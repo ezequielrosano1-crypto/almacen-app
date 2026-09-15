@@ -2313,12 +2313,36 @@ if (data && data.length > 0) {
     setProductos((prev) => prev.map((p) => (p.id === id ? { ...p, stock: nuevoStock } : p)));
   };
 
-  const guardarProducto = (producto) => {
-    setProductos((prev) => {
-      const existe = prev.some((p) => p.id === producto.id);
-      return existe ? prev.map((p) => (p.id === producto.id ? producto : p)) : [...prev, producto];
-    });
+ const guardarProducto = async (producto) => {
+  const productoSupabase = {
+    id: producto.id,
+    negocio_id: 1,
+    nombre: producto.nombre,
+    precio: Number(producto.precio),
+    unidad: producto.unidad,
+    stock: Number(producto.stock),
+    stock_minimo: Number(producto.stockMinimo),
+    codigo_barras: producto.codigoBarras || null,
   };
+
+  const { error } = await supabase
+    .from("productos")
+    .upsert(productoSupabase, { onConflict: "id" });
+
+  if (error) {
+    console.error("Error guardando producto en Supabase:", error);
+    alert("No se pudo guardar el producto.");
+    return;
+  }
+
+  setProductos((prev) => {
+    const existe = prev.some((p) => p.id === producto.id);
+
+    return existe
+      ? prev.map((p) => (p.id === producto.id ? producto : p))
+      : [...prev, producto];
+  });
+};
 
   const guardarInfoNegocio = (datos) => {
     setInfoNegocio(datos);
