@@ -2151,23 +2151,69 @@ export default function App() {
     let activo = true;
     (async () => {
       try {
-        const { data, error } = await supabase
+       const { data, error } = await supabase
   .from("productos")
   .select("*")
   .eq("negocio_id", 1);
 
-if (!error && activo && data) {
-  setProductos(
-    data.map((p) => ({
+if (error) throw error;
+
+// Si Supabase ya tiene productos, los cargamos normalmente.
+if (data && data.length > 0) {
+  if (activo) {
+    setProductos(
+      data.map((p) => ({
+        id: p.id,
+        nombre: p.nombre,
+        precio: Number(p.precio),
+        unidad: p.unidad,
+        stock: Number(p.stock),
+        stockMinimo: Number(p.stock_minimo),
+        codigoBarras: p.codigo_barras,
+      }))
+    );
+  }
+} else {
+  // Primera migración: recuperar productos del almacenamiento local.
+  const local = await window.storage.get("datos:productos", false);
+
+  if (local?.value) {
+    const productosLocales = JSON.parse(local.value);
+
+    const productosParaSupabase = productosLocales.map((p) => ({
       id: p.id,
+      negocio_id: 1,
       nombre: p.nombre,
       precio: Number(p.precio),
       unidad: p.unidad,
       stock: Number(p.stock),
-      stockMinimo: Number(p.stock_minimo),
-      codigoBarras: p.codigo_barras,
-    }))
-  );
+      stock_minimo: Number(p.stockMinimo),
+      codigo_barras: p.codigoBarras || null,
+    }));
+
+    if (productosParaSupabase.length > 0) {
+      const { data: migrados, error: errorMigracion } = await supabase
+        .from("productos")
+        .upsert(productosParaSupabase, { onConflict: "id" })
+        .select("*");
+
+      if (errorMigracion) throw errorMigracion;
+
+      if (activo && migrados) {
+        setProductos(
+          migrados.map((p) => ({
+            id: p.id,
+            nombre: p.nombre,
+            precio: Number(p.precio),
+            unidad: p.unidad,
+            stock: Number(p.stock),
+            stockMinimo: Number(p.stock_minimo),
+            codigoBarras: p.codigo_barras,
+          }))
+        );
+      }
+    }
+  }
 }
       } catch (e) {}
       try {
