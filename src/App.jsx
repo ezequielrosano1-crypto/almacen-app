@@ -84,38 +84,6 @@ const COLORS = {
   agotado: "#C0392B",
 };
 
-const CATEGORIAS = [
-  "Bebidas",
-  "Panadería",
-  "Almacén",
-  "Alfajores",
-  "Galletas",
-  "Snacks",
-  "Dulces",
-  "Chocolates",
-  "Lácteos",
-  "Fiambres",
-  "Quesos",
-  "Congelados",
-  "Carnes",
-  "Frutas",
-  "Verduras",
-  "Conservas",
-  "Condimentos",
-  "Pastas",
-  "Arroz y Legumbres",
-  "Harinas",
-  "Desayuno",
-  "Yerba y Té",
-  "Café",
-  "Limpieza",
-  "Higiene Personal",
-  "Cuidado del Hogar",
-  "Mascotas",
-  "Bebés",
-  "Tabaco",
-  "Otros",
-];
 const MOTIVOS_AJUSTE = ["Conteo físico", "Producto vencido/roto", "Error de carga", "Otro"];
 
 let idCounter = 1000;
@@ -252,60 +220,11 @@ async function sincronizarCaja(movimientos = [], opciones = {}) {
 // por una fuente de datos real más adelante sin cambiar la interfaz.
 // ===========================================================================
 function productosIniciales() {
-  return [
-    { id: nextId(), nombre: "Coca-Cola 1.5L", categoria: "Bebidas", unidad: "unidad", precio: 1200, stock: 24, stockMinimo: 10 },
-    { id: nextId(), nombre: "Cerveza Patricia 1L", categoria: "Bebidas", unidad: "unidad", precio: 950, stock: 8, stockMinimo: 10 },
-    { id: nextId(), nombre: "Pan flauta", categoria: "Panadería", unidad: "unidad", precio: 150, stock: 0, stockMinimo: 5 },
-    { id: nextId(), nombre: "Alfajor Nesquik", categoria: "Alfajores", unidad: "unidad", precio: 180, stock: 30, stockMinimo: 15 },
-    { id: nextId(), nombre: "Galletitas María", categoria: "Galletas", unidad: "unidad", precio: 220, stock: 12, stockMinimo: 15 },
-    { id: nextId(), nombre: "Jamón cocido", categoria: "Fiambres", unidad: "kg", precio: 980, stock: 3.2, stockMinimo: 2 },
-    { id: nextId(), nombre: "Queso fresco", categoria: "Fiambres", unidad: "kg", precio: 1250, stock: 0.4, stockMinimo: 1 },
-    { id: nextId(), nombre: "Detergente Ala", categoria: "Limpieza", unidad: "unidad", precio: 310, stock: 18, stockMinimo: 8 },
-    { id: nextId(), nombre: "Lavandina", categoria: "Limpieza", unidad: "unidad", precio: 140, stock: 5, stockMinimo: 6 },
-  ];
+  return [];
 }
 
 function movimientosIniciales() {
-  const hoy = new Date();
-  const hace2h = new Date(hoy.getTime() - 2 * 60 * 60 * 1000);
-  const hace1h = new Date(hoy.getTime() - 1 * 60 * 60 * 1000);
-  const ayer = new Date(hoy.getTime() - 26 * 60 * 60 * 1000);
-  const hace3d = new Date(hoy.getTime() - 72 * 60 * 60 * 1000);
-
-  return [
-    {
-      id: nextId(),
-      tipo: "venta",
-      fecha: hace1h,
-      items: [{ nombre: "Alfajor Nesquik", cantidad: 3, unidad: "unidad" }],
-      total: 540,
-      pago: "Débito",
-    },
-    {
-      id: nextId(),
-      tipo: "venta",
-      fecha: hace2h,
-      items: [{ nombre: "Coca-Cola 1.5L", cantidad: 2, unidad: "unidad" }],
-      total: 2400,
-      pago: "Efectivo",
-    },
-    {
-      id: nextId(),
-      tipo: "entrada",
-      fecha: ayer,
-      producto: "Jamón cocido",
-      cantidad: 2,
-      unidad: "kg",
-    },
-    {
-      id: nextId(),
-      tipo: "ajuste",
-      fecha: hace3d,
-      producto: "Galletitas María",
-      diferencia: -3,
-      motivo: "Conteo físico",
-    },
-  ];
+  return [];
 }
 
 // ===========================================================================
@@ -402,32 +321,6 @@ function SearchBar({ value, onChange, placeholder }) {
   );
 }
 
-function CategoryChips({ categorias, active, onChange }) {
-  const opciones = ["Todas", ...categorias];
-  return (
-    <div className="flex gap-2 overflow-x-auto pb-1 -mx-5 px-5">
-      {opciones.map((c) => {
-        const isActive = active === c;
-        return (
-          <button
-            type="button"
-            key={c}
-            onClick={() => onChange(c)}
-            className="whitespace-nowrap text-sm rounded-full px-3.5 py-1.5 border"
-            style={
-              isActive
-                ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
-            }
-          >
-            {c}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function ProductoListRow({ producto, onClick }) {
   const estado = estadoProducto(producto);
   return (
@@ -440,7 +333,7 @@ function ProductoListRow({ producto, onClick }) {
         <EstadoDot estado={estado} />
         <div>
           <p className="text-stone-800 font-medium text-sm">{producto.nombre}</p>
-          <p className="text-stone-400 text-xs">{producto.categoria}</p>
+          <p className="text-stone-400 text-xs">{fmtMoney(producto.precio)}{producto.unidad === "kg" ? " / kg" : ""}</p>
         </div>
       </div>
       <span className="text-stone-600 text-sm font-medium">{fmtStock(producto)}</span>
@@ -466,7 +359,7 @@ function PrimaryButton({ children, onClick, disabled }) {
   );
 }
 
-function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total }) {
+function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total, pago, setPago, onConfirmar, enviando }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [estado, setEstado] = useState("solicitando"); // solicitando | activa | error
@@ -527,8 +420,13 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
   useEffect(() => {
     if (estado !== "activa" || !deteccionSoportada) return;
     let activo = true;
+    let temporizador = null;
     const detector = new window.BarcodeDetector();
 
+    // Antes intentaba detectar en CADA frame de la cámara (hasta 60 veces
+    // por segundo), lo que hacía que leyera de más y a veces mal. Ahora
+    // espera un ratito entre lectura y lectura — sigue siendo rápido para
+    // escanear en el mostrador, pero le da tiempo a la cámara a enfocar.
     const detectar = async () => {
       if (!activo || !videoRef.current) return;
       try {
@@ -541,12 +439,13 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
       } catch (e) {
         // Se ignora un error puntual de detección y se sigue intentando
       }
-      if (activo) requestAnimationFrame(detectar);
+      if (activo) temporizador = setTimeout(detectar, 550);
     };
-    requestAnimationFrame(detectar);
+    temporizador = setTimeout(detectar, 550);
 
     return () => {
       activo = false;
+      if (temporizador) clearTimeout(temporizador);
     };
   }, [estado, deteccionSoportada, onCodigoDetectado]);
 
@@ -558,33 +457,6 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
           <X size={22} color="#57534E" />
         </button>
       </div>
-
-      {items && items.length > 0 && (
-        <div
-          className="px-5 py-2 max-h-32 overflow-y-auto space-y-1 border-b border-white/10"
-          style={{ backgroundColor: "#111111" }}
-        >
-          <p className="text-[10px] uppercase tracking-wide text-stone-400 pb-0.5">
-            Agregado en esta venta
-          </p>
-          {items.map((it) => (
-            <div key={it.id} className="flex items-center justify-between text-xs text-white">
-              <span className="truncate pr-2">
-                {it.producto.nombre} × {it.cantidad}
-                {it.producto.unidad === "kg" ? "kg" : ""}
-              </span>
-              <span className="shrink-0">{fmtMoney(it.subtotal)}</span>
-            </div>
-          ))}
-          <div
-            className="flex items-center justify-between text-xs font-semibold pt-1 mt-1"
-            style={{ color: "#FFFFFF", borderTop: "1px solid #FFFFFF33" }}
-          >
-            <span>Total</span>
-            <span>{fmtMoney(total || 0)}</span>
-          </div>
-        </div>
-      )}
 
       <div className="flex-1 relative flex items-center justify-center">
         {estado === "solicitando" && (
@@ -612,7 +484,7 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
               <div className="w-64 h-40 border-2 rounded-2xl" style={{ borderColor: "#2E6B4F" }} />
             </div>
             {!deteccionSoportada && (
-              <div className="absolute bottom-24 left-5 right-5 bg-black/60 rounded-2xl px-4 py-3">
+              <div className="absolute bottom-5 left-5 right-5 bg-black/60 rounded-2xl px-4 py-3">
                 <p className="text-white text-xs text-center">
                   Cámara activa. Este navegador no soporta detección automática de códigos de barra
                   (BarcodeDetector no disponible).
@@ -624,9 +496,9 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
       </div>
 
       {codigoDetectado && (
-        <div className="px-5 py-4 space-y-2" style={{ backgroundColor: "#FAF8F5" }}>
+        <div className="px-5 py-3 space-y-1" style={{ backgroundColor: "#FAF8F5" }}>
           <p className="text-stone-500 text-xs">Código detectado</p>
-          <p className="text-stone-800 font-bold text-lg break-all">{codigoDetectado}</p>
+          <p className="text-stone-800 font-bold text-base break-all">{codigoDetectado}</p>
           {mensaje ? (
             <p className="text-sm font-medium" style={{ color: "#2E6B4F" }}>
               {mensaje}
@@ -636,6 +508,70 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
               Este código todavía no está asociado a ningún producto.
             </p>
           )}
+        </div>
+      )}
+
+      {/* Lista de lo agregado + pago + confirmar, siempre abajo de todo, sin
+          tener que cerrar el escáner para ver o confirmar la venta. */}
+      {items && items.length > 0 && (
+        <div
+          className="px-5 pt-2 pb-4 space-y-2"
+          style={{ backgroundColor: "#111111", maxHeight: "45vh", overflowY: "auto" }}
+        >
+          <p className="text-[10px] uppercase tracking-wide text-stone-400 pb-0.5">
+            Agregado en esta venta
+          </p>
+          <div className="space-y-1">
+            {items.map((it) => (
+              <div key={it.id} className="flex items-center justify-between text-xs text-white">
+                <span className="truncate pr-2">
+                  {it.producto.nombre} × {it.cantidad}
+                  {it.producto.unidad === "kg" ? "kg" : ""}
+                </span>
+                <span className="shrink-0">{fmtMoney(it.subtotal)}</span>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="flex items-center justify-between text-sm font-semibold pt-2"
+            style={{ color: "#FFFFFF", borderTop: "1px solid #FFFFFF33" }}
+          >
+            <span>Total</span>
+            <span>{fmtMoney(total || 0)}</span>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            {["Efectivo", "Débito"].map((m) => (
+              <button
+                type="button"
+                key={m}
+                onClick={() => setPago(m)}
+                className="flex-1 rounded-xl py-2 text-sm font-semibold border"
+                style={
+                  pago === m
+                    ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
+                    : { backgroundColor: "transparent", color: "#FFFFFF", borderColor: "#FFFFFF55" }
+                }
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={onConfirmar}
+            disabled={!pago || enviando}
+            className="w-full appearance-none font-semibold rounded-xl py-3 text-sm flex items-center justify-center gap-2"
+            style={
+              !pago || enviando
+                ? { backgroundColor: "#3A3A3A", color: "#8A8A8A" }
+                : { backgroundColor: "#2E6B4F", color: "#FFFFFF" }
+            }
+          >
+            Confirmar venta
+          </button>
         </div>
       )}
     </div>
@@ -829,7 +765,6 @@ function VentasMain({ push, caja, totalHoy, abrirCajaManual }) {
 
 function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetStack, caja }) {
   const [busqueda, setBusqueda] = useState("");
-  const [categoriasAbiertas, setCategoriasAbiertas] = useState({});
   const [carrito, setCarrito] = useState([]); // [{id, cantidad}]
   const [pago, setPago] = useState(null);
   const [confirmada, setConfirmada] = useState(null);
@@ -839,15 +774,9 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
   const ultimoCodigoRef = useRef(null);
   const cooldownCodigoRef = useRef(null);
 
-  const buscando = busqueda.trim() !== "";
-  const disponibles = productos.filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()));
-
-  const grupos = CATEGORIAS.map((cat) => ({
-    categoria: cat,
-    productos: disponibles.filter((p) => p.categoria === cat).sort((a, b) => b.stock - a.stock),
-  }));
-
-  const toggleCategoria = (cat) => setCategoriasAbiertas((prev) => ({ ...prev, [cat]: !prev[cat] }));
+  const disponibles = productos
+    .filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   const cantidadEnCarrito = (id) => carrito.find((c) => c.id === id)?.cantidad || 0;
 
@@ -969,43 +898,14 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
             <Camera size={20} color="#2E6B4F" />
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {grupos.map((g) => {
-            const abierta = buscando || !!categoriasAbiertas[g.categoria];
-            return (
-              <React.Fragment key={g.categoria}>
-                <button
-                  type="button"
-                  onClick={() => toggleCategoria(g.categoria)}
-                  className="rounded-2xl shadow-sm px-2 py-3 text-center flex flex-col items-center justify-center gap-0.5"
-                  style={
-                    abierta
-                      ? { backgroundColor: "#2E6B4F", color: "#FFFFFF" }
-                      : { backgroundColor: "#FFFFFF", color: "#44403C" }
-                  }
-                >
-                  <span className="font-medium text-sm leading-tight">{g.categoria}</span>
-                  <span
-                    className="text-xs"
-                    style={{ color: abierta ? "#FFFFFFAA" : "#A8A29E" }}
-                  >
-                    ({g.productos.length})
-                  </span>
-                </button>
-                {abierta && (
-                  <div className="col-span-2 bg-white rounded-2xl shadow-sm px-2 py-2 space-y-2">
-                    {g.productos.length > 0 ? (
-                      g.productos.map((p) => (
-                        <ProductoListRow key={p.id} producto={p} onClick={() => agregarProducto(p)} />
-                      ))
-                    ) : (
-                      <p className="text-stone-400 text-xs text-center py-3">Sin productos en esta categoría</p>
-                    )}
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
+        <div className="space-y-2">
+          {disponibles.length > 0 ? (
+            disponibles.map((p) => (
+              <ProductoListRow key={p.id} producto={p} onClick={() => agregarProducto(p)} />
+            ))
+          ) : (
+            <p className="text-stone-400 text-xs text-center py-6">Ningún producto coincide con la búsqueda</p>
+          )}
         </div>
       </div>
 
@@ -1079,6 +979,10 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
           mensaje={mensajeEscaneo}
           items={items}
           total={total}
+          pago={pago}
+          setPago={setPago}
+          onConfirmar={confirmarVenta}
+          enviando={enviando}
         />
       )}
     </div>
@@ -1316,51 +1220,20 @@ function StockMain({ push }) {
   );
 }
 
-function CategoriasProductos({ productos, busqueda, onProductoClick }) {
-  const [categoriasAbiertas, setCategoriasAbiertas] = useState({});
-  const buscando = busqueda.trim() !== "";
-  const disponibles = productos.filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()));
-  const grupos = CATEGORIAS.map((cat) => ({
-    categoria: cat,
-    productos: disponibles.filter((p) => p.categoria === cat).sort((a, b) => b.stock - a.stock),
-  }));
-  const toggleCategoria = (cat) => setCategoriasAbiertas((prev) => ({ ...prev, [cat]: !prev[cat] }));
+function ListaProductos({ productos, busqueda, onProductoClick }) {
+  const disponibles = productos
+    .filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {grupos.map((g) => {
-        const abierta = buscando || !!categoriasAbiertas[g.categoria];
-        return (
-          <React.Fragment key={g.categoria}>
-            <button
-              type="button"
-              onClick={() => toggleCategoria(g.categoria)}
-              className="rounded-2xl shadow-sm px-2 py-3 text-center flex flex-col items-center justify-center gap-0.5"
-              style={
-                abierta
-                  ? { backgroundColor: "#2E6B4F", color: "#FFFFFF" }
-                  : { backgroundColor: "#FFFFFF", color: "#44403C" }
-              }
-            >
-              <span className="font-medium text-sm leading-tight">{g.categoria}</span>
-              <span className="text-xs" style={{ color: abierta ? "#FFFFFFAA" : "#A8A29E" }}>
-                ({g.productos.length})
-              </span>
-            </button>
-            {abierta && (
-              <div className="col-span-2 bg-white rounded-2xl shadow-sm px-2 py-2 space-y-2">
-                {g.productos.length > 0 ? (
-                  g.productos.map((p) => (
-                    <ProductoListRow key={p.id} producto={p} onClick={() => onProductoClick(p.id)} />
-                  ))
-                ) : (
-                  <p className="text-stone-400 text-xs text-center py-3">Sin productos en esta categoría</p>
-                )}
-              </div>
-            )}
-          </React.Fragment>
-        );
-      })}
+    <div className="space-y-2">
+      {disponibles.length > 0 ? (
+        disponibles.map((p) => (
+          <ProductoListRow key={p.id} producto={p} onClick={() => onProductoClick(p.id)} />
+        ))
+      ) : (
+        <p className="text-stone-400 text-xs text-center py-6">Ningún producto coincide con la búsqueda</p>
+      )}
     </div>
   );
 }
@@ -1373,7 +1246,7 @@ function VerProductos({ productos, pop, onOpenDetalle }) {
       <Header title="Ver productos" onBack={pop} />
       <div className="px-5 space-y-3">
         <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-        <CategoriasProductos productos={productos} busqueda={busqueda} onProductoClick={onOpenDetalle} />
+        <ListaProductos productos={productos} busqueda={busqueda} onProductoClick={onOpenDetalle} />
       </div>
     </div>
   );
@@ -1390,10 +1263,6 @@ function DetalleProducto({ productos, productoId, pop, goTabScreen }) {
       <Header title={p.nombre} onBack={pop} />
       <div className="px-5 space-y-3">
         <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Categoría</span>
-            <span className="text-stone-800 font-medium">{p.categoria}</span>
-          </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Precio</span>
             <span className="text-stone-800 font-medium">{fmtMoney(p.precio)}</span>
@@ -1836,7 +1705,7 @@ function ProductosMain({ productos, pop, onOpenDetalle, onNuevo }) {
       </div>
       <div className="px-5 space-y-3">
         <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-        <CategoriasProductos productos={productos} busqueda={busqueda} onProductoClick={onOpenDetalle} />
+        <ListaProductos productos={productos} busqueda={busqueda} onProductoClick={onOpenDetalle} />
       </div>
     </div>
   );
@@ -1846,7 +1715,6 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
   const existente = productos.find((p) => p.id === productoId);
   const esNuevo = !existente;
   const [nombre, setNombre] = useState(existente?.nombre || "");
-  const [categoria, setCategoria] = useState(existente?.categoria || CATEGORIAS[0]);
   const [precio, setPrecio] = useState(existente ? String(existente.precio) : "");
   const [unidad, setUnidad] = useState(existente?.unidad || "unidad");
   const [stock, setStock] = useState(existente ? String(existente.stock) : "");
@@ -1861,7 +1729,6 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
     guardarProducto({
       id: existente ? existente.id : nextId(),
       nombre,
-      categoria,
       precio: parseFloat(precio),
       unidad,
       stock: parseFloat(stock),
@@ -1907,27 +1774,6 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
             Mejor escanealo con la cámara que tipearlo: así queda idéntico al código que la caja va a leer
             después, sin errores de tipeo.
           </p>
-        </div>
-
-        <div>
-          <label className="text-stone-500 text-sm mb-2 block">Categoría</label>
-          <div className="grid grid-cols-2 gap-2">
-            {CATEGORIAS.map((c) => (
-              <button
-                type="button"
-                key={c}
-                onClick={() => setCategoria(c)}
-                className="text-sm rounded-2xl px-3 py-2.5 border text-center"
-                style={
-                  categoria === c
-                    ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                    : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
-                }
-              >
-                {c}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div>
@@ -2207,6 +2053,63 @@ function PruebasCaja() {
   );
 }
 
+function BorrarDatos() {
+  const [confirmando, setConfirmando] = useState(false);
+  const [borrando, setBorrando] = useState(false);
+
+  const borrarTodo = async () => {
+    setBorrando(true);
+    try { await window.storage.delete("datos:productos", false); } catch (e) {}
+    try { await window.storage.delete("datos:movimientos", false); } catch (e) {}
+    window.location.reload();
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
+      <p className="text-xs font-semibold text-stone-500 px-1">Empezar de cero</p>
+      <p className="text-xs text-stone-500 px-1">
+        Borra todos los productos y todo el historial de ventas de este dispositivo. La caja (abierta/cerrada)
+        no se toca. No se puede deshacer.
+      </p>
+      {!confirmando ? (
+        <button
+          type="button"
+          onClick={() => setConfirmando(true)}
+          className="w-full text-sm rounded-xl px-3 py-2.5 border"
+          style={{ backgroundColor: "#FFFFFF", color: "#C0392B", borderColor: "#E7E5E4" }}
+        >
+          Borrar todos los productos y ventas
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold px-1" style={{ color: COLORS.agotado }}>
+            ¿Seguro? Esto borra todo y no se puede deshacer.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmando(false)}
+              className="flex-1 text-sm rounded-xl px-3 py-2.5 border"
+              style={{ backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={borrarTodo}
+              disabled={borrando}
+              className="flex-1 text-sm rounded-xl px-3 py-2.5"
+              style={{ backgroundColor: "#C0392B", color: "#FFFFFF" }}
+            >
+              {borrando ? "Borrando..." : "Sí, borrar todo"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Configuracion({ pop }) {
   return (
     <div>
@@ -2216,6 +2119,7 @@ function Configuracion({ pop }) {
           <p className="text-stone-600 font-medium">Configuración</p>
           <p className="text-stone-400 text-sm mt-2">Esta sección estará disponible en una etapa futura.</p>
         </div>
+        <BorrarDatos />
         <div>
           <p className="text-xs font-semibold text-stone-500 px-1 mb-2">
             Pruebas · caja automática
