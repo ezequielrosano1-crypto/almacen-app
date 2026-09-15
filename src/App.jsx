@@ -490,9 +490,6 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje }) {
           return;
         }
         streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
         setEstado("activa");
         setDeteccionSoportada(typeof window !== "undefined" && "BarcodeDetector" in window);
       } catch (err) {
@@ -512,6 +509,20 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje }) {
       }
     };
   }, []);
+
+  // El <video> recién existe en el DOM cuando estado === "activa" (se monta
+  // condicionalmente más abajo). Por eso la conexión de la cámara al video
+  // tiene que hacerse en un efecto aparte, disparado cuando ese elemento ya
+  // está montado — si se intenta en el mismo paso en que se pide la cámara
+  // (como estaba antes), videoRef.current todavía es null y la asignación
+  // se pierde: el navegador pide permiso, pero no se ve nada.
+  useEffect(() => {
+    if (estado === "activa" && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      const intento = videoRef.current.play();
+      if (intento && intento.catch) intento.catch(() => {});
+    }
+  }, [estado]);
 
   useEffect(() => {
     if (estado !== "activa" || !deteccionSoportada) return;
@@ -744,14 +755,46 @@ function PantallaInicio({
 // ===========================================================================
 // VENTAS
 // ===========================================================================
-function VentasMain({ push, caja, totalHoy }) {
+function VentasMain({ push, caja, totalHoy, abrirCajaManual }) {
+  const [avisoFueraHorario, setAvisoFueraHorario] = useState(false);
+  const [abriendo, setAbriendo] = useState(false);
+
+  const tocarAbrir = async () => {
+    setAbriendo(true);
+    const resultado = await abrirCajaManual();
+    setAbriendo(false);
+    if (!resultado) {
+      setAvisoFueraHorario(true);
+      setTimeout(() => setAvisoFueraHorario(false), 3500);
+    }
+  };
+
   return (
     <div>
       <Header title="Ventas" />
       <div className="px-5 space-y-3">
         <EstadoCajaCard caja={caja} totalHoy={totalHoy} />
+        {caja?.estado !== "ABIERTA" && (
+          <div className="space-y-1.5">
+            <button
+              type="button"
+              onClick={tocarAbrir}
+              disabled={abriendo}
+              className="w-full font-semibold rounded-2xl py-3 text-sm shadow-sm border flex items-center justify-center gap-2"
+              style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
+            >
+              Abrir caja ahora (manual)
+            </button>
+            {avisoFueraHorario && (
+              <p className="text-xs text-center" style={{ color: COLORS.agotado }}>
+                Solo se puede abrir manualmente entre 08:00 y 22:00.
+              </p>
+            )}
+          </div>
+        )}
         <Row label="Nueva venta" onClick={() => push("nuevaVenta")} />
         <Row label="Cierre del día" onClick={() => push("cierreDia")} />
+        <Row label="Historial de cierres" onClick={() => push("historialCierres")} />
       </div>
     </div>
   );
@@ -1147,6 +1190,78 @@ function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, act
 // ===========================================================================
 // STOCK
 // ===========================================================================
+function HistorialCierres({ pop }) {
+  const [cargando, setCargando] = useState(true);
+  const [cierres, setCierres] = useState([]);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        // Recorre todas las claves "cierre:YYYY-MM-DD" guardadas (una por
+        // cada día cerrado, manual o automáticamente) y trae cada resumen.
+        const listado = await window.storage.list("cierre:", false);
+        const claves = (listado?.keys || []).slice().sort().reverse();
+        const registros = [];
+        for (const clave of claves) {
+          try {
+            const r = await window.storage.get(clave, false);
+            if (r?.value) registros.push(JSON.parse(r.value));
+          } catch (e) {}
+        }
+        if (activo) setCierres(registros);
+      } catch (e) {
+        if (activo) setError(true);
+      } finally {
+        if (activo) setCargando(false);
+      }
+    })();
+    return () => { activo = false; };
+  }, []);
+
+  return (
+    <div className="px-5 space-y-3 pb-6">
+      <Header title="Historial de cierres" onBack={pop} />
+      {cargando ? (
+        <p className="text-stone-400 text-sm text-center py-6">Cargando historial...</p>
+      ) : error ? (
+        <p className="text-stone-400 text-sm text-center py-6">No se pudo cargar el historial.</p>
+      ) : cierres.length === 0 ? (
+        <p className="text-stone-400 text-sm text-center py-6">Todavía no hay ningún día cerrado.</p>
+      ) : (
+        <div className="space-y-2">
+          {cierres.map((c, i) => (
+            <div key={i} className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-stone-800">{c.fecha}</p>
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: c.automatico ? COLORS.bajo : COLORS.principal }}
+                >
+                  {c.automatico ? "Cierre automático" : "Cierre manual"}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Hora de cierre</span>
+                <span className="text-stone-800 font-medium">{c.hora}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Total</span>
+                <span className="text-stone-800 font-medium">{fmtMoney(c.total)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Cantidad de ventas</span>
+                <span className="text-stone-800 font-medium">{c.cantidadVentas}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StockMain({ push }) {
   return (
     <div>
@@ -2117,6 +2232,31 @@ export default function App() {
     return () => { activo = false; clearInterval(intervalo); };
   }, [movimientos]);
 
+  // Apertura manual: solo tiene sentido dentro del horario habilitado
+  // (08:00–22:00). Además de abrir la jornada, borra el registro de cierre
+  // guardado para hoy — si no se borra, un cierre manual anterior ese mismo
+  // día deja "cierre:<fecha>" guardado, y CierreDia lo lee al montar y
+  // piensa que el día ya está cerrado, bloqueando un cierre posterior. El
+  // cierre y la apertura automáticos (sincronizarCaja) siguen funcionando
+  // igual después de esto: si llega a las 22:00 con la caja reabierta, la
+  // cierra sola; al otro día a las 08:00 abre una jornada nueva.
+  const abrirCajaManual = async () => {
+    const ahora = ahoraUY();
+    if (ahora.horaNumero < 8 || ahora.horaNumero >= 22) return null;
+    const nueva = {
+      id: `caja-${ahora.fecha}`,
+      fecha: ahora.fecha,
+      estado: "ABIERTA",
+      horaApertura: ahora.hora,
+      horaCierre: null,
+      cerradoAutomaticamente: false,
+    };
+    try { await window.storage.set(CAJA_STORAGE_KEY, JSON.stringify(nueva), false); } catch (e) {}
+    try { await window.storage.delete(`cierre:${ahora.fecha}`, false); } catch (e) {}
+    setCaja(nueva);
+    return nueva;
+  };
+
   const current = stack.length ? stack[stack.length - 1] : { screen: "main", params: {} };
 
   const goTab = (newTab) => {
@@ -2202,7 +2342,8 @@ export default function App() {
             actualizarCaja={setCaja}
           />
         );
-      return <VentasMain push={push} caja={caja} totalHoy={totalHoy} />;
+      if (current.screen === "historialCierres") return <HistorialCierres pop={pop} />;
+      return <VentasMain push={push} caja={caja} totalHoy={totalHoy} abrirCajaManual={abrirCajaManual} />;
     }
 
     if (tab === "stock") {
