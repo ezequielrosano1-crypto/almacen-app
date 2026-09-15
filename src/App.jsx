@@ -2151,8 +2151,24 @@ export default function App() {
     let activo = true;
     (async () => {
       try {
-        const r = await window.storage.get("datos:productos", false);
-        if (activo && r?.value) setProductos(JSON.parse(r.value));
+        const { data, error } = await supabase
+  .from("productos")
+  .select("*")
+  .eq("negocio_id", 1);
+
+if (!error && activo && data) {
+  setProductos(
+    data.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      precio: Number(p.precio),
+      unidad: p.unidad,
+      stock: Number(p.stock),
+      stockMinimo: Number(p.stock_minimo),
+      codigoBarras: p.codigo_barras,
+    }))
+  );
+}
       } catch (e) {}
       try {
         const r = await window.storage.get("datos:movimientos", false);
