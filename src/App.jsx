@@ -2215,7 +2215,9 @@ if (data && data.length > 0) {
     }
   }
 }
-      } catch (e) {}
+} catch (e) {
+  console.error("Error cargando productos:", e);
+}
       try {
         const r = await window.storage.get("datos:movimientos", false);
         if (activo && r?.value) {
