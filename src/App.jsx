@@ -2309,9 +2309,25 @@ if (data && data.length > 0) {
     setMovimientos((m) => [{ id: nextId(), fecha: new Date(), ...mov }, ...m]);
   };
 
-  const actualizarStock = (id, nuevoStock) => {
-    setProductos((prev) => prev.map((p) => (p.id === id ? { ...p, stock: nuevoStock } : p)));
-  };
+const actualizarStock = async (id, nuevoStock) => {
+  const { error } = await supabase
+    .from("productos")
+    .update({ stock: Number(nuevoStock) })
+    .eq("id", id)
+    .eq("negocio_id", 1);
+
+  if (error) {
+    console.error("Error actualizando stock en Supabase:", error);
+    alert("No se pudo actualizar el stock.");
+    return false;
+  }
+
+  setProductos((prev) =>
+    prev.map((p) => (p.id === id ? { ...p, stock: nuevoStock } : p))
+  );
+
+  return true;
+};
 
  const guardarProducto = async (producto) => {
   const productoSupabase = {
