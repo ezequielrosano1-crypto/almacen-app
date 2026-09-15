@@ -466,7 +466,7 @@ function PrimaryButton({ children, onClick, disabled }) {
   );
 }
 
-function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje }) {
+function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [estado, setEstado] = useState("solicitando"); // solicitando | activa | error
@@ -558,6 +558,33 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje }) {
           <X size={22} color="#57534E" />
         </button>
       </div>
+
+      {items && items.length > 0 && (
+        <div
+          className="px-5 py-2 max-h-32 overflow-y-auto space-y-1 border-b border-white/10"
+          style={{ backgroundColor: "#111111" }}
+        >
+          <p className="text-[10px] uppercase tracking-wide text-stone-400 pb-0.5">
+            Agregado en esta venta
+          </p>
+          {items.map((it) => (
+            <div key={it.id} className="flex items-center justify-between text-xs text-white">
+              <span className="truncate pr-2">
+                {it.producto.nombre} × {it.cantidad}
+                {it.producto.unidad === "kg" ? "kg" : ""}
+              </span>
+              <span className="shrink-0">{fmtMoney(it.subtotal)}</span>
+            </div>
+          ))}
+          <div
+            className="flex items-center justify-between text-xs font-semibold pt-1 mt-1"
+            style={{ color: "#FFFFFF", borderTop: "1px solid #FFFFFF33" }}
+          >
+            <span>Total</span>
+            <span>{fmtMoney(total || 0)}</span>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 relative flex items-center justify-center">
         {estado === "solicitando" && (
@@ -810,6 +837,7 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
   const [escaneando, setEscaneando] = useState(false);
   const [mensajeEscaneo, setMensajeEscaneo] = useState(null);
   const ultimoCodigoRef = useRef(null);
+  const cooldownCodigoRef = useRef(null);
 
   const buscando = busqueda.trim() !== "";
   const disponibles = productos.filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()));
@@ -837,9 +865,19 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
   };
 
   const manejarCodigoDetectado = (codigo) => {
-    if (codigo === ultimoCodigoRef.current) return;
-    ultimoCodigoRef.current = codigo;
-    const producto = productos.find((p) => p.codigoBarras && p.codigoBarras === codigo);
+    const limpio = (codigo || "").trim();
+    if (!limpio || limpio === ultimoCodigoRef.current) return;
+    ultimoCodigoRef.current = limpio;
+    // Después de un ratito se "olvida" el último código leído, para poder
+    // escanear el MISMO producto de nuevo (por ejemplo, si el cliente lleva
+    // 2 unidades). Sin esto, una vez leído un código quedaba bloqueado para
+    // siempre en esta pantalla.
+    if (cooldownCodigoRef.current) clearTimeout(cooldownCodigoRef.current);
+    cooldownCodigoRef.current = setTimeout(() => {
+      ultimoCodigoRef.current = null;
+    }, 1500);
+
+    const producto = productos.find((p) => p.codigoBarras && p.codigoBarras.trim() === limpio);
     if (producto) {
       agregarProducto(producto);
       setMensajeEscaneo(`Agregado: ${producto.nombre}`);
@@ -1039,6 +1077,8 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
           onClose={() => setEscaneando(false)}
           onCodigoDetectado={manejarCodigoDetectado}
           mensaje={mensajeEscaneo}
+          items={items}
+          total={total}
         />
       )}
     </div>
@@ -1812,6 +1852,7 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
   const [stock, setStock] = useState(existente ? String(existente.stock) : "");
   const [stockMinimo, setStockMinimo] = useState(existente ? String(existente.stockMinimo) : "");
   const [codigoBarras, setCodigoBarras] = useState(existente?.codigoBarras || "");
+  const [escaneandoCodigo, setEscaneandoCodigo] = useState(false);
 
   const puedeGuardar = nombre && precio && stock !== "" && stockMinimo !== "";
 
@@ -1845,13 +1886,27 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
 
         <div>
           <label className="text-stone-500 text-sm">Código de barras (opcional)</label>
-          <input
-            type="text"
-            value={codigoBarras}
-            onChange={(e) => setCodigoBarras(e.target.value)}
-            placeholder="7791234567890"
-            className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-          />
+          <div className="flex gap-2 mt-1">
+            <input
+              type="text"
+              value={codigoBarras}
+              onChange={(e) => setCodigoBarras(e.target.value)}
+              placeholder="7791234567890"
+              className="flex-1 bg-white rounded-2xl shadow-sm px-4 py-3 outline-none text-stone-800"
+            />
+            <button
+              type="button"
+              onClick={() => setEscaneandoCodigo(true)}
+              className="shrink-0 rounded-2xl shadow-sm w-12 flex items-center justify-center"
+              style={{ backgroundColor: "#FFFFFF", border: "1px solid #E7E5E4" }}
+            >
+              <Camera size={20} color="#2E6B4F" />
+            </button>
+          </div>
+          <p className="text-stone-400 text-xs mt-1">
+            Mejor escanealo con la cámara que tipearlo: así queda idéntico al código que la caja va a leer
+            después, sin errores de tipeo.
+          </p>
         </div>
 
         <div>
@@ -1939,6 +1994,17 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
           </PrimaryButton>
         </div>
       </div>
+
+      {escaneandoCodigo && (
+        <EscanerCodigoBarras
+          onClose={() => setEscaneandoCodigo(false)}
+          onCodigoDetectado={(codigo) => {
+            setCodigoBarras((codigo || "").trim());
+            setEscaneandoCodigo(false);
+          }}
+          mensaje="Código capturado, revisalo abajo y guardá el producto"
+        />
+      )}
     </div>
   );
 }
