@@ -115,6 +115,7 @@ const fmtFecha = (date) =>
     timeZone: "America/Montevideo",
     hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
   });
 
 const esHoy = (date) => date.toDateString() === new Date().toDateString();
