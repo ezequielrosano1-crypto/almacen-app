@@ -763,7 +763,7 @@ function VentasMain({ push, caja, totalHoy, abrirCajaManual }) {
   );
 }
 
-function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetStack, caja }) {
+function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarStock, pop, resetStack, caja }) {
   const [busqueda, setBusqueda] = useState("");
   const [carrito, setCarrito] = useState([]); // [{id, cantidad}]
   const [pago, setPago] = useState(null);
@@ -849,7 +849,9 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
       .insert({
         negocio_id: 1,
         jornada_id: null,
-        fecha: new Date().toISOString(),
+fecha: new Date().toLocaleString("sv-SE", {
+  timeZone: "America/Montevideo",
+}),
         total: Number(total),
         pago,
       })
@@ -2451,14 +2453,15 @@ const actualizarStock = async (id, nuevoStock) => {
     if (tab === "ventas") {
       if (current.screen === "nuevaVenta")
         return (
-          <NuevaVenta
-            productos={productos}
-            setProductos={setProductos}
-            registrarMovimiento={registrarMovimiento}
-            pop={pop}
-            resetStack={resetStack}
-            caja={caja}
-          />
+       <NuevaVenta
+  productos={productos}
+  setProductos={setProductos}
+  registrarMovimiento={registrarMovimiento}
+  actualizarStock={actualizarStock}
+  pop={pop}
+  resetStack={resetStack}
+  caja={caja}
+/>
         );
       if (current.screen === "cierreDia")
         return (
