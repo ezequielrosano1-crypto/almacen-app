@@ -105,9 +105,17 @@ const estadoColor = (estado) =>
   estado === "agotado" ? COLORS.agotado : estado === "bajo" ? COLORS.bajo : COLORS.normal;
 
 const fmtFecha = (date) =>
-  date.toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit" }) +
+  date.toLocaleDateString("es-UY", {
+    timeZone: "America/Montevideo",
+    day: "2-digit",
+    month: "2-digit",
+  }) +
   " " +
-  date.toLocaleTimeString("es-UY", { hour: "2-digit", minute: "2-digit" });
+  date.toLocaleTimeString("es-UY", {
+    timeZone: "America/Montevideo",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 const esHoy = (date) => date.toDateString() === new Date().toDateString();
 
