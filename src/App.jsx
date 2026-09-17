@@ -849,9 +849,7 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarSt
       .insert({
         negocio_id: 1,
         jornada_id: null,
-fecha: new Date().toLocaleString("sv-SE", {
-  timeZone: "America/Montevideo",
-}),
+fecha: new Date().toISOString(),
         total: Number(total),
         pago,
       })
