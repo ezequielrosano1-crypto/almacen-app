@@ -838,23 +838,75 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
   });
   const total = items.reduce((a, it) => a + it.subtotal, 0);
 
-  const confirmarVenta = () => {
-    if (items.length === 0 || !pago || enviando || !caja || caja.estado !== "ABIERTA") return;
-    setEnviando(true);
-    setProductos((prev) =>
-      prev.map((p) => {
-        const it = carrito.find((c) => c.id === p.id);
-        return it ? { ...p, stock: Math.round((p.stock - it.cantidad) * 100) / 100 } : p;
+ const confirmarVenta = async () => {
+  if (items.length === 0 || !pago || enviando || !caja || caja.estado !== "ABIERTA") return;
+
+  setEnviando(true);
+
+  try {
+    const { data: venta, error: errorVenta } = await supabase
+      .from("ventas")
+      .insert({
+        negocio_id: 1,
+        jornada_id: null,
+        fecha: new Date().toISOString(),
+        total: Number(total),
+        pago,
       })
-    );
+      .select("id")
+      .single();
+
+    if (errorVenta) throw errorVenta;
+
+    const itemsVenta = items.map((it) => ({
+      venta_id: venta.id,
+      producto_id: it.producto.id,
+      nombre: it.producto.nombre,
+      cantidad: Number(it.cantidad),
+      unidad: it.producto.unidad,
+      precio_unitario: Number(it.producto.precio),
+      subtotal: Number(it.subtotal),
+    }));
+
+    const { error: errorItems } = await supabase
+      .from("venta_items")
+      .insert(itemsVenta);
+
+    if (errorItems) {
+      await supabase.from("ventas").delete().eq("id", venta.id);
+      throw errorItems;
+    }
+
+    for (const it of items) {
+      const nuevoStock =
+        Math.round((it.producto.stock - it.cantidad) * 100) / 100;
+
+      const actualizado = await actualizarStock(it.producto.id, nuevoStock);
+
+      if (actualizado === false) {
+        throw new Error("No se pudo actualizar el stock.");
+      }
+    }
+
     registrarMovimiento({
       tipo: "venta",
-      items: items.map((it) => ({ nombre: it.producto.nombre, cantidad: it.cantidad, unidad: it.producto.unidad })),
+      items: items.map((it) => ({
+        nombre: it.producto.nombre,
+        cantidad: it.cantidad,
+        unidad: it.producto.unidad,
+      })),
       total,
       pago,
     });
+
     setConfirmada({ total, pago });
-  };
+  } catch (error) {
+    console.error("Error registrando venta:", error);
+    alert("No se pudo registrar la venta.");
+  } finally {
+    setEnviando(false);
+  }
+};
 
   if (confirmada) {
     return (
