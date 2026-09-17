@@ -881,11 +881,15 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, pop, resetSt
       const nuevoStock =
         Math.round((it.producto.stock - it.cantidad) * 100) / 100;
 
-      const actualizado = await actualizarStock(it.producto.id, nuevoStock);
+     const { error: errorStock } = await supabase
+  .from("productos")
+  .update({ stock: Number(nuevoStock) })
+  .eq("id", it.producto.id)
+  .eq("negocio_id", 1);
 
-      if (actualizado === false) {
-        throw new Error("No se pudo actualizar el stock.");
-      }
+if (errorStock) {
+  throw errorStock;
+}
     }
 
     registrarMovimiento({
