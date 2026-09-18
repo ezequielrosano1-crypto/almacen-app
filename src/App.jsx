@@ -1423,7 +1423,13 @@ function AgregarEntrada({ productos, productoIdInicial, actualizarStock, registr
     if (!producto || !cant || cant <= 0) return;
     const nuevoStock = Math.round((producto.stock + cant) * 100) / 100;
     actualizarStock(producto.id, nuevoStock);
-    registrarMovimiento({ tipo: "entrada", producto: producto.nombre, cantidad: cant, unidad: producto.unidad });
+  registrarMovimiento({
+  tipo: "entrada",
+  productoId: producto.id,
+  producto: producto.nombre,
+  cantidad: cant,
+  unidad: producto.unidad,
+});
     setConfirmada({ nombre: producto.nombre, cantidad: cant, unidad: producto.unidad });
   };
 
@@ -2385,9 +2391,31 @@ const registrarMovimiento = async (mov) => {
     ...mov,
   };
 
+  if (mov.tipo === "entrada") {
+    const { error } = await supabase
+      .from("movimientos_stock")
+      .insert({
+        negocio_id: 1,
+        producto_id: mov.productoId,
+        jornada_id: null,
+        fecha: movimiento.fecha.toISOString(),
+        tipo: "entrada",
+        cantidad: Number(mov.cantidad),
+        unidad: mov.unidad,
+        diferencia: Number(mov.cantidad),
+        motivo: "Entrada de stock",
+      });
+
+    if (error) {
+      console.error("Error guardando movimiento de entrada:", error);
+      alert("No se pudo guardar el movimiento de stock.");
+      return false;
+    }
+  }
+
   setMovimientos((m) => [movimiento, ...m]);
 
-  return movimiento;
+  return true;
 };
 
 const actualizarStock = async (id, nuevoStock) => {
