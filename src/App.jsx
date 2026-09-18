@@ -2266,6 +2266,55 @@ if (data && data.length > 0) {
         }
       } catch (e) {}
       try {
+  const { data, error } = await supabase
+    .from("ventas")
+    .select(`
+      id,
+      negocio_id,
+      fecha,
+      total,
+      pago,
+      venta_items (
+        id,
+        producto_id,
+        nombre,
+        cantidad,
+        unidad,
+        precio_unitario,
+        subtotal
+      )
+    `)
+    .eq("negocio_id", 1)
+    .order("fecha", { ascending: false });
+
+  if (error) throw error;
+
+  if (activo && data) {
+    const ventasFormateadas = data.map((v) => ({
+      id: v.id,
+      fecha: new Date(v.fecha),
+      tipo: "venta",
+      total: Number(v.total),
+      pago: v.pago,
+      items: (v.venta_items || []).map((it) => ({
+        productoId: it.producto_id,
+        nombre: it.nombre,
+        cantidad: Number(it.cantidad),
+        unidad: it.unidad,
+        precio: Number(it.precio_unitario),
+        subtotal: Number(it.subtotal),
+      })),
+    }));
+
+    setMovimientos((prev) => {
+      const otros = prev.filter((m) => m.tipo !== "venta");
+      return [...ventasFormateadas, ...otros];
+    });
+  }
+} catch (e) {
+  console.error("Error cargando ventas:", e);
+}
+      try {
         const r = await window.storage.get("datos:infoNegocio", false);
         if (activo && r?.value) setInfoNegocio(JSON.parse(r.value));
       } catch (e) {}
@@ -2341,7 +2390,7 @@ useEffect(() => {
       (payload) => {
         const movimiento = payload.new;
 
-        if (!movimiento) return;
+  if (!movimiento || movimiento.tipo === "venta") return;
 
         setMovimientos((prev) => [
           {
@@ -2356,6 +2405,63 @@ useEffect(() => {
           },
           ...prev,
         ]);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(canal);
+  };
+}, []);
+  useEffect(() => {
+  const canal = supabase
+    .channel("ventas-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "ventas",
+        filter: "negocio_id=eq.1",
+      },
+      async (payload) => {
+        const venta = payload.new;
+
+        if (!venta) return;
+
+        const { data: items, error } = await supabase
+          .from("venta_items")
+          .select("*")
+          .eq("venta_id", venta.id);
+
+        if (error) {
+          console.error("Error cargando items de venta:", error);
+          return;
+        }
+
+        const ventaFormateada = {
+          id: venta.id,
+          fecha: new Date(venta.fecha),
+          tipo: "venta",
+          total: Number(venta.total),
+          pago: venta.pago,
+          items: (items || []).map((it) => ({
+            productoId: it.producto_id,
+            nombre: it.nombre,
+            cantidad: Number(it.cantidad),
+            unidad: it.unidad,
+            precio: Number(it.precio_unitario),
+            subtotal: Number(it.subtotal),
+          })),
+        };
+
+        setMovimientos((prev) => {
+          const existe = prev.some((m) => m.id === ventaFormateada.id);
+
+          if (existe) return prev;
+
+          return [ventaFormateada, ...prev];
+        });
       }
     )
     .subscribe();
