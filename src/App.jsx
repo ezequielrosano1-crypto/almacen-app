@@ -2317,6 +2317,43 @@ useEffect(() => {
     supabase.removeChannel(canal);
   };
 }, []);
+  useEffect(() => {
+  const canal = supabase
+    .channel("movimientos-stock-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "movimientos_stock",
+        filter: "negocio_id=eq.1",
+      },
+      (payload) => {
+        const movimiento = payload.new;
+
+        if (!movimiento) return;
+
+        setMovimientos((prev) => [
+          {
+            id: movimiento.id,
+            fecha: new Date(movimiento.fecha),
+            tipo: movimiento.tipo,
+            productoId: movimiento.producto_id,
+            cantidad: Number(movimiento.cantidad),
+            unidad: movimiento.unidad,
+            diferencia: Number(movimiento.diferencia),
+            motivo: movimiento.motivo,
+          },
+          ...prev,
+        ]);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(canal);
+  };
+}, []);
   // Guardado: recién después de terminar la carga inicial, para no pisar
   // datos guardados con los datos de ejemplo del primer render.
  
