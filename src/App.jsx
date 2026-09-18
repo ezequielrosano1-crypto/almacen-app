@@ -901,26 +901,7 @@ if (errorStock) {
 }
     }
 
-  for (const it of items) {
-  const { error } = await supabase
-    .from("movimientos_stock")
-    .insert({
-      negocio_id: 1,
-      producto_id: it.producto.id,
-      jornada_id: null,
-      fecha: new Date().toISOString(),
-      tipo: "venta",
-      cantidad: Number(it.cantidad),
-      unidad: it.producto.unidad,
-      diferencia: -Number(it.cantidad),
-      motivo: "Venta",
-    });
-
-  if (error) {
-    console.error("Error guardando movimiento de venta:", error);
-    throw error;
-  }
-}
+ 
 
     setConfirmada({ total, pago });
   } catch (error) {
