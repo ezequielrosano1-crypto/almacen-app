@@ -173,10 +173,36 @@ async function sincronizarCaja(movimientos = [], opciones = {}) {
   const abiertaPorHorario = ahora.horaNumero >= 8 && ahora.horaNumero < 22;
   let actual = null;
 
-  try {
+try {
+  if (storageKey === CAJA_STORAGE_KEY) {
+    const { data, error } = await supabase
+      .from("jornada")
+      .select("*")
+      .eq("negocio_id", 1)
+      .eq("fecha", ahora.fecha)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data) {
+      actual = {
+        id: data.id,
+        fecha: data.fecha,
+        estado: data.estado,
+        horaApertura: data.hora_apertura,
+        horaCierre: data.hora_cierre,
+        cerradoAutomaticamente: data.cerrado_automatico,
+        total: Number(data.total || 0),
+        cantidadVentas: Number(data.cantidad_ventas || 0),
+      };
+    }
+  } else {
     const resultado = await window.storage.get(storageKey, false);
     if (resultado?.value) actual = JSON.parse(resultado.value);
-  } catch (e) {}
+  }
+} catch (e) {
+  console.error("Error cargando jornada:", e);
+}
 
   // Cerrar una jornada que quedó abierta cuando ya pasó la hora de cierre
   // (22:00) o cuando cambió el día sin que nadie la cerrara a tiempo.
@@ -195,10 +221,33 @@ async function sincronizarCaja(movimientos = [], opciones = {}) {
       cantidadVentas: ventasJornada.length,
       automatico: true,
     };
-    try {
-      await window.storage.set(storageKey, JSON.stringify(cierre), false);
-      await window.storage.set(claveCierre(actual.fecha), JSON.stringify(resumen), false);
-    } catch (e) {}
+try {
+  if (storageKey === CAJA_STORAGE_KEY) {
+    const { error } = await supabase
+      .from("jornada")
+      .update({
+        estado: cierre.estado,
+        hora_cierre: cierre.horaCierre,
+        cerrado_automatico: cierre.cerradoAutomaticamente,
+        total: resumen.total,
+        cantidad_ventas: resumen.cantidadVentas,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", actual.id)
+      .eq("negocio_id", 1);
+
+    if (error) throw error;
+  } else {
+    await window.storage.set(storageKey, JSON.stringify(cierre), false);
+    await window.storage.set(
+      claveCierre(actual.fecha),
+      JSON.stringify(resumen),
+      false
+    );
+  }
+} catch (e) {
+  console.error("Error guardando cierre de jornada:", e);
+}
     actual = cierre;
   }
 
@@ -217,7 +266,32 @@ async function sincronizarCaja(movimientos = [], opciones = {}) {
       horaCierre: null,
       cerradoAutomaticamente: false,
     };
-    try { await window.storage.set(storageKey, JSON.stringify(nueva), false); } catch (e) {}
+  try {
+  if (storageKey === CAJA_STORAGE_KEY) {
+    const { data, error } = await supabase
+      .from("jornada")
+      .insert({
+        negocio_id: 1,
+        fecha: nueva.fecha,
+        estado: nueva.estado,
+        hora_apertura: nueva.horaApertura,
+        hora_cierre: nueva.horaCierre,
+        cerrado_automatico: nueva.cerradoAutomaticamente,
+        total: 0,
+        cantidad_ventas: 0,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    nueva.id = data.id;
+  } else {
+    await window.storage.set(storageKey, JSON.stringify(nueva), false);
+  }
+} catch (e) {
+  console.error("Error guardando jornada:", e);
+}
     actual = nueva;
   }
 
