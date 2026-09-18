@@ -1157,26 +1157,44 @@ function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, act
       cantidadVentas: ventasHoy.length,
     };
     try {
-      const resultado = await window.storage.set(claveHoy, JSON.stringify(registro), false);
-      if (resultado) {
-        const cerrada = {
-          ...(caja || {}),
-          id: (caja && caja.id) || `caja-${claveFechaHoy()}`,
-          fecha: claveFechaHoy(),
-          estado: "CERRADA",
-          horaCierre: registro.hora,
-          cerradoAutomaticamente: false,
-        };
-        try { await window.storage.set(CAJA_STORAGE_KEY, JSON.stringify(cerrada), false); } catch (e) {}
-        if (actualizarCaja) actualizarCaja(cerrada);
-        setCierre(registro);
-        setConfirmando(false);
-      } else {
-        setErrorGuardado(true);
-      }
-    } catch (e) {
-      setErrorGuardado(true);
-    } finally {
+  if (!caja?.id) {
+    throw new Error("No hay una jornada de caja activa.");
+  }
+
+  const { error } = await supabase
+    .from("jornada")
+    .update({
+      estado: "CERRADA",
+      hora_cierre: registro.hora,
+      cerrado_automatico: false,
+      total: Number(registro.total),
+      cantidad_ventas: Number(registro.cantidadVentas),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", caja.id)
+    .eq("negocio_id", 1);
+
+  if (error) throw error;
+
+  const cerrada = {
+    ...(caja || {}),
+    id: caja.id,
+    fecha: claveFechaHoy(),
+    estado: "CERRADA",
+    horaCierre: registro.hora,
+    cerradoAutomaticamente: false,
+    total: Number(registro.total),
+    cantidadVentas: Number(registro.cantidadVentas),
+  };
+
+  if (actualizarCaja) actualizarCaja(cerrada);
+  setCierre(registro);
+  setConfirmando(false);
+   
+ } catch (e) {
+  console.error("Error guardando cierre de jornada:", e);
+  setErrorGuardado(true);
+} finally {
       setGuardando(false);
     }
   };
