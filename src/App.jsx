@@ -2257,7 +2257,60 @@ if (data && data.length > 0) {
     })();
     return () => { activo = false; };
   }, []);
+useEffect(() => {
+  const canal = supabase
+    .channel("productos-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "productos",
+        filter: "negocio_id=eq.1",
+      },
+      (payload) => {
+        const producto = payload.new;
 
+        if (payload.eventType === "DELETE") {
+          setProductos((prev) =>
+            prev.filter((p) => p.id !== payload.old.id)
+          );
+          return;
+        }
+
+        if (producto) {
+          const productoFormateado = {
+            id: producto.id,
+            nombre: producto.nombre,
+            precio: Number(producto.precio),
+            unidad: producto.unidad,
+            stock: Number(producto.stock),
+            stockMinimo: Number(producto.stock_minimo),
+            codigoBarras: producto.codigo_barras || "",
+          };
+
+          setProductos((prev) => {
+            const existe = prev.some(
+              (p) => p.id === productoFormateado.id
+            );
+
+            return existe
+              ? prev.map((p) =>
+                  p.id === productoFormateado.id
+                    ? productoFormateado
+                    : p
+                )
+              : [...prev, productoFormateado];
+          });
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(canal);
+  };
+}, []);
   // Guardado: recién después de terminar la carga inicial, para no pisar
   // datos guardados con los datos de ejemplo del primer render.
  
