@@ -2440,7 +2440,43 @@ const actualizarStock = async (id, nuevoStock) => {
 
   const productosBajo = productos.filter((p) => estadoProducto(p) === "bajo");
   const productosAgotados = productos.filter((p) => estadoProducto(p) === "agotado");
+const ventasSemana = Array.from({ length: 7 }, (_, i) => {
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() - (6 - i));
 
+  const fechaUY = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Montevideo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(fecha);
+
+  const total = movimientos
+    .filter((m) => {
+      if (m.tipo !== "venta") return false;
+
+      const fechaVenta = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Montevideo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(m.fecha));
+
+      return fechaVenta === fechaUY;
+    })
+    .reduce((acc, m) => acc + Number(m.total || 0), 0);
+
+  const dia = new Intl.DateTimeFormat("es-UY", {
+    timeZone: "America/Montevideo",
+    weekday: "short",
+  }).format(fecha);
+
+  return {
+    fecha: fechaUY,
+    dia: dia.replace(".", ""),
+    total,
+  };
+});
   function renderTab() {
     if (tab === "inicio") {
       return (
