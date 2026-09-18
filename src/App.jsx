@@ -2378,9 +2378,17 @@ useEffect(() => {
   const pop = () => setStack((s) => s.slice(0, -1));
   const resetStack = () => setStack([]);
 
-  const registrarMovimiento = (mov) => {
-    setMovimientos((m) => [{ id: nextId(), fecha: new Date(), ...mov }, ...m]);
+const registrarMovimiento = async (mov) => {
+  const movimiento = {
+    id: nextId(),
+    fecha: new Date(),
+    ...mov,
   };
+
+  setMovimientos((m) => [movimiento, ...m]);
+
+  return movimiento;
+};
 
 const actualizarStock = async (id, nuevoStock) => {
   const { error } = await supabase
