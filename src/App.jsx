@@ -2392,6 +2392,8 @@ const registrarMovimiento = async (mov) => {
   };
 
   if (mov.tipo === "entrada") {
+    console.log("REGISTRANDO MOVIMIENTO:", mov);
+    
     const { error } = await supabase
       .from("movimientos_stock")
       .insert({
