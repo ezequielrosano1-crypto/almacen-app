@@ -2622,22 +2622,57 @@ useEffect(() => {
   // cierre y la apertura automáticos (sincronizarCaja) siguen funcionando
   // igual después de esto: si llega a las 22:00 con la caja reabierta, la
   // cierra sola; al otro día a las 08:00 abre una jornada nueva.
-  const abrirCajaManual = async () => {
-    const ahora = ahoraUY();
-    if (ahora.horaNumero < 8 || ahora.horaNumero >= 22) return null;
-    const nueva = {
-      id: `caja-${ahora.fecha}`,
-      fecha: ahora.fecha,
-      estado: "ABIERTA",
-      horaApertura: ahora.hora,
-      horaCierre: null,
-      cerradoAutomaticamente: false,
-    };
-    try { await window.storage.set(CAJA_STORAGE_KEY, JSON.stringify(nueva), false); } catch (e) {}
-    try { await window.storage.delete(`cierre:${ahora.fecha}`, false); } catch (e) {}
-    setCaja(nueva);
-    return nueva;
+const abrirCajaManual = async () => {
+  const ahora = ahoraUY();
+
+  if (ahora.horaNumero < 8 || ahora.horaNumero >= 22) return null;
+
+  const nueva = {
+    id: `caja-${ahora.fecha}`,
+    fecha: ahora.fecha,
+    estado: "ABIERTA",
+    horaApertura: ahora.hora,
+    horaCierre: null,
+    cerradoAutomaticamente: false,
   };
+
+  try {
+    const { data, error } = await supabase
+      .from("jornada")
+      .update({
+        estado: "ABIERTA",
+        hora_apertura: nueva.horaApertura,
+        hora_cierre: null,
+        cerrado_automatico: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", nueva.id)
+      .eq("negocio_id", 1)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const jornadaAbierta = {
+      id: data.id,
+      fecha: data.fecha,
+      estado: data.estado,
+      horaApertura: data.hora_apertura,
+      horaCierre: data.hora_cierre,
+      cerradoAutomaticamente: data.cerrado_automatico,
+      total: Number(data.total || 0),
+      cantidadVentas: Number(data.cantidad_ventas || 0),
+    };
+
+    setCaja(jornadaAbierta);
+
+    return jornadaAbierta;
+  } catch (e) {
+    console.error("Error abriendo jornada:", e);
+    alert("No se pudo abrir la caja.");
+    return null;
+  }
+};
 
   const current = stack.length ? stack[stack.length - 1] : { screen: "main", params: {} };
 
