@@ -2544,6 +2544,48 @@ useEffect(() => {
     supabase.removeChannel(canal);
   };
 }, []);
+  useEffect(() => {
+  const canal = supabase
+    .channel("jornada-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "jornada",
+        filter: "negocio_id=eq.1",
+      },
+      (payload) => {
+        const jornada = payload.new;
+
+        if (!jornada) return;
+
+        const jornadaFormateada = {
+          id: jornada.id,
+          fecha: jornada.fecha,
+          estado: jornada.estado,
+          horaApertura: jornada.hora_apertura,
+          horaCierre: jornada.hora_cierre,
+          cerradoAutomaticamente: jornada.cerrado_automatico,
+          total: Number(jornada.total || 0),
+          cantidadVentas: Number(jornada.cantidad_ventas || 0),
+        };
+
+        setCaja((prev) => {
+          if (!prev || prev.id === jornadaFormateada.id) {
+            return jornadaFormateada;
+          }
+
+          return prev;
+        });
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(canal);
+  };
+}, []);
   // Guardado: recién después de terminar la carga inicial, para no pisar
   // datos guardados con los datos de ejemplo del primer render.
  
