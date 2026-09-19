@@ -271,6 +271,7 @@ try {
     const { data, error } = await supabase
       .from("jornada")
       .insert({
+        id: nueva.id,
         negocio_id: 1,
         fecha: nueva.fecha,
         estado: nueva.estado,
