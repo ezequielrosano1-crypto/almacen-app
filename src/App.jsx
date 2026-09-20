@@ -175,27 +175,53 @@ async function sincronizarCaja(movimientos = [], opciones = {}) {
 
 try {
   if (storageKey === CAJA_STORAGE_KEY) {
-    const { data, error } = await supabase
-      .from("jornada")
-      .select("*")
-      .eq("negocio_id", 1)
-      .eq("fecha", ahora.fecha)
-      .maybeSingle();
-
+const { data, error } = await supabase
+  .from("jornada")
+  .select("*")
+  .eq("negocio_id", 1)
+  .order("fecha", { ascending: false })
+  .limit(2);
     if (error) throw error;
 
-    if (data) {
-      actual = {
-        id: data.id,
-        fecha: data.fecha,
-        estado: data.estado,
-        horaApertura: data.hora_apertura,
-        horaCierre: data.hora_cierre,
-        cerradoAutomaticamente: data.cerrado_automatico,
-        total: Number(data.total || 0),
-        cantidadVentas: Number(data.cantidad_ventas || 0),
-      };
-    }
+  if (data && data.length > 0) {
+  const jornadaHoy = data.find((j) => j.fecha === ahora.fecha);
+
+  if (jornadaHoy) {
+    actual = {
+      id: jornadaHoy.id,
+      fecha: jornadaHoy.fecha,
+      estado: jornadaHoy.estado,
+      horaApertura: jornadaHoy.hora_apertura,
+      horaCierre: jornadaHoy.hora_cierre,
+      cerradoAutomaticamente: jornadaHoy.cerrado_automatico,
+      total: Number(jornadaHoy.total || 0),
+      cantidadVentas: Number(jornadaHoy.cantidad_ventas || 0),
+    };
+  }
+}
+    const jornadasAbiertasAnteriores = (data || []).filter(
+  (j) => j.fecha < ahora.fecha && j.estado === "ABIERTA"
+);
+
+for (const jornadaAnterior of jornadasAbiertasAnteriores) {
+  const { error: errorCierre } = await supabase
+    .from("jornada")
+    .update({
+      estado: "CERRADA",
+      hora_cierre: "22:00",
+      cerrado_automatico: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", jornadaAnterior.id)
+    .eq("negocio_id", 1);
+
+  if (errorCierre) {
+    console.error(
+      "Error cerrando jornada anterior:",
+      errorCierre
+    );
+  }
+}
   } else {
     const resultado = await window.storage.get(storageKey, false);
     if (resultado?.value) actual = JSON.parse(resultado.value);
