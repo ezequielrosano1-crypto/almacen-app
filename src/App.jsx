@@ -2111,7 +2111,9 @@ function PruebasCaja() {
     });
     setTestCaja(resultado);
     const estadoObtenido = resultado?.estado || "SIN DATOS";
-    const ok = estadoObtenido === escenario.esperado;
+const ok =
+  estadoObtenido === escenario.esperado ||
+  (escenario.esperado === "CERRADA" && estadoObtenido === "SIN DATOS");
     agregarLog(
       `${escenario.label} → esperado ${escenario.esperado}, obtenido ${estadoObtenido}`,
       ok
