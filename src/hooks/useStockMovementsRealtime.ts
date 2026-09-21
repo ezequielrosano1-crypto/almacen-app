@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { listSaleItems as defaultListSaleItems } from "../data/salesRepository";
 import { supabase } from "../data/supabaseClient";
 
 export interface RealtimeStockMovementPayload {
@@ -11,14 +10,6 @@ export interface RealtimeStockMovementPayload {
   unidad?: string;
   diferencia?: number | string;
   motivo?: string;
-  [key: string]: unknown;
-}
-
-export interface RealtimeSalePayload {
-  id: number | string;
-  fecha: string;
-  total: number | string;
-  pago: string;
   [key: string]: unknown;
 }
 
@@ -52,61 +43,12 @@ export function handleStockMovementRealtimeInsert(
   setMovements((prev) => [movimientoFormateado, ...prev]);
 }
 
-export async function handleSaleRealtimeInsert(
-  venta: RealtimeSalePayload | null | undefined,
-  setMovements: (updater: (prev: any[]) => any[]) => void,
-  fetchItems: typeof defaultListSaleItems = defaultListSaleItems,
-) {
-  if (!venta) return;
-
-  let items: any[];
-  try {
-    items = await fetchItems(Number(venta.id));
-  } catch (error) {
-    console.error("Error cargando items de venta:", error);
-    return;
-  }
-
-  const ventaFormateada = {
-    id: venta.id,
-    fecha: new Date(venta.fecha),
-    date: new Date(venta.fecha),
-    tipo: "venta",
-    type: "venta",
-    total: Number(venta.total),
-    pago: venta.pago,
-    paymentMethod: venta.pago,
-    items: (items || []).map((it) => ({
-      productoId: it.producto_id,
-      productId: it.producto_id,
-      nombre: it.nombre,
-      name: it.nombre,
-      cantidad: Number(it.cantidad),
-      quantity: Number(it.cantidad),
-      unidad: it.unidad,
-      unit: it.unidad,
-      precio: Number(it.precio_unitario),
-      price: Number(it.precio_unitario),
-      subtotal: Number(it.subtotal),
-    })),
-  };
-
-  setMovements((prev) => {
-    const existe = prev.some((m) => m.id === ventaFormateada.id);
-    if (existe) return prev;
-    return [ventaFormateada, ...prev];
-  });
-}
-
 export function useStockMovementsRealtime(
   setMovements: (updater: (prev: any[]) => any[]) => void,
-  deps = {
-    client: supabase,
-    listSaleItems: defaultListSaleItems,
-  },
+  client = supabase,
 ) {
   useEffect(() => {
-    const canalStock = deps.client
+    const canalStock = client
       .channel("movimientos-stock-realtime")
       .on(
         "postgres_changes",
@@ -122,27 +64,10 @@ export function useStockMovementsRealtime(
       )
       .subscribe();
 
-    const canalVentas = deps.client
-      .channel("ventas-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "ventas",
-          filter: "negocio_id=eq.1",
-        },
-        async (payload: any) => {
-          await handleSaleRealtimeInsert(payload.new, setMovements, deps.listSaleItems);
-        },
-      )
-      .subscribe();
-
     return () => {
-      deps.client.removeChannel(canalStock);
-      deps.client.removeChannel(canalVentas);
+      client.removeChannel(canalStock);
     };
-  }, [setMovements, deps]);
+  }, [setMovements, client]);
 }
 
 export default useStockMovementsRealtime;

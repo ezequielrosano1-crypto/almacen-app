@@ -4,10 +4,7 @@ vi.mock("../data/supabaseClient", () => ({
   supabase: { from: vi.fn() },
 }));
 
-import {
-  handleSaleRealtimeInsert,
-  handleStockMovementRealtimeInsert,
-} from "./useStockMovementsRealtime";
+import { handleStockMovementRealtimeInsert } from "./useStockMovementsRealtime";
 
 describe("useStockMovementsRealtime / pure handlers", () => {
   it("pins bug #2: blindly prepends entrada without deduplication (twin duplicated entrada)", () => {
@@ -54,40 +51,5 @@ describe("useStockMovementsRealtime / pure handlers", () => {
     );
 
     expect(state).toHaveLength(1);
-  });
-
-  it("handleSaleRealtimeInsert fetches sale items and deduplicates against state", async () => {
-    let state = [{ id: 100, tipo: "venta", total: 150 }];
-    const setMovements = (updater: any) => {
-      state = updater(state);
-    };
-
-    const mockFetchItems = vi.fn().mockResolvedValue([
-      {
-        producto_id: 1,
-        nombre: "Yerba",
-        cantidad: 1,
-        unidad: "un",
-        precio_unitario: 150,
-        subtotal: 150,
-      },
-    ]);
-
-    // Already exists in state -> should NOT be duplicated
-    await handleSaleRealtimeInsert(
-      { id: 100, fecha: "2026-09-21T12:00:00.000Z", total: 150, pago: "Efectivo" },
-      setMovements,
-      mockFetchItems as any,
-    );
-    expect(state).toHaveLength(1);
-
-    // New sale -> should be prepended
-    await handleSaleRealtimeInsert(
-      { id: 101, fecha: "2026-09-21T12:05:00.000Z", total: 80, pago: "Débito" },
-      setMovements,
-      mockFetchItems as any,
-    );
-    expect(state).toHaveLength(2);
-    expect(state[0].id).toBe(101);
   });
 });

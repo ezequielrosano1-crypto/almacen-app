@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "./data/supabaseClient";
 import {
   COLORS,
   CASH_SHIFT_STORAGE_KEY,
@@ -28,6 +27,8 @@ import { useProducts } from "./hooks/useProducts";
 import { useProductsRealtime } from "./hooks/useProductsRealtime";
 import { useStockMovements } from "./hooks/useStockMovements";
 import { useStockMovementsRealtime } from "./hooks/useStockMovementsRealtime";
+import { useSalesRealtime } from "./hooks/useSalesRealtime";
+import { useCashShiftRealtime } from "./hooks/useCashShiftRealtime";
 import { useBusinessInfo } from "./hooks/useBusinessInfo";
 import { useInitialLoad } from "./hooks/useInitialLoad";
 import { Header } from "./components/Header";
@@ -125,50 +126,17 @@ export default function App() {
     setStockMovements: setMovimientos,
     setBusinessInfo: setInfoNegocio,
   });
+  // useCashRegister no tiene efectos: se declara antes para que useCashShiftRealtime
+  // ocupe la misma posición que el efecto original sin alterar el orden de efectos.
+  const {
+    cashShift: caja,
+    setCashShift: setCaja,
+    openCashShiftManually: abrirCajaManual,
+  } = useCashRegister();
   useProductsRealtime(setProductos);
   useStockMovementsRealtime(setMovimientos);
-  useEffect(() => {
-  const canal = supabase
-    .channel("jornada-realtime")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "jornada",
-        filter: "negocio_id=eq.1",
-      },
-      (payload) => {
-        const jornada = payload.new;
-
-        if (!jornada) return;
-
-        const jornadaFormateada = {
-          id: jornada.id,
-          fecha: jornada.fecha,
-          estado: jornada.estado,
-          horaApertura: jornada.hora_apertura,
-          horaCierre: jornada.hora_cierre,
-          cerradoAutomaticamente: jornada.cerrado_automatico,
-          total: Number(jornada.total || 0),
-          cantidadVentas: Number(jornada.cantidad_ventas || 0),
-        };
-
-        setCaja((prev) => {
-          if (!prev || prev.id === jornadaFormateada.id) {
-            return jornadaFormateada;
-          }
-
-          return prev;
-        });
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(canal);
-  };
-}, []);
+  useSalesRealtime(setMovimientos);
+  useCashShiftRealtime(setCaja);
   // Guardado: recién después de terminar la carga inicial, para no pisar
   // datos guardados con los datos de ejemplo del primer render.
  
@@ -184,11 +152,6 @@ export default function App() {
 
   const [tab, setTab] = useState("home");
   const [stack, setStack] = useState([]); // [{screen, params}]
-  const {
-    cashShift: caja,
-    setCashShift: setCaja,
-    openCashShiftManually: abrirCajaManual,
-  } = useCashRegister();
 
   useEffect(() => {
     let activo = true;
