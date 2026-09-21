@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import {
   COLORS,
   CASH_SHIFT_STORAGE_KEY,
@@ -20,8 +20,6 @@ import {
   getOutOfStockProducts,
   getWeekSales,
 } from "./lib/metrics";
-import { writeJson } from "./lib/storage/storage";
-import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
 import { useProducts } from "./hooks/useProducts";
 import { useProductsRealtime } from "./hooks/useProductsRealtime";
@@ -31,6 +29,9 @@ import { useSalesRealtime } from "./hooks/useSalesRealtime";
 import { useCashShiftRealtime } from "./hooks/useCashShiftRealtime";
 import { useBusinessInfo } from "./hooks/useBusinessInfo";
 import { useInitialLoad } from "./hooks/useInitialLoad";
+import { useNavigation } from "./hooks/useNavigation";
+import { useStorageSync } from "./hooks/useStorageSync";
+import { useCashShiftAutoSync } from "./hooks/useCashShiftAutoSync";
 import { Header } from "./components/Header";
 import { PrimaryButton } from "./components/PrimaryButton";
 import { BottomNav } from "./components/BottomNav";
@@ -137,50 +138,10 @@ export default function App() {
   useStockMovementsRealtime(setMovimientos);
   useSalesRealtime(setMovimientos);
   useCashShiftRealtime(setCaja);
-  // Guardado: recién después de terminar la carga inicial, para no pisar
-  // datos guardados con los datos de ejemplo del primer render.
- 
-  useEffect(() => {
-    if (!cargado) return;
-    writeJson("datos:movimientos", movimientos).catch(() => {});
-  }, [cargado, movimientos]);
-
-  useEffect(() => {
-    if (!cargado) return;
-    writeJson("datos:infoNegocio", infoNegocio).catch(() => {});
-  }, [cargado, infoNegocio]);
-
-  const [tab, setTab] = useState("home");
-  const [stack, setStack] = useState([]); // [{screen, params}]
-
-  useEffect(() => {
-    let activo = true;
-    const verificarCaja = async () => {
-      const estado = await syncCashShift(movimientos);
-      if (activo) setCaja(estado);
-    };
-    verificarCaja();
-    const intervalo = setInterval(verificarCaja, 30000);
-    return () => { activo = false; clearInterval(intervalo); };
-  }, [movimientos]);
-
-  const current = stack.length ? stack[stack.length - 1] : { screen: "main", params: {} };
-
-  const goTab = (newTab) => {
-    setTab(newTab);
-    setStack([]);
-  };
-  const goTabScreen = (newTab, screen, params = {}) => {
-    setTab(newTab);
-    setStack([{ screen, params }]);
-  };
-  const push = (screen, params = {}) => setStack((s) => [...s, { screen, params }]);
-  const pop = () => setStack((s) => s.slice(0, -1));
-  const resetStack = () => setStack([]);
-
-
-
-
+  const { tab, current, goTab, goTabScreen, push, pop, resetStack } = useNavigation();
+  useStorageSync("datos:movimientos", movimientos, cargado);
+  useStorageSync("datos:infoNegocio", infoNegocio, cargado);
+  useCashShiftAutoSync(movimientos, setCaja);
 
   const ventasHoy = getTodaySales(movimientos);
   const totalHoy = getTodayTotal(ventasHoy);
