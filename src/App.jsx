@@ -1319,30 +1319,41 @@ function HistorialCierres({ pop }) {
   const [cierres, setCierres] = useState([]);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let activo = true;
-    (async () => {
-      try {
-        // Recorre todas las claves "cierre:YYYY-MM-DD" guardadas (una por
-        // cada día cerrado, manual o automáticamente) y trae cada resumen.
-        const listado = await window.storage.list("cierre:", false);
-        const claves = (listado?.keys || []).slice().sort().reverse();
-        const registros = [];
-        for (const clave of claves) {
-          try {
-            const r = await window.storage.get(clave, false);
-            if (r?.value) registros.push(JSON.parse(r.value));
-          } catch (e) {}
-        }
-        if (activo) setCierres(registros);
-      } catch (e) {
-        if (activo) setError(true);
-      } finally {
-        if (activo) setCargando(false);
-      }
-    })();
-    return () => { activo = false; };
-  }, []);
+useEffect(() => {
+  let activo = true;
+
+  (async () => {
+    try {
+      const { data, error } = await supabase
+        .from("jornada")
+        .select("*")
+        .eq("negocio_id", 1)
+        .eq("estado", "CERRADA")
+        .order("fecha", { ascending: false });
+
+      if (error) throw error;
+
+      const registros = (data || []).map((j) => ({
+        fecha: j.fecha,
+        hora: j.hora_cierre || "--:--",
+        total: Number(j.total || 0),
+        cantidadVentas: Number(j.cantidad_ventas || 0),
+        automatico: Boolean(j.cerrado_automatico),
+      }));
+
+      if (activo) setCierres(registros);
+    } catch (e) {
+      console.error("Error cargando historial de cierres:", e);
+      if (activo) setError(true);
+    } finally {
+      if (activo) setCargando(false);
+    }
+  })();
+
+  return () => {
+    activo = false;
+  };
+}, []);
 
   return (
     <div className="px-5 space-y-3 pb-6">
