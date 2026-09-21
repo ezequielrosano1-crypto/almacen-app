@@ -5,19 +5,16 @@ import {
   ArrowLeft,
   AlertTriangle,
   XCircle,
-  CheckCircle2,
   X,
   Camera,
 } from "lucide-react";
 import { supabase } from "./data/supabaseClient";
 import {
   COLORS,
-  ADJUSTMENT_REASONS,
   CASH_SHIFT_STORAGE_KEY,
   TEST_CASH_SHIFT_STORAGE_KEY,
 } from "./lib/constants";
 import { formatMoney, formatDate } from "./lib/format";
-import { formatStock } from "./lib/stock";
 import { nextId } from "./lib/ids";
 import { initialProducts, initialStockMovements } from "./lib/initialData";
 import {
@@ -57,9 +54,7 @@ import { Row } from "./components/Row";
 import { SearchBar } from "./components/SearchBar";
 import { BottomNav } from "./components/BottomNav";
 import { CashRegisterStatusCard as EstadoCajaCard } from "./components/CashRegisterStatusCard";
-import { ConfirmationScreen } from "./components/ConfirmationScreen";
 import { ProductList as ListaProductos } from "./components/ProductList";
-import { ProductRow as ProductoListRow } from "./components/ProductRow";
 import { BarcodeScanner } from "./components/BarcodeScanner";
 import { HomeView } from "./views/HomeView";
 import { SalesView } from "./views/SalesView";
@@ -70,6 +65,8 @@ import { StockView } from "./views/StockView";
 import { ProductCatalogView } from "./views/ProductCatalogView";
 import { ProductDetailView } from "./views/ProductDetailView";
 import { LowStockView } from "./views/LowStockView";
+import { AddStockEntryView } from "./views/AddStockEntryView";
+import { AdjustStockView } from "./views/AdjustStockView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -101,186 +98,6 @@ import { LowStockView } from "./views/LowStockView";
 // ===========================================================================
 // STOCK
 // ===========================================================================
-
-function AgregarEntrada({ productos, productoIdInicial, actualizarStock, registrarMovimiento, pop, resetStack }) {
-  const [productoId, setProductoId] = useState(productoIdInicial || null);
-  const [busqueda, setBusqueda] = useState("");
-  const [cantidad, setCantidad] = useState("");
-  const [confirmada, setConfirmada] = useState(null);
-
-  const producto = productos.find((p) => p.id === productoId);
-  const disponibles = productos.filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()));
-
-  const confirmar = () => {
-    const cant = parseFloat(cantidad);
-    if (!producto || !cant || cant <= 0) return;
-    const nuevoStock = Math.round((producto.stock + cant) * 100) / 100;
-    actualizarStock(producto.id, nuevoStock);
-  registrarMovimiento({
-  tipo: "entrada",
-  productoId: producto.id,
-  producto: producto.nombre,
-  cantidad: cant,
-  unidad: producto.unidad,
-});
-    setConfirmada({ nombre: producto.nombre, cantidad: cant, unidad: producto.unidad });
-  };
-
-  if (confirmada) {
-    return (
-      <ConfirmationScreen
-        icon={<CheckCircle2 size={56} color={COLORS.principal} />}
-        title="Entrada registrada"
-        message={`+${confirmada.cantidad}${confirmada.unidad === "kg" ? "kg" : " un."} de ${confirmada.nombre}`}
-        buttonLabel="Volver a Stock"
-        onDone={resetStack}
-      />
-    );
-  }
-
-  return (
-    <div>
-      <Header title="Agregar entrada" onBack={pop} />
-      <div className="px-5 space-y-3">
-        {!producto ? (
-          <>
-            <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-            <div className="space-y-2">
-              {disponibles.map((p) => (
-                <ProductoListRow key={p.id} producto={p} onClick={() => setProductoId(p.id)} />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-stone-800 font-medium text-sm">{producto.nombre}</p>
-                <p className="text-stone-400 text-xs">Stock actual: {formatStock(producto)}</p>
-              </div>
-              <button type="button" onClick={() => setProductoId(null)} className="text-sm font-medium" style={{ color: "#2E6B4F" }}>
-                Cambiar
-              </button>
-            </div>
-            <div>
-              <label className="text-stone-500 text-sm">
-                Cantidad a ingresar {producto.unidad === "kg" ? "(kg)" : "(unidades)"}
-              </label>
-              <input
-                type="number"
-                step={producto.unidad === "kg" ? "0.001" : "1"}
-                min="0"
-                value={cantidad}
-                onChange={(e) => setCantidad(e.target.value)}
-                placeholder={producto.unidad === "kg" ? "0,500" : "0"}
-                className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-              />
-            </div>
-            <PrimaryButton onClick={confirmar} disabled={!cantidad || parseFloat(cantidad) <= 0}>
-              Registrar entrada
-            </PrimaryButton>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function AjustarStock({ productos, productoIdInicial, actualizarStock, registrarMovimiento, pop, resetStack }) {
-  const [productoId, setProductoId] = useState(productoIdInicial || null);
-  const [busqueda, setBusqueda] = useState("");
-  const [stockReal, setStockReal] = useState("");
-  const [motivo, setMotivo] = useState(null);
-  const [confirmada, setConfirmada] = useState(null);
-
-  const producto = productos.find((p) => p.id === productoId);
-  const disponibles = productos.filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()));
-
-  const confirmar = () => {
-    const real = parseFloat(stockReal);
-    if (!producto || isNaN(real) || real < 0 || !motivo) return;
-    const diferencia = Math.round((real - producto.stock) * 100) / 100;
-    actualizarStock(producto.id, real);
-    registrarMovimiento({ tipo: "ajuste", producto: producto.nombre, diferencia, motivo });
-    setConfirmada({ nombre: producto.nombre, diferencia });
-  };
-
-  if (confirmada) {
-    return (
-      <ConfirmationScreen
-        icon={<CheckCircle2 size={56} color={COLORS.principal} />}
-        title="Ajuste registrado"
-        message={`${confirmada.nombre}: diferencia ${confirmada.diferencia > 0 ? "+" : ""}${confirmada.diferencia}`}
-        buttonLabel="Volver a Stock"
-        onDone={resetStack}
-      />
-    );
-  }
-
-  return (
-    <div>
-      <Header title="Ajustar stock" onBack={pop} />
-      <div className="px-5 space-y-3">
-        {!producto ? (
-          <>
-            <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-            <div className="space-y-2">
-              {disponibles.map((p) => (
-                <ProductoListRow key={p.id} producto={p} onClick={() => setProductoId(p.id)} />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-stone-800 font-medium text-sm">{producto.nombre}</p>
-                <p className="text-stone-400 text-xs">Stock registrado: {formatStock(producto)}</p>
-              </div>
-              <button type="button" onClick={() => setProductoId(null)} className="text-sm font-medium" style={{ color: "#2E6B4F" }}>
-                Cambiar
-              </button>
-            </div>
-            <div>
-              <label className="text-stone-500 text-sm">Stock real contado</label>
-              <input
-                type="number"
-                step={producto.unidad === "kg" ? "0.001" : "1"}
-                min="0"
-                value={stockReal}
-                onChange={(e) => setStockReal(e.target.value)}
-                className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-              />
-            </div>
-            <div>
-              <label className="text-stone-500 text-sm mb-2 block">Motivo del ajuste</label>
-              <div className="grid grid-cols-2 gap-2">
-                {ADJUSTMENT_REASONS.map((m) => (
-                  <button
-                    type="button"
-                    key={m}
-                    onClick={() => setMotivo(m)}
-                    className="rounded-xl py-2.5 text-sm font-medium border"
-                    style={
-                      motivo === m
-                        ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                        : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
-                    }
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <PrimaryButton onClick={confirmar} disabled={stockReal === "" || !motivo}>
-              Confirmar ajuste
-            </PrimaryButton>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ===========================================================================
 // MOVIMIENTOS
@@ -1384,22 +1201,22 @@ const actualizarStock = async (id, nuevoStock) => {
         );
       if (current.screen === "addStockEntry")
         return (
-          <AgregarEntrada
-            productos={productos}
-            productoIdInicial={current.params.productId}
-            actualizarStock={actualizarStock}
-            registrarMovimiento={registrarMovimiento}
+          <AddStockEntryView
+            products={productos}
+            initialProductId={current.params.productId}
+            updateStock={actualizarStock}
+            recordMovement={registrarMovimiento}
             pop={pop}
             resetStack={resetStack}
           />
         );
       if (current.screen === "adjustStock")
         return (
-          <AjustarStock
-            productos={productos}
-            productoIdInicial={current.params.productId}
-            actualizarStock={actualizarStock}
-            registrarMovimiento={registrarMovimiento}
+          <AdjustStockView
+            products={productos}
+            initialProductId={current.params.productId}
+            updateStock={actualizarStock}
+            recordMovement={registrarMovimiento}
             pop={pop}
             resetStack={resetStack}
           />
