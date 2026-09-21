@@ -1,5 +1,5 @@
-// Identificadores: el id local lo genera nextId() y el de base viene de Supabase,
-// por eso conviven number y string (se preserva tal cual).
+// Identificadores: los ids de base los genera Postgres (identity); nextId() solo
+// crea ids locales efímeros. Conviven number y string (se preserva tal cual).
 export type ProductId = number | string;
 export type SaleId = number | string;
 export type MovementId = number | string;

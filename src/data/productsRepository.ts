@@ -1,4 +1,4 @@
-import type { ProductRow, ProductUpsert } from "../types/db";
+import type { ProductInsert, ProductRow, ProductUpsert } from "../types/db";
 import type { ProductId } from "../types/domain";
 import { supabase } from "./supabaseClient";
 
@@ -30,4 +30,14 @@ export async function upsertProduct(row: ProductUpsert): Promise<void> {
   if (error) {
     throw error;
   }
+}
+
+export async function insertProduct(row: ProductInsert): Promise<ProductRow> {
+  const { data, error } = await supabase.from("productos").insert(row).select().single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as ProductRow;
 }

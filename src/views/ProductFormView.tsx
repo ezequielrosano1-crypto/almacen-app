@@ -3,8 +3,7 @@ import { useState } from "react";
 import { BarcodeScanner } from "../components/BarcodeScanner";
 import { Header } from "../components/Header";
 import { PrimaryButton } from "../components/PrimaryButton";
-import type { ProductItem } from "../hooks/useProducts";
-import { nextId } from "../lib/ids";
+import type { ProductDraft } from "../hooks/useProducts";
 import type { ProductId } from "../types/domain";
 
 export interface ProductFormData {
@@ -25,7 +24,7 @@ export interface ProductFormData {
 export interface ProductFormViewProps {
   products?: ProductFormData[];
   productId?: ProductId | null;
-  saveProduct?: (product: ProductItem) => unknown;
+  saveProduct?: (product: ProductDraft) => unknown;
   pop: () => void;
 }
 
@@ -65,7 +64,7 @@ export function ProductFormView(props: ProductFormViewProps) {
     if (!puedeGuardar) return;
     const finalBarcode = codigoBarras.trim() ? codigoBarras.trim() : null;
     const nuevoProducto = {
-      id: existente ? existente.id : nextId(),
+      id: existente?.id,
       nombre,
       precio: parseFloat(precio),
       unidad,

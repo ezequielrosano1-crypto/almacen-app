@@ -3,12 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("./supabaseClient", () => ({
   supabase: {
     from: vi.fn(),
+    rpc: vi.fn(),
   },
 }));
 
 import { type SubmitSaleDeps, type SubmitSaleInput, submitSale } from "./submitSale";
 
-describe("submitSale I/O orchestration and bug #5 pinning", () => {
+describe("submitSale", () => {
   const mockInput: SubmitSaleInput = {
     total: 350,
     pago: "Efectivo",
@@ -26,92 +27,85 @@ describe("submitSale I/O orchestration and bug #5 pinning", () => {
     ],
   };
 
-  it("happy path: creates sale, inserts items, and updates stock for each item in order", async () => {
-    const calls: string[] = [];
-    const deps: SubmitSaleDeps = {
-      createSale: vi.fn(async (params) => {
-        calls.push(`createSale:${params.total}:${params.pago}`);
-        return {
-          id: 123,
-          negocio_id: params.negocio_id,
-          jornada_id: params.jornada_id,
-          fecha: params.fecha,
-          total: params.total,
-          pago: params.pago,
-        };
-      }),
-      insertSaleItems: vi.fn(async (items) => {
-        calls.push(`insertSaleItems:${items.length}`);
-      }),
-      deleteSale: vi.fn(async (_id) => {
-        calls.push("deleteSale");
-      }),
-      updateProductStock: vi.fn(async (id, stock) => {
-        calls.push(`updateStock:${id}:${stock}`);
-      }),
-    };
+  const savedSale = {
+    id: 123,
+    negocio_id: 1,
+    jornada_id: null,
+    fecha: "2026-09-21T10:00:00.000Z",
+    total: 350,
+    pago: "Efectivo",
+  };
+
+  it("registers the whole sale with ONE call, mapping cart items to the RPC payload", async () => {
+    const deps: SubmitSaleDeps = { registerSale: vi.fn(async () => savedSale) };
 
     const result = await submitSale(mockInput, deps);
 
     expect(result.id).toBe(123);
-    expect(calls).toEqual([
-      "createSale:350:Efectivo",
-      "insertSaleItems:2",
-      "updateStock:1:9",
-      "updateStock:2:3",
-    ]);
-    expect(deps.deleteSale).not.toHaveBeenCalled();
+    expect(deps.registerSale).toHaveBeenCalledTimes(1);
+    expect(deps.registerSale).toHaveBeenCalledWith({
+      negocio_id: 1,
+      jornada_id: null,
+      pago: "Efectivo",
+      total: 350,
+      items: [
+        {
+          producto_id: 1,
+          nombre: "Yerba",
+          cantidad: 1,
+          unidad: "unidad",
+          precio_unitario: 190,
+          subtotal: 190,
+        },
+        {
+          producto_id: 2,
+          nombre: "Manzanas",
+          cantidad: 2,
+          unidad: "kg",
+          precio_unitario: 80,
+          subtotal: 160,
+        },
+      ],
+    });
   });
 
-  it("items failure: rolls back created sale with deleteSale and rethrows error without updating stock", async () => {
-    const deps: SubmitSaleDeps = {
-      createSale: vi.fn(async (params) => ({
-        id: 456,
-        negocio_id: params.negocio_id,
-        jornada_id: params.jornada_id,
-        fecha: params.fecha,
-        total: params.total,
-        pago: params.pago,
-      })),
-      insertSaleItems: vi.fn(async () => {
-        throw new Error("DB Error on insert items");
-      }),
-      deleteSale: vi.fn(async () => {}),
-      updateProductStock: vi.fn(async () => {}),
-    };
+  it("coerces numeric strings coming from the cart UI", async () => {
+    const deps: SubmitSaleDeps = { registerSale: vi.fn(async () => savedSale) };
 
-    await expect(submitSale(mockInput, deps)).rejects.toThrow("DB Error on insert items");
-    expect(deps.deleteSale).toHaveBeenCalledTimes(1);
-    expect(deps.deleteSale).toHaveBeenCalledWith(456);
-    expect(deps.updateProductStock).not.toHaveBeenCalled();
+    await submitSale(
+      {
+        total: "350" as unknown as number,
+        pago: "Débito",
+        items: [
+          {
+            cantidad: "2" as unknown as number,
+            subtotal: "160" as unknown as number,
+            producto: {
+              id: 2,
+              nombre: "Manzanas",
+              unidad: "kg",
+              precio: "80" as unknown as number,
+              stock: 5,
+            },
+          },
+        ],
+      },
+      deps,
+    );
+
+    const payload = vi.mocked(deps.registerSale).mock.calls[0]?.[0];
+    expect(payload?.total).toBe(350);
+    expect(payload?.items[0]).toMatchObject({ cantidad: 2, precio_unitario: 80, subtotal: 160 });
   });
 
-  it("pins bug #5 (rollback asymmetry): stock update failure on item 2 leaves item 1 updated and issues NO deleteSale", async () => {
-    const stockUpdated: { id: number | string; stock: number }[] = [];
+  it("propagates the error and does not swallow it (the database rolls the sale back atomically)", async () => {
     const deps: SubmitSaleDeps = {
-      createSale: vi.fn(async (params) => ({
-        id: 789,
-        negocio_id: params.negocio_id,
-        jornada_id: params.jornada_id,
-        fecha: params.fecha,
-        total: params.total,
-        pago: params.pago,
-      })),
-      insertSaleItems: vi.fn(async () => {}),
-      deleteSale: vi.fn(async () => {}),
-      updateProductStock: vi.fn(async (id, stock) => {
-        if (id === 2) {
-          throw new Error("Stock update failed for product 2");
-        }
-        stockUpdated.push({ id, stock });
+      registerSale: vi.fn(async () => {
+        throw new Error("product 2 not found");
       }),
     };
 
-    await expect(submitSale(mockInput, deps)).rejects.toThrow("Stock update failed for product 2");
-
-    // Item 1 was updated and is NOT rolled back
-    expect(stockUpdated).toEqual([{ id: 1, stock: 9 }]);
-    // Crucially, deleteSale was NOT called (bug #5 preserved)
-    expect(deps.deleteSale).not.toHaveBeenCalled();
+    await expect(submitSale(mockInput, deps)).rejects.toThrow("product 2 not found");
+    expect(deps.registerSale).toHaveBeenCalledTimes(1);
   });
 });

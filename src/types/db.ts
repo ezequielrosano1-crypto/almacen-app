@@ -101,22 +101,22 @@ export interface CashShiftReopenUpdate {
   updated_at: string;
 }
 
-export interface SaleInsert {
-  negocio_id: number;
-  jornada_id: string | null;
-  fecha: string;
-  total: number;
-  pago: string;
-}
-
-export interface SaleItemInsert {
-  venta_id: number;
+// Payload of the registrar_venta RPC: the whole sale is written in one transaction.
+export interface RegisterSaleItem {
   producto_id: number | string;
   nombre: string;
   cantidad: number;
   unidad: string;
   precio_unitario: number;
   subtotal: number;
+}
+
+export interface RegisterSaleInput {
+  negocio_id: number;
+  jornada_id: string | null;
+  pago: string;
+  total: number;
+  items: RegisterSaleItem[];
 }
 
 export interface StockMovementInsert {
@@ -141,3 +141,6 @@ export interface ProductUpsert {
   stock_minimo: number;
   codigo_barras: string | null;
 }
+
+// New products carry no id: Postgres generates it (productos.id is an identity column).
+export type ProductInsert = Omit<ProductUpsert, "id">;

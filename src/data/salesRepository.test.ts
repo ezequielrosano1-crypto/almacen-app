@@ -15,80 +15,6 @@ describe("salesRepository", () => {
     vi.clearAllMocks();
   });
 
-  it("createSale inserts sale and returns single result", async () => {
-    const { createSale } = await import("./salesRepository");
-
-    const mockInsert = vi.fn().mockReturnThis();
-    const mockSelect = vi.fn().mockReturnThis();
-    const mockSingle = vi.fn().mockResolvedValue({
-      data: { id: 77 },
-      error: null,
-    });
-
-    vi.mocked(supabase.from).mockReturnValue({
-      insert: mockInsert,
-    } as unknown as ReturnType<typeof supabase.from>);
-    mockInsert.mockReturnValue({ select: mockSelect });
-    mockSelect.mockReturnValue({ single: mockSingle });
-
-    const payload = {
-      negocio_id: 1,
-      jornada_id: "caja-1",
-      fecha: "2026-09-21T10:00:00.000Z",
-      total: 500,
-      pago: "Efectivo",
-    };
-
-    const res = await createSale(payload);
-    expect(supabase.from).toHaveBeenCalledWith("ventas");
-    expect(mockInsert).toHaveBeenCalledWith(payload);
-    expect(res).toEqual({ id: 77 });
-  });
-
-  it("insertSaleItems inserts rows into 'venta_items'", async () => {
-    const { insertSaleItems } = await import("./salesRepository");
-
-    const mockInsert = vi.fn().mockResolvedValue({ error: null });
-    vi.mocked(supabase.from).mockReturnValue({
-      insert: mockInsert,
-    } as unknown as ReturnType<typeof supabase.from>);
-
-    const items = [
-      {
-        venta_id: 77,
-        producto_id: 1,
-        nombre: "Yerba",
-        cantidad: 2,
-        unidad: "unidad",
-        precio_unitario: 150,
-        subtotal: 300,
-      },
-    ];
-
-    await insertSaleItems(items);
-    expect(supabase.from).toHaveBeenCalledWith("venta_items");
-    expect(mockInsert).toHaveBeenCalledWith(items);
-  });
-
-  it("deleteSale deletes sale matching id and negocio_id 1", async () => {
-    const { deleteSale } = await import("./salesRepository");
-
-    const mockDelete = vi.fn().mockReturnThis();
-    const mockEqId = vi.fn().mockReturnThis();
-    const mockEqNegocio = vi.fn().mockResolvedValue({ error: null });
-
-    vi.mocked(supabase.from).mockReturnValue({
-      delete: mockDelete,
-    } as unknown as ReturnType<typeof supabase.from>);
-    mockDelete.mockReturnValue({ eq: mockEqId });
-    mockEqId.mockReturnValue({ eq: mockEqNegocio });
-
-    await deleteSale(77);
-    expect(supabase.from).toHaveBeenCalledWith("ventas");
-    expect(mockEqId).toHaveBeenCalledWith("id", 77);
-    expect(mockEqNegocio).toHaveBeenCalledWith("negocio_id", 1);
-  });
-
   it("listSalesWithItems selects exact nested projection", async () => {
     const { listSalesWithItems } = await import("./salesRepository");
 
@@ -131,5 +57,50 @@ describe("salesRepository", () => {
     expect(mockSelect).toHaveBeenCalledWith("*");
     expect(mockEq).toHaveBeenCalledWith("venta_id", 77);
     expect(res).toHaveLength(1);
+  });
+});
+
+describe("salesRepository.registerSale", () => {
+  it("calls the registrar_venta RPC with prefixed params and returns the sale", async () => {
+    const { registerSale } = await import("./salesRepository");
+    const rpc = vi.fn().mockResolvedValue({ data: { id: 9 }, error: null });
+    (supabase as unknown as { rpc: typeof rpc }).rpc = rpc;
+
+    const items = [
+      {
+        producto_id: 1,
+        nombre: "Yerba",
+        cantidad: 1,
+        unidad: "unidad",
+        precio_unitario: 190,
+        subtotal: 190,
+      },
+    ];
+    const result = await registerSale({
+      negocio_id: 1,
+      jornada_id: null,
+      pago: "Efectivo",
+      total: 190,
+      items,
+    });
+
+    expect(rpc).toHaveBeenCalledWith("registrar_venta", {
+      p_negocio_id: 1,
+      p_jornada_id: null,
+      p_pago: "Efectivo",
+      p_total: 190,
+      p_items: items,
+    });
+    expect(result).toEqual({ id: 9 });
+  });
+
+  it("throws the Supabase error", async () => {
+    const { registerSale } = await import("./salesRepository");
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: new Error("boom") });
+    (supabase as unknown as { rpc: typeof rpc }).rpc = rpc;
+
+    await expect(
+      registerSale({ negocio_id: 1, jornada_id: null, pago: "Efectivo", total: 1, items: [] }),
+    ).rejects.toThrow("boom");
   });
 });

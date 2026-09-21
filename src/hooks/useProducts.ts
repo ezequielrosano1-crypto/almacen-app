@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { toProductUpsert } from "../data/mappers";
+import { toProductInsert, toProductUpsert } from "../data/mappers";
 import {
+  insertProduct as defaultInsertProduct,
   updateProductStock as defaultUpdateProductStock,
   upsertProduct as defaultUpsertProduct,
 } from "../data/productsRepository";
@@ -22,6 +23,9 @@ export interface ProductItem {
   barcode?: string | null;
   [key: string]: unknown;
 }
+
+// A product that was never saved has no id yet: the database assigns it on insert.
+export type ProductDraft = Omit<ProductItem, "id"> & { id?: ProductId };
 
 export function applyStockUpdate(
   products: ProductItem[],
@@ -54,35 +58,31 @@ export async function updateStockInRepository(
 }
 
 export async function saveProductToRepository(
-  producto: ProductItem,
-  deps = { upsertProduct: defaultUpsertProduct },
-): Promise<boolean> {
+  producto: ProductDraft,
+  deps = { upsertProduct: defaultUpsertProduct, insertProduct: defaultInsertProduct },
+): Promise<ProductItem | null> {
   const name = (producto.name ?? producto.nombre ?? "") as string;
   const price = Number(producto.price ?? producto.precio ?? 0);
   const unit = (producto.unit ?? producto.unidad ?? "unidad") as MeasurementUnit;
   const stock = Number(producto.stock ?? 0);
   const minimumStock = Number(producto.minimumStock ?? producto.stockMinimo ?? 0);
   const barcode = ((producto.barcode ?? producto.codigoBarras ?? "") as string).trim() || null;
-
-  const productoSupabase = toProductUpsert({
-    id: producto.id,
-    name,
-    price,
-    unit,
-    stock,
-    minimumStock,
-    barcode,
-  });
+  const fields = { name, price, unit, stock, minimumStock, barcode };
 
   try {
-    await deps.upsertProduct(productoSupabase);
-    return true;
+    if (producto.id === undefined) {
+      const created = await deps.insertProduct(toProductInsert(fields));
+      return { ...(producto as ProductItem), id: created.id };
+    }
+
+    await deps.upsertProduct(toProductUpsert({ id: producto.id, ...fields }));
+    return { ...(producto as ProductItem), id: producto.id };
   } catch (error) {
     console.error("Error guardando producto en Supabase:", error);
     if (typeof alert !== "undefined") {
       alert("No se pudo guardar el producto.");
     }
-    return false;
+    return null;
   }
 }
 
@@ -91,6 +91,7 @@ export function useProducts(
   deps = {
     updateProductStock: defaultUpdateProductStock,
     upsertProduct: defaultUpsertProduct,
+    insertProduct: defaultInsertProduct,
   },
 ) {
   const [products, setProducts] = useState<ProductItem[]>(initial);
@@ -103,11 +104,11 @@ export function useProducts(
     return true;
   };
 
-  const saveProduct = async (producto: ProductItem): Promise<boolean> => {
-    const ok = await saveProductToRepository(producto, deps);
-    if (!ok) return false;
+  const saveProduct = async (producto: ProductDraft): Promise<boolean> => {
+    const saved = await saveProductToRepository(producto, deps);
+    if (!saved) return false;
 
-    setProducts((prev) => applyProductSave(prev, producto));
+    setProducts((prev) => applyProductSave(prev, saved));
     return true;
   };
 

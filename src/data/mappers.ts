@@ -1,5 +1,6 @@
 import type {
   CashShiftRow,
+  ProductInsert,
   ProductRow,
   ProductUpsert,
   SaleItemRow,
@@ -78,6 +79,12 @@ export function toProductUpsert(product: Product): ProductUpsert {
     stock_minimo: Number(product.minimumStock),
     codigo_barras: product.barcode || null,
   };
+}
+
+/** Same as toProductUpsert but without id: the database assigns it on insert. */
+export function toProductInsert(product: Omit<Product, "id">): ProductInsert {
+  const { id: _omit, ...row } = toProductUpsert({ ...product, id: 0 });
+  return row;
 }
 
 /**

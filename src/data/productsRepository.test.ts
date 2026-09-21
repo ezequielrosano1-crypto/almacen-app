@@ -79,4 +79,51 @@ describe("productsRepository", () => {
     expect(supabase.from).toHaveBeenCalledWith("productos");
     expect(mockUpsert).toHaveBeenCalledWith(payload, { onConflict: "id" });
   });
+
+  it("insertProduct inserts WITHOUT id and returns the generated row", async () => {
+    const { insertProduct } = await import("./productsRepository");
+
+    const mockSingle = vi.fn().mockResolvedValue({ data: { id: 812 }, error: null });
+    const mockSelect = vi.fn().mockReturnValue({ single: mockSingle });
+    const mockInsert = vi.fn().mockReturnValue({ select: mockSelect });
+    vi.mocked(supabase.from).mockReturnValue({
+      insert: mockInsert,
+    } as unknown as ReturnType<typeof supabase.from>);
+
+    const payload = {
+      negocio_id: 1,
+      nombre: "Prod",
+      precio: 100,
+      unidad: "unidad",
+      stock: 10,
+      stock_minimo: 2,
+      codigo_barras: null,
+    };
+
+    const row = await insertProduct(payload);
+    expect(supabase.from).toHaveBeenCalledWith("productos");
+    expect(mockInsert).toHaveBeenCalledWith(payload);
+    expect(row).toEqual({ id: 812 });
+  });
+
+  it("insertProduct throws the Supabase error", async () => {
+    const { insertProduct } = await import("./productsRepository");
+
+    const mockSingle = vi.fn().mockResolvedValue({ data: null, error: new Error("dup barcode") });
+    vi.mocked(supabase.from).mockReturnValue({
+      insert: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: mockSingle }) }),
+    } as unknown as ReturnType<typeof supabase.from>);
+
+    await expect(
+      insertProduct({
+        negocio_id: 1,
+        nombre: "x",
+        precio: 1,
+        unidad: "unidad",
+        stock: 0,
+        stock_minimo: 0,
+        codigo_barras: null,
+      }),
+    ).rejects.toThrow("dup barcode");
+  });
 });
