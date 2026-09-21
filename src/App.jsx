@@ -37,7 +37,7 @@ import {
   getOutOfStockProducts,
   getWeekSales,
 } from "./lib/metrics";
-import { readJson, writeJson, listKeys, removeKey } from "./lib/storage/storage";
+import { readJson, writeJson, removeKey } from "./lib/storage/storage";
 import { toProductUpsert } from "./data/mappers";
 import {
   listProducts,
@@ -66,6 +66,7 @@ import { HomeView } from "./views/HomeView";
 import { SalesView } from "./views/SalesView";
 import { NewSaleView } from "./views/NewSaleView";
 import { DayClosingView } from "./views/DayClosingView";
+import { ClosingHistoryView } from "./views/ClosingHistoryView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -97,77 +98,6 @@ import { DayClosingView } from "./views/DayClosingView";
 // ===========================================================================
 // STOCK
 // ===========================================================================
-function HistorialCierres({ pop }) {
-  const [cargando, setCargando] = useState(true);
-  const [cierres, setCierres] = useState([]);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    let activo = true;
-    (async () => {
-      try {
-        // Recorre todas las claves "cierre:YYYY-MM-DD" guardadas (una por
-        // cada día cerrado, manual o automáticamente) y trae cada resumen.
-        const listado = await listKeys("cierre:");
-        const claves = (listado || []).slice().sort().reverse();
-        const registros = [];
-        for (const clave of claves) {
-          try {
-            const data = await readJson(clave);
-            if (data) registros.push(data);
-          } catch (e) {}
-        }
-        if (activo) setCierres(registros);
-      } catch (e) {
-        if (activo) setError(true);
-      } finally {
-        if (activo) setCargando(false);
-      }
-    })();
-    return () => { activo = false; };
-  }, []);
-
-  return (
-    <div className="px-5 space-y-3 pb-6">
-      <Header title="Historial de cierres" onBack={pop} />
-      {cargando ? (
-        <p className="text-stone-400 text-sm text-center py-6">Cargando historial...</p>
-      ) : error ? (
-        <p className="text-stone-400 text-sm text-center py-6">No se pudo cargar el historial.</p>
-      ) : cierres.length === 0 ? (
-        <p className="text-stone-400 text-sm text-center py-6">Todavía no hay ningún día cerrado.</p>
-      ) : (
-        <div className="space-y-2">
-          {cierres.map((c, i) => (
-            <div key={i} className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-stone-800">{c.fecha}</p>
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: c.automatico ? COLORS.bajo : COLORS.principal }}
-                >
-                  {c.automatico ? "Cierre automático" : "Cierre manual"}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Hora de cierre</span>
-                <span className="text-stone-800 font-medium">{c.hora}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Total</span>
-                <span className="text-stone-800 font-medium">{formatMoney(c.total)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Cantidad de ventas</span>
-                <span className="text-stone-800 font-medium">{c.cantidadVentas}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function StockMain({ push }) {
   return (
@@ -1533,7 +1463,7 @@ const actualizarStock = async (id, nuevoStock) => {
             onUpdateCashShift={setCaja}
           />
         );
-      if (current.screen === "closingHistory") return <HistorialCierres pop={pop} />;
+      if (current.screen === "closingHistory") return <ClosingHistoryView pop={pop} />;
       return (
         <SalesView
           push={push}
