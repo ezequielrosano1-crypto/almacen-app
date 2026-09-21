@@ -58,6 +58,7 @@ import {
 } from "./data/cashShiftRepository";
 import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
+import { useSaleCart } from "./hooks/useSaleCart";
 import { Header } from "./components/Header";
 import { PrimaryButton } from "./components/PrimaryButton";
 import { Row } from "./components/Row";
@@ -98,7 +99,6 @@ import { SalesView } from "./views/SalesView";
 
 function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarStock, pop, resetStack, caja }) {
   const [busqueda, setBusqueda] = useState("");
-  const [carrito, setCarrito] = useState([]); // [{id, cantidad}]
   const [pago, setPago] = useState(null);
   const [confirmada, setConfirmada] = useState(null);
   const [enviando, setEnviando] = useState(false);
@@ -107,24 +107,19 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarSt
   const ultimoCodigoRef = useRef(null);
   const cooldownCodigoRef = useRef(null);
 
+  const {
+    carrito,
+    items,
+    total,
+    agregarProducto,
+    cambiarCantidad,
+    quitarProducto,
+    cantidadEnCarrito,
+  } = useSaleCart(productos);
+
   const disponibles = productos
     .filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()))
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-  const cantidadEnCarrito = (id) => carrito.find((c) => c.id === id)?.cantidad || 0;
-
-  const agregarProducto = (producto) => {
-    const enCarrito = cantidadEnCarrito(producto.id);
-    const incremento = producto.unidad === "kg" ? 0.5 : 1;
-    if (enCarrito + incremento > producto.stock) return;
-    if (enCarrito === 0) {
-      setCarrito((c) => [...c, { id: producto.id, cantidad: incremento }]);
-    } else {
-      setCarrito((c) =>
-        c.map((it) => (it.id === producto.id ? { ...it, cantidad: it.cantidad + incremento } : it))
-      );
-    }
-  };
 
   const manejarCodigoDetectado = (codigo) => {
     const limpio = (codigo || "").trim();
@@ -148,28 +143,6 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarSt
     }
     setTimeout(() => setMensajeEscaneo(null), 2500);
   };
-
-  const cambiarCantidad = (id, delta) => {
-    const producto = productos.find((p) => p.id === id);
-    const paso = producto.unidad === "kg" ? 0.5 : 1;
-    setCarrito((c) =>
-      c
-        .map((it) => {
-          if (it.id !== id) return it;
-          const nueva = Math.round((it.cantidad + delta * paso) * 100) / 100;
-          return { ...it, cantidad: nueva };
-        })
-        .filter((it) => it.cantidad > 0 && it.cantidad <= producto.stock)
-    );
-  };
-
-  const quitarProducto = (id) => setCarrito((c) => c.filter((it) => it.id !== id));
-
-  const items = carrito.map((it) => {
-    const producto = productos.find((p) => p.id === it.id);
-    return { ...it, producto, subtotal: producto.precio * it.cantidad };
-  });
-  const total = items.reduce((a, it) => a + it.subtotal, 0);
 
  const confirmarVenta = async () => {
   if (items.length === 0 || !pago || enviando || !caja || caja.estado !== "ABIERTA") return;
