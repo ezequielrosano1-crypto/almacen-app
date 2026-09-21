@@ -16,7 +16,7 @@ import {
   X,
   Camera,
 } from "lucide-react";
-import { supabase } from "./supabaseClient";
+import { supabase } from "./data/supabaseClient";
 // ===========================================================================
 // Compatibilidad de almacenamiento fuera de Claude.ai
 // -----------------------------------------------------------------------
