@@ -22,11 +22,12 @@ import {
   getWeekSales,
 } from "./lib/metrics";
 import { writeJson } from "./lib/storage/storage";
-import { listSaleItems } from "./data/salesRepository";
 import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
 import { useProducts } from "./hooks/useProducts";
+import { useProductsRealtime } from "./hooks/useProductsRealtime";
 import { useStockMovements } from "./hooks/useStockMovements";
+import { useStockMovementsRealtime } from "./hooks/useStockMovementsRealtime";
 import { useBusinessInfo } from "./hooks/useBusinessInfo";
 import { useInitialLoad } from "./hooks/useInitialLoad";
 import { Header } from "./components/Header";
@@ -124,152 +125,8 @@ export default function App() {
     setStockMovements: setMovimientos,
     setBusinessInfo: setInfoNegocio,
   });
-useEffect(() => {
-  const canal = supabase
-    .channel("productos-realtime")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "productos",
-        filter: "negocio_id=eq.1",
-      },
-      (payload) => {
-        const producto = payload.new;
-
-        if (payload.eventType === "DELETE") {
-          setProductos((prev) =>
-            prev.filter((p) => p.id !== payload.old.id)
-          );
-          return;
-        }
-
-        if (producto) {
-          const productoFormateado = {
-            id: producto.id,
-            nombre: producto.nombre,
-            precio: Number(producto.precio),
-            unidad: producto.unidad,
-            stock: Number(producto.stock),
-            stockMinimo: Number(producto.stock_minimo),
-            codigoBarras: producto.codigo_barras || "",
-          };
-
-          setProductos((prev) => {
-            const existe = prev.some(
-              (p) => p.id === productoFormateado.id
-            );
-
-            return existe
-              ? prev.map((p) =>
-                  p.id === productoFormateado.id
-                    ? productoFormateado
-                    : p
-                )
-              : [...prev, productoFormateado];
-          });
-        }
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(canal);
-  };
-}, []);
-  useEffect(() => {
-  const canal = supabase
-    .channel("movimientos-stock-realtime")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "movimientos_stock",
-        filter: "negocio_id=eq.1",
-      },
-      (payload) => {
-        const movimiento = payload.new;
-
-  if (!movimiento || movimiento.tipo === "venta") return;
-
-        setMovimientos((prev) => [
-          {
-            id: movimiento.id,
-            fecha: new Date(movimiento.fecha),
-            tipo: movimiento.tipo,
-            productoId: movimiento.producto_id,
-            cantidad: Number(movimiento.cantidad),
-            unidad: movimiento.unidad,
-            diferencia: Number(movimiento.diferencia),
-            motivo: movimiento.motivo,
-          },
-          ...prev,
-        ]);
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(canal);
-  };
-}, []);
-  useEffect(() => {
-  const canal = supabase
-    .channel("ventas-realtime")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "ventas",
-        filter: "negocio_id=eq.1",
-      },
-      async (payload) => {
-        const venta = payload.new;
-
-        if (!venta) return;
-
-        let items;
-        try {
-          items = await listSaleItems(venta.id);
-        } catch (error) {
-          console.error("Error cargando items de venta:", error);
-          return;
-        }
-
-        const ventaFormateada = {
-          id: venta.id,
-          fecha: new Date(venta.fecha),
-          tipo: "venta",
-          total: Number(venta.total),
-          pago: venta.pago,
-          items: (items || []).map((it) => ({
-            productoId: it.producto_id,
-            nombre: it.nombre,
-            cantidad: Number(it.cantidad),
-            unidad: it.unidad,
-            precio: Number(it.precio_unitario),
-            subtotal: Number(it.subtotal),
-          })),
-        };
-
-        setMovimientos((prev) => {
-          const existe = prev.some((m) => m.id === ventaFormateada.id);
-
-          if (existe) return prev;
-
-          return [ventaFormateada, ...prev];
-        });
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(canal);
-  };
-}, []);
+  useProductsRealtime(setProductos);
+  useStockMovementsRealtime(setMovimientos);
   useEffect(() => {
   const canal = supabase
     .channel("jornada-realtime")
