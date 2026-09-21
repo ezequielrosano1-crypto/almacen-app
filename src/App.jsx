@@ -68,6 +68,7 @@ import { CashRegisterStatusCard as EstadoCajaCard } from "./components/CashRegis
 import { ConfirmationScreen } from "./components/ConfirmationScreen";
 import { ProductList as ListaProductos } from "./components/ProductList";
 import { ProductRow as ProductoListRow } from "./components/ProductRow";
+import { BarcodeScanner } from "./components/BarcodeScanner";
 
 // ===========================================================================
 // Constantes / configuración
@@ -83,224 +84,7 @@ import { ProductRow as ProductoListRow } from "./components/ProductRow";
 
 
 
-function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total, pago, setPago, onConfirmar, enviando }) {
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const [estado, setEstado] = useState("solicitando"); // solicitando | activa | error
-  const [mensajeError, setMensajeError] = useState("");
-  const [codigoDetectado, setCodigoDetectado] = useState(null);
-  const [deteccionSoportada, setDeteccionSoportada] = useState(false);
 
-  useEffect(() => {
-    let cancelado = false;
-
-    async function iniciarCamara() {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error("Este entorno no permite acceder a la cámara del dispositivo.");
-        }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
-        if (cancelado) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        streamRef.current = stream;
-        setEstado("activa");
-        setDeteccionSoportada(typeof window !== "undefined" && "BarcodeDetector" in window);
-      } catch (err) {
-        if (!cancelado) {
-          setMensajeError(err && err.message ? err.message : "No se pudo acceder a la cámara.");
-          setEstado("error");
-        }
-      }
-    }
-
-    iniciarCamara();
-
-    return () => {
-      cancelado = true;
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-      }
-    };
-  }, []);
-
-  // El <video> recién existe en el DOM cuando estado === "activa" (se monta
-  // condicionalmente más abajo). Por eso la conexión de la cámara al video
-  // tiene que hacerse en un efecto aparte, disparado cuando ese elemento ya
-  // está montado — si se intenta en el mismo paso en que se pide la cámara
-  // (como estaba antes), videoRef.current todavía es null y la asignación
-  // se pierde: el navegador pide permiso, pero no se ve nada.
-  useEffect(() => {
-    if (estado === "activa" && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-      const intento = videoRef.current.play();
-      if (intento && intento.catch) intento.catch(() => {});
-    }
-  }, [estado]);
-
-  useEffect(() => {
-    if (estado !== "activa" || !deteccionSoportada) return;
-    let activo = true;
-    let temporizador = null;
-    const detector = new window.BarcodeDetector();
-
-    // Antes intentaba detectar en CADA frame de la cámara (hasta 60 veces
-    // por segundo), lo que hacía que leyera de más y a veces mal. Ahora
-    // espera un ratito entre lectura y lectura — sigue siendo rápido para
-    // escanear en el mostrador, pero le da tiempo a la cámara a enfocar.
-    const detectar = async () => {
-      if (!activo || !videoRef.current) return;
-      try {
-        const codigos = await detector.detect(videoRef.current);
-        if (codigos.length > 0) {
-          const valor = codigos[0].rawValue;
-          setCodigoDetectado(valor);
-          if (onCodigoDetectado) onCodigoDetectado(valor);
-        }
-      } catch (e) {
-        // Se ignora un error puntual de detección y se sigue intentando
-      }
-      if (activo) temporizador = setTimeout(detectar, 550);
-    };
-    temporizador = setTimeout(detectar, 550);
-
-    return () => {
-      activo = false;
-      if (temporizador) clearTimeout(temporizador);
-    };
-  }, [estado, deteccionSoportada, onCodigoDetectado]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col max-w-sm mx-auto" style={{ backgroundColor: "#000000" }}>
-      <div className="flex items-center justify-between px-5 py-4" style={{ backgroundColor: "#FAF8F5" }}>
-        <h2 className="text-lg font-bold text-stone-800">Escanear código</h2>
-        <button type="button" onClick={onClose} className="p-1">
-          <X size={22} color="#57534E" />
-        </button>
-      </div>
-
-      <div className="flex-1 relative flex items-center justify-center">
-        {estado === "solicitando" && (
-          <p className="text-white text-sm text-center px-8">Solicitando acceso a la cámara...</p>
-        )}
-
-        {estado === "error" && (
-          <div className="text-center px-8 space-y-3">
-            <Camera size={40} color="#A8A29E" className="mx-auto" />
-            <p className="text-white text-sm">
-              No se pudo activar el escáner de código de barras en este entorno.
-            </p>
-            <p className="text-stone-400 text-xs">{mensajeError}</p>
-            <p className="text-stone-400 text-xs">
-              Esto puede deberse a que el Artifact no tiene permiso de cámara habilitado en este dispositivo o
-              navegador. La interfaz queda preparada para cuando el acceso a la cámara esté disponible.
-            </p>
-          </div>
-        )}
-
-        {estado === "activa" && (
-          <>
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-64 h-40 border-2 rounded-2xl" style={{ borderColor: "#2E6B4F" }} />
-            </div>
-            {!deteccionSoportada && (
-              <div className="absolute bottom-5 left-5 right-5 bg-black/60 rounded-2xl px-4 py-3">
-                <p className="text-white text-xs text-center">
-                  Cámara activa. Este navegador no soporta detección automática de códigos de barra
-                  (BarcodeDetector no disponible).
-                </p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {codigoDetectado && (
-        <div className="px-5 py-3 space-y-1" style={{ backgroundColor: "#FAF8F5" }}>
-          <p className="text-stone-500 text-xs">Código detectado</p>
-          <p className="text-stone-800 font-bold text-base break-all">{codigoDetectado}</p>
-          {mensaje ? (
-            <p className="text-sm font-medium" style={{ color: "#2E6B4F" }}>
-              {mensaje}
-            </p>
-          ) : (
-            <p className="text-stone-400 text-xs">
-              Este código todavía no está asociado a ningún producto.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Lista de lo agregado + pago + confirmar, siempre abajo de todo, sin
-          tener que cerrar el escáner para ver o confirmar la venta. */}
-      {items && items.length > 0 && (
-        <div
-          className="px-5 pt-2 pb-4 space-y-2"
-          style={{ backgroundColor: "#111111", maxHeight: "45vh", overflowY: "auto" }}
-        >
-          <p className="text-[10px] uppercase tracking-wide text-stone-400 pb-0.5">
-            Agregado en esta venta
-          </p>
-          <div className="space-y-1">
-            {items.map((it) => (
-              <div key={it.id} className="flex items-center justify-between text-xs text-white">
-                <span className="truncate pr-2">
-                  {it.producto.nombre} × {it.cantidad}
-                  {it.producto.unidad === "kg" ? "kg" : ""}
-                </span>
-                <span className="shrink-0">{formatMoney(it.subtotal)}</span>
-              </div>
-            ))}
-          </div>
-
-          <div
-            className="flex items-center justify-between text-sm font-semibold pt-2"
-            style={{ color: "#FFFFFF", borderTop: "1px solid #FFFFFF33" }}
-          >
-            <span>Total</span>
-            <span>{formatMoney(total || 0)}</span>
-          </div>
-
-          <div className="flex gap-2 pt-1">
-            {["Efectivo", "Débito"].map((m) => (
-              <button
-                type="button"
-                key={m}
-                onClick={() => setPago(m)}
-                className="flex-1 rounded-xl py-2 text-sm font-semibold border"
-                style={
-                  pago === m
-                    ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                    : { backgroundColor: "transparent", color: "#FFFFFF", borderColor: "#FFFFFF55" }
-                }
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={onConfirmar}
-            disabled={!pago || enviando}
-            className="w-full appearance-none font-semibold rounded-xl py-3 text-sm flex items-center justify-center gap-2"
-            style={
-              !pago || enviando
-                ? { backgroundColor: "#3A3A3A", color: "#8A8A8A" }
-                : { backgroundColor: "#2E6B4F", color: "#FFFFFF" }
-            }
-          >
-            Confirmar venta
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 
 
@@ -681,17 +465,73 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarSt
       )}
 
       {escaneando && (
-        <EscanerCodigoBarras
+        <BarcodeScanner
           onClose={() => setEscaneando(false)}
           onCodigoDetectado={manejarCodigoDetectado}
           mensaje={mensajeEscaneo}
-          items={items}
-          total={total}
-          pago={pago}
-          setPago={setPago}
-          onConfirmar={confirmarVenta}
-          enviando={enviando}
-        />
+        >
+          {items && items.length > 0 && (
+            <div
+              className="px-5 pt-2 pb-4 space-y-2"
+              style={{ backgroundColor: "#111111", maxHeight: "45vh", overflowY: "auto" }}
+            >
+              <p className="text-[10px] uppercase tracking-wide text-stone-400 pb-0.5">
+                Agregado en esta venta
+              </p>
+              <div className="space-y-1">
+                {items.map((it) => (
+                  <div key={it.id} className="flex items-center justify-between text-xs text-white">
+                    <span className="truncate pr-2">
+                      {it.producto.nombre} × {it.cantidad}
+                      {it.producto.unidad === "kg" ? "kg" : ""}
+                    </span>
+                    <span className="shrink-0">{formatMoney(it.subtotal)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className="flex items-center justify-between text-sm font-semibold pt-2"
+                style={{ color: "#FFFFFF", borderTop: "1px solid #FFFFFF33" }}
+              >
+                <span>Total</span>
+                <span>{formatMoney(total || 0)}</span>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                {["Efectivo", "Débito"].map((m) => (
+                  <button
+                    type="button"
+                    key={m}
+                    onClick={() => setPago(m)}
+                    className="flex-1 rounded-xl py-2 text-sm font-semibold border"
+                    style={
+                      pago === m
+                        ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
+                        : { backgroundColor: "transparent", color: "#FFFFFF", borderColor: "#FFFFFF55" }
+                    }
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={confirmarVenta}
+                disabled={!pago || enviando}
+                className="w-full appearance-none font-semibold rounded-xl py-3 text-sm flex items-center justify-center gap-2"
+                style={
+                  !pago || enviando
+                    ? { backgroundColor: "#3A3A3A", color: "#8A8A8A" }
+                    : { backgroundColor: "#2E6B4F", color: "#FFFFFF" }
+                }
+              >
+                Confirmar venta
+              </button>
+            </div>
+          )}
+        </BarcodeScanner>
       )}
     </div>
   );
@@ -1552,7 +1392,7 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
       </div>
 
       {escaneandoCodigo && (
-        <EscanerCodigoBarras
+        <BarcodeScanner
           onClose={() => setEscaneandoCodigo(false)}
           onCodigoDetectado={(codigo) => {
             setCodigoBarras((codigo || "").trim());
