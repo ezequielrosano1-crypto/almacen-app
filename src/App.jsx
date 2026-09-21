@@ -9,7 +9,6 @@ import {
   Minus,
   ChevronRight,
   ArrowLeft,
-  Search,
   AlertTriangle,
   XCircle,
   CheckCircle2,
@@ -64,6 +63,11 @@ import {
 } from "./data/cashShiftRepository";
 import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
+import { Header } from "./components/Header";
+import { PrimaryButton } from "./components/PrimaryButton";
+import { Row } from "./components/Row";
+import { SearchBar } from "./components/SearchBar";
+import { StatusDot } from "./components/StatusDot";
 
 // ===========================================================================
 // Constantes / configuración
@@ -122,55 +126,6 @@ function BottomNav({ active, onChange }) {
 // ===========================================================================
 // Componentes visuales reutilizables (sin estado propio)
 // ===========================================================================
-function Header({ title, onBack }) {
-  return (
-    <div className="px-5 pt-6 pb-4 flex items-center gap-3">
-      {onBack && (
-        <button type="button" onClick={onBack} className="p-1 -ml-1">
-          <ArrowLeft size={22} color="#57534E" />
-        </button>
-      )}
-      <h1 className="text-2xl font-bold text-stone-800">{title}</h1>
-    </div>
-  );
-}
-
-function Row({ label, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-4 shadow-sm text-left"
-    >
-      <span className="text-stone-700 font-medium">{label}</span>
-      <ChevronRight size={20} color="#B8B2A5" />
-    </button>
-  );
-}
-
-function EstadoDot({ estado }) {
-  return (
-    <span
-      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-      style={{ backgroundColor: getStatusColor(estado) }}
-    />
-  );
-}
-
-function SearchBar({ value, onChange, placeholder }) {
-  return (
-    <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 shadow-sm">
-      <Search size={18} color="#B8B2A5" />
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || "Buscar..."}
-        className="flex-1 bg-transparent outline-none text-stone-700 text-sm"
-      />
-    </div>
-  );
-}
-
 function ProductoListRow({ producto, onClick }) {
   const estado = getProductStatus(producto);
   return (
@@ -180,31 +135,13 @@ function ProductoListRow({ producto, onClick }) {
       className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
     >
       <div className="flex items-center gap-3">
-        <EstadoDot estado={estado} />
+        <StatusDot estado={estado} />
         <div>
           <p className="text-stone-800 font-medium text-sm">{producto.nombre}</p>
           <p className="text-stone-400 text-xs">{formatMoney(producto.precio)}{producto.unidad === "kg" ? " / kg" : ""}</p>
         </div>
       </div>
       <span className="text-stone-600 text-sm font-medium">{formatStock(producto)}</span>
-    </button>
-  );
-}
-
-function PrimaryButton({ children, onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="w-full appearance-none font-semibold rounded-2xl py-4 text-lg shadow-sm flex items-center justify-center gap-2"
-      style={
-        disabled
-          ? { backgroundColor: "#E7E5E4", color: "#78716C", cursor: "not-allowed" }
-          : { backgroundColor: "#2E6B4F", color: "#FFFFFF" }
-      }
-    >
-      {children}
     </button>
   );
 }
@@ -1172,7 +1109,7 @@ function DetalleProducto({ productos, productoId, pop, goTabScreen }) {
           <div className="flex justify-between items-center text-sm border-t border-stone-100 pt-3">
             <span className="text-stone-500">Estado</span>
             <span className="flex items-center gap-2 font-medium" style={{ color: getStatusColor(estado) }}>
-              <EstadoDot estado={estado} />
+              <StatusDot estado={estado} />
               {etiqueta}
             </span>
           </div>
@@ -1219,7 +1156,7 @@ function StockBajo({ productosAgotados, productosBajo, pop, onOpenDetalle }) {
               className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
             >
               <div className="flex items-center gap-3">
-                <EstadoDot estado={estado} />
+                <StatusDot estado={estado} />
                 <div>
                   <p className="text-stone-800 font-medium text-sm">{p.nombre}</p>
                   <p className="text-stone-400 text-xs">
