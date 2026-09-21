@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Plus,
-  ChevronRight,
   ArrowLeft,
   AlertTriangle,
   XCircle,
@@ -14,7 +13,6 @@ import {
   CASH_SHIFT_STORAGE_KEY,
   TEST_CASH_SHIFT_STORAGE_KEY,
 } from "./lib/constants";
-import { formatMoney, formatDate } from "./lib/format";
 import { nextId } from "./lib/ids";
 import { initialProducts, initialStockMovements } from "./lib/initialData";
 import {
@@ -67,6 +65,8 @@ import { ProductDetailView } from "./views/ProductDetailView";
 import { LowStockView } from "./views/LowStockView";
 import { AddStockEntryView } from "./views/AddStockEntryView";
 import { AdjustStockView } from "./views/AdjustStockView";
+import { StockMovementsView } from "./views/StockMovementsView";
+import { StockMovementDetailView } from "./views/StockMovementDetailView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -102,155 +102,6 @@ import { AdjustStockView } from "./views/AdjustStockView";
 // ===========================================================================
 // MOVIMIENTOS
 // ===========================================================================
-function Movimientos({ movimientos, onOpenDetalle }) {
-  const [filtro, setFiltro] = useState("Todos");
-  const filtros = ["Todos", "Ventas", "Entradas", "Ajustes"];
-  const tipoDeFiltro = { Ventas: "venta", Entradas: "entrada", Ajustes: "ajuste" };
-
-  const lista = movimientos.filter((m) => filtro === "Todos" || m.tipo === tipoDeFiltro[filtro]);
-
-  const resumenMovimiento = (m) => {
-    if (m.tipo === "venta") return `Venta · ${formatMoney(m.total)}`;
-    if (m.tipo === "entrada") return `Entrada · ${m.producto}`;
-    return `Ajuste · ${m.producto}`;
-  };
-  const colorTipo = (tipo) =>
-    tipo === "venta" ? COLORS.principal : tipo === "entrada" ? "#5B7DB1" : COLORS.bajo;
-
-  return (
-    <div>
-      <Header title="Movimientos" />
-      <div className="px-5 space-y-3">
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-5 px-5">
-          {filtros.map((f) => (
-            <button
-              type="button"
-              key={f}
-              onClick={() => setFiltro(f)}
-              className="whitespace-nowrap text-sm rounded-full px-3.5 py-1.5 border"
-              style={
-                filtro === f
-                  ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                  : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
-              }
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          {lista.length === 0 && (
-            <div className="bg-white rounded-2xl shadow-sm px-4 py-6 text-center text-stone-400 text-sm">
-              Todavía no hay movimientos registrados
-            </div>
-          )}
-          {lista.map((m) => (
-            <button
-              type="button"
-              key={m.id}
-              onClick={() => onOpenDetalle(m.id)}
-              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: colorTipo(m.tipo) }}
-                />
-                <div>
-                  <p className="text-stone-800 font-medium text-sm">{resumenMovimiento(m)}</p>
-                  <p className="text-stone-400 text-xs">{formatDate(m.fecha)}</p>
-                </div>
-              </div>
-              <ChevronRight size={18} color="#B8B2A5" />
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DetalleMovimiento({ movimientos, movimientoId, pop }) {
-  const m = movimientos.find((mv) => mv.id === movimientoId);
-  if (!m) return null;
-
-  return (
-    <div>
-      <Header title="Detalle del movimiento" onBack={pop} />
-      <div className="px-5">
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Fecha</span>
-            <span className="text-stone-800 font-medium">{formatDate(m.fecha)}</span>
-          </div>
-
-          {m.tipo === "venta" && (
-            <>
-              <div className="border-t border-stone-100 pt-3 space-y-1">
-                {m.items.map((it, i) => (
-                  <div key={it.nombre + i} className="flex justify-between text-sm">
-                    <span className="text-stone-600">
-                      {it.nombre} × {it.cantidad}
-                      {it.unidad === "kg" ? "kg" : ""}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between text-sm border-t border-stone-100 pt-3">
-                <span className="text-stone-500">Total</span>
-                <span className="text-stone-800 font-bold">{formatMoney(m.total)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Medio de pago</span>
-                <span className="text-stone-800 font-medium">{m.pago}</span>
-              </div>
-            </>
-          )}
-
-          {m.tipo === "entrada" && (
-            <>
-              <div className="flex justify-between text-sm border-t border-stone-100 pt-3">
-                <span className="text-stone-500">Producto</span>
-                <span className="text-stone-800 font-medium">{m.producto}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Cantidad</span>
-                <span className="text-stone-800 font-medium">
-                  +{m.cantidad}
-                  {m.unidad === "kg" ? "kg" : " un."}
-                </span>
-              </div>
-            </>
-          )}
-
-          {m.tipo === "ajuste" && (
-            <>
-              <div className="flex justify-between text-sm border-t border-stone-100 pt-3">
-                <span className="text-stone-500">Producto</span>
-                <span className="text-stone-800 font-medium">{m.producto}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Diferencia</span>
-                <span className="text-stone-800 font-medium">
-                  {m.diferencia > 0 ? "+" : ""}
-                  {m.diferencia}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Motivo</span>
-                <span className="text-stone-800 font-medium">{m.motivo}</span>
-              </div>
-            </>
-          )}
-        </div>
-        <p className="text-stone-400 text-xs text-center mt-4">
-          Los movimientos son de solo lectura y no pueden editarse ni borrarse.
-        </p>
-      </div>
-    </div>
-  );
-}
 
 // ===========================================================================
 // MÁS
@@ -1226,11 +1077,17 @@ const actualizarStock = async (id, nuevoStock) => {
 
     if (tab === "movements") {
       if (current.screen === "stockMovementDetail")
-        return <DetalleMovimiento movimientos={movimientos} movimientoId={current.params.movementId} pop={pop} />;
+        return (
+          <StockMovementDetailView
+            movements={movimientos}
+            movementId={current.params.movementId}
+            pop={pop}
+          />
+        );
       return (
-        <Movimientos
-          movimientos={movimientos}
-          onOpenDetalle={(id) => push("stockMovementDetail", { movementId: id })}
+        <StockMovementsView
+          movements={movimientos}
+          onOpenDetail={(id) => push("stockMovementDetail", { movementId: id })}
         />
       );
     }
