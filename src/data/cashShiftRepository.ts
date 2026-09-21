@@ -58,3 +58,18 @@ export async function reopenShift(id: string, p: CashShiftReopenUpdate): Promise
 
   return data as CashShiftRow;
 }
+
+export async function listClosedShifts(): Promise<CashShiftRow[]> {
+  const { data, error } = await supabase
+    .from("jornada")
+    .select("*")
+    .eq("negocio_id", 1)
+    .eq("estado", "CERRADA")
+    .order("fecha", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []) as CashShiftRow[];
+}

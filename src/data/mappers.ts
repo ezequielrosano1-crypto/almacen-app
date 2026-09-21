@@ -328,6 +328,32 @@ export function fromStoredClosingSummary(stored: StoredClosingSummary): ClosingS
   };
 }
 
+/** A closed jornada row is the closing record: the table is the source of truth. */
+export function cashShiftRowToClosingSummary(row: CashShiftRow): ClosingSummary {
+  return {
+    date: row.fecha,
+    time: row.hora_cierre ?? "",
+    total: Number(row.total ?? 0),
+    salesCount: Number(row.cantidad_ventas ?? 0),
+    isAutoClosed: row.cerrado_automatico,
+  };
+}
+
+/** Closing of the shift the app already loaded, or null while it is still open. */
+export function storedShiftToClosingSummary(
+  shift: StoredCashShift | null | undefined,
+): ClosingSummary | null {
+  if (shift?.estado !== "CERRADA") return null;
+
+  return {
+    date: shift.fecha,
+    time: shift.horaCierre ?? "",
+    total: Number(shift.total ?? 0),
+    salesCount: Number(shift.cantidadVentas ?? 0),
+    isAutoClosed: shift.cerradoAutomaticamente,
+  };
+}
+
 /**
  * Mapea CashShift a StoredCashShift.
  */

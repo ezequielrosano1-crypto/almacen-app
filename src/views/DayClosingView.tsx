@@ -1,20 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
 import { Header } from "../components/Header";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { closeShiftManually } from "../data/cashShiftRepository";
+import { storedShiftToClosingSummary } from "../data/mappers";
 import { formatUruguayTime, todayDateKey } from "../lib/dates";
 import { formatMoney } from "../lib/format";
-import { readJson } from "../lib/storage/storage";
-import type { MovementRecordItem } from "../types/domain";
+import type { ClosingSummary, MovementRecordItem } from "../types/domain";
 import type { StoredCashShift } from "../types/storage";
-
-export interface DayClosingRecord {
-  fecha: string;
-  hora: string;
-  total: number;
-  cantidadVentas: number;
-}
 
 export interface DayClosingViewProps {
   todayTotal?: number;
@@ -35,43 +28,23 @@ export function DayClosingView(props: DayClosingViewProps) {
   const caja = props.cashShift ?? null;
   const actualizarCaja = props.onUpdateCashShift;
 
-  const claveHoy = `cierre:${todayDateKey()}`;
-  const [cargando, setCargando] = useState(true);
-  const [cierre, setCierre] = useState<DayClosingRecord | null>(null);
+  // The jornada loaded from the database is the closing record; the local state only
+  // covers the moment right after confirming, before the parent refreshes `cashShift`.
+  const [cierreLocal, setCierreLocal] = useState<ClosingSummary | null>(null);
+  const cierre = storedShiftToClosingSummary(caja) ?? cierreLocal;
   const [confirmando, setConfirmando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorGuardado, setErrorGuardado] = useState(false);
-
-  useEffect(() => {
-    let activo = true;
-    (async () => {
-      try {
-        const guardado = await readJson<DayClosingRecord>(claveHoy);
-        if (activo && guardado) {
-          setCierre(guardado);
-        }
-      } catch (_e) {
-        // Todavía no existe un cierre guardado para hoy: se mantiene cierre en null
-      } finally {
-        if (activo) {
-          setCargando(false);
-        }
-      }
-    })();
-    return () => {
-      activo = false;
-    };
-  }, [claveHoy]);
 
   const confirmarCierre = async () => {
     if (guardando || cierre) return;
     setGuardando(true);
     setErrorGuardado(false);
-    const registro: DayClosingRecord = {
-      fecha: todayDateKey(),
-      hora: formatUruguayTime(),
+    const registro: ClosingSummary = {
+      date: todayDateKey(),
+      time: formatUruguayTime(),
       total: totalHoy,
-      cantidadVentas: ventasHoy.length,
+      salesCount: ventasHoy.length,
     };
     try {
       if (!caja?.id) {
@@ -80,10 +53,10 @@ export function DayClosingView(props: DayClosingViewProps) {
 
       await closeShiftManually(caja.id, {
         estado: "CERRADA",
-        hora_cierre: registro.hora,
+        hora_cierre: registro.time,
         cerrado_automatico: false,
         total: Number(registro.total),
-        cantidad_ventas: Number(registro.cantidadVentas),
+        cantidad_ventas: Number(registro.salesCount),
         updated_at: new Date().toISOString(),
       });
 
@@ -92,16 +65,16 @@ export function DayClosingView(props: DayClosingViewProps) {
         id: caja.id,
         fecha: todayDateKey(),
         estado: "CERRADA",
-        horaCierre: registro.hora,
+        horaCierre: registro.time,
         cerradoAutomaticamente: false,
         total: Number(registro.total),
-        cantidadVentas: Number(registro.cantidadVentas),
+        cantidadVentas: Number(registro.salesCount),
       };
 
       if (actualizarCaja) {
         actualizarCaja(cerrada);
       }
-      setCierre(registro);
+      setCierreLocal(registro);
       setConfirmando(false);
     } catch (e) {
       console.error("Error guardando cierre de jornada:", e);
@@ -136,20 +109,18 @@ export function DayClosingView(props: DayClosingViewProps) {
         </div>
       </div>
 
-      {cargando ? (
-        <p className="text-stone-400 text-sm text-center py-3">Verificando el estado del día...</p>
-      ) : cierre ? (
+      {cierre ? (
         <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-2">
           <p className="text-sm font-semibold" style={{ color: "#2E6B4F" }}>
             Día cerrado
           </p>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Fecha</span>
-            <span className="text-stone-800 font-medium">{cierre.fecha}</span>
+            <span className="text-stone-800 font-medium">{cierre.date}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Hora de cierre</span>
-            <span className="text-stone-800 font-medium">{cierre.hora}</span>
+            <span className="text-stone-800 font-medium">{cierre.time}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Total cerrado</span>
@@ -157,7 +128,7 @@ export function DayClosingView(props: DayClosingViewProps) {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Cantidad de ventas</span>
-            <span className="text-stone-800 font-medium">{cierre.cantidadVentas}</span>
+            <span className="text-stone-800 font-medium">{cierre.salesCount}</span>
           </div>
         </div>
       ) : confirmando ? (
