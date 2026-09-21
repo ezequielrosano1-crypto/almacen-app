@@ -17,7 +17,7 @@ import {
   TEST_CASH_SHIFT_STORAGE_KEY,
 } from "./lib/constants";
 import { formatMoney, formatDate } from "./lib/format";
-import { formatStock, getProductStatus, getStatusColor } from "./lib/stock";
+import { formatStock } from "./lib/stock";
 import { nextId } from "./lib/ids";
 import { initialProducts, initialStockMovements } from "./lib/initialData";
 import {
@@ -55,7 +55,6 @@ import { Header } from "./components/Header";
 import { PrimaryButton } from "./components/PrimaryButton";
 import { Row } from "./components/Row";
 import { SearchBar } from "./components/SearchBar";
-import { StatusDot } from "./components/StatusDot";
 import { BottomNav } from "./components/BottomNav";
 import { CashRegisterStatusCard as EstadoCajaCard } from "./components/CashRegisterStatusCard";
 import { ConfirmationScreen } from "./components/ConfirmationScreen";
@@ -67,6 +66,10 @@ import { SalesView } from "./views/SalesView";
 import { NewSaleView } from "./views/NewSaleView";
 import { DayClosingView } from "./views/DayClosingView";
 import { ClosingHistoryView } from "./views/ClosingHistoryView";
+import { StockView } from "./views/StockView";
+import { ProductCatalogView } from "./views/ProductCatalogView";
+import { ProductDetailView } from "./views/ProductDetailView";
+import { LowStockView } from "./views/LowStockView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -98,128 +101,6 @@ import { ClosingHistoryView } from "./views/ClosingHistoryView";
 // ===========================================================================
 // STOCK
 // ===========================================================================
-
-function StockMain({ push }) {
-  return (
-    <div>
-      <Header title="Stock" />
-      <div className="px-5 space-y-3">
-        <Row label="Ver productos" onClick={() => push("productCatalog")} />
-        <Row label="Stock bajo" onClick={() => push("lowStock")} />
-        <Row label="Agregar entrada" onClick={() => push("addStockEntry")} />
-        <Row label="Ajustar stock" onClick={() => push("adjustStock")} />
-      </div>
-    </div>
-  );
-}
-
-
-
-function VerProductos({ productos, pop, onOpenDetalle }) {
-  const [busqueda, setBusqueda] = useState("");
-
-  return (
-    <div>
-      <Header title="Ver productos" onBack={pop} />
-      <div className="px-5 space-y-3">
-        <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-        <ListaProductos productos={productos} busqueda={busqueda} onProductoClick={onOpenDetalle} />
-      </div>
-    </div>
-  );
-}
-
-function DetalleProducto({ productos, productoId, pop, goTabScreen }) {
-  const p = productos.find((pr) => pr.id === productoId);
-  if (!p) return null;
-  const estado = getProductStatus(p);
-  const etiqueta = estado === "agotado" ? "Agotado" : estado === "bajo" ? "Stock bajo" : "Normal";
-
-  return (
-    <div>
-      <Header title={p.nombre} onBack={pop} />
-      <div className="px-5 space-y-3">
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Precio</span>
-            <span className="text-stone-800 font-medium">{formatMoney(p.precio)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Stock actual</span>
-            <span className="text-stone-800 font-medium">{formatStock(p)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Stock mínimo</span>
-            <span className="text-stone-800 font-medium">
-              {p.stockMinimo} {p.unidad === "kg" ? "kg" : "un."}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm border-t border-stone-100 pt-3">
-            <span className="text-stone-500">Estado</span>
-            <span className="flex items-center gap-2 font-medium" style={{ color: getStatusColor(estado) }}>
-              <StatusDot estado={estado} />
-              {etiqueta}
-            </span>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => goTabScreen("stock", "addStockEntry", { productId: p.id })}
-            className="font-semibold rounded-2xl py-3 text-sm shadow-sm border"
-            style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
-          >
-            Agregar entrada
-          </button>
-          <button
-            type="button"
-            onClick={() => goTabScreen("stock", "adjustStock", { productId: p.id })}
-            className="font-semibold rounded-2xl py-3 text-sm shadow-sm border"
-            style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
-          >
-            Ajustar stock
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StockBajo({ productosAgotados, productosBajo, pop, onOpenDetalle }) {
-  const lista = [...productosAgotados, ...productosBajo];
-  return (
-    <div>
-      <Header title="Stock bajo" onBack={pop} />
-      <div className="px-5 space-y-2">
-        {lista.length === 0 && (
-          <p className="text-stone-400 text-sm text-center py-6">No hay productos para revisar</p>
-        )}
-        {lista.map((p) => {
-          const estado = getProductStatus(p);
-          return (
-            <button
-              type="button"
-              key={p.id}
-              onClick={() => onOpenDetalle(p.id)}
-              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
-            >
-              <div className="flex items-center gap-3">
-                <StatusDot estado={estado} />
-                <div>
-                  <p className="text-stone-800 font-medium text-sm">{p.nombre}</p>
-                  <p className="text-stone-400 text-xs">
-                    Actual: {formatStock(p)} · Mínimo: {p.stockMinimo} {p.unidad === "kg" ? "kg" : "un."}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight size={18} color="#B8B2A5" />
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function AgregarEntrada({ productos, productoIdInicial, actualizarStock, registrarMovimiento, pop, resetStack }) {
   const [productoId, setProductoId] = useState(productoIdInicial || null);
@@ -1477,28 +1358,28 @@ const actualizarStock = async (id, nuevoStock) => {
     if (tab === "stock") {
       if (current.screen === "productCatalog")
         return (
-          <VerProductos
-            productos={productos}
+          <ProductCatalogView
+            products={productos}
             pop={pop}
-            onOpenDetalle={(id) => push("productDetail", { productId: id })}
+            onOpenDetail={(id) => push("productDetail", { productId: id })}
           />
         );
       if (current.screen === "productDetail")
         return (
-          <DetalleProducto
-            productos={productos}
-            productoId={current.params.productId}
+          <ProductDetailView
+            products={productos}
+            productId={current.params.productId}
             pop={pop}
             goTabScreen={goTabScreen}
           />
         );
       if (current.screen === "lowStock")
         return (
-          <StockBajo
-            productosAgotados={productosAgotados}
-            productosBajo={productosBajo}
+          <LowStockView
+            outOfStockProducts={productosAgotados}
+            lowStockProducts={productosBajo}
             pop={pop}
-            onOpenDetalle={(id) => push("productDetail", { productId: id })}
+            onOpenDetail={(id) => push("productDetail", { productId: id })}
           />
         );
       if (current.screen === "addStockEntry")
@@ -1523,7 +1404,7 @@ const actualizarStock = async (id, nuevoStock) => {
             resetStack={resetStack}
           />
         );
-      return <StockMain push={push} />;
+      return <StockView push={push} />;
     }
 
     if (tab === "movements") {
