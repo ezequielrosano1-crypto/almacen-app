@@ -3,7 +3,6 @@ import { supabase } from "./data/supabaseClient";
 import {
   COLORS,
   CASH_SHIFT_STORAGE_KEY,
-  TEST_CASH_SHIFT_STORAGE_KEY,
 } from "./lib/constants";
 import { nextId } from "./lib/ids";
 import { initialProducts, initialStockMovements } from "./lib/initialData";
@@ -59,6 +58,7 @@ import { MoreView } from "./views/MoreView";
 import { BusinessInfoView } from "./views/BusinessInfoView";
 import { ProductsView } from "./views/ProductsView";
 import { ProductFormView } from "./views/ProductFormView";
+import { CashRegisterSandboxView } from "./views/CashRegisterSandboxView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -101,162 +101,7 @@ import { ProductFormView } from "./views/ProductFormView";
 
 
 
-// ===========================================================================
-// Panel de pruebas de caja automática (punto 14 del pedido) — corre la
-// sincronización sobre una caja "sandbox" (storageKey separado) para poder
-// simular horarios sin esperar al reloj real ni tocar la caja de producción.
-// ===========================================================================
-const DIA_1 = "2026-09-14";
-const DIA_2 = "2026-09-15";
 
-const ESCENARIOS_PRUEBA = [
-  { label: "07:59 · antes de apertura", fecha: DIA_1, horaNumero: 7 + 59 / 60, esperado: "CERRADA" },
-  { label: "08:00 · apertura", fecha: DIA_1, horaNumero: 8, esperado: "ABIERTA" },
-  { label: "12:00 · mediodía", fecha: DIA_1, horaNumero: 12, esperado: "ABIERTA" },
-  { label: "21:59 · antes del cierre", fecha: DIA_1, horaNumero: 21 + 59 / 60, esperado: "ABIERTA" },
-  { label: "22:00 · cierre automático", fecha: DIA_1, horaNumero: 22, esperado: "CERRADA" },
-  { label: "23:00 · después del cierre", fecha: DIA_1, horaNumero: 23, esperado: "CERRADA" },
-  { label: "08:00 día siguiente · nueva jornada", fecha: DIA_2, horaNumero: 8, esperado: "ABIERTA" },
-];
-
-function PruebasCaja() {
-  const [testCaja, setTestCaja] = useState(null);
-  const [log, setLog] = useState([]);
-  const [corriendo, setCorriendo] = useState(false);
-
-  const agregarLog = (texto, ok) =>
-    setLog((l) => [{ id: nextId(), texto, ok, hora: new Date().toLocaleTimeString("es-UY") }, ...l]);
-
-  const correr = async (escenario) => {
-    setCorriendo(true);
-    const resultado = await syncCashShift([], {
-      override: { fecha: escenario.fecha, horaNumero: escenario.horaNumero },
-      storageKey: TEST_CASH_SHIFT_STORAGE_KEY,
-    });
-    setTestCaja(resultado);
-    const estadoObtenido = resultado?.estado || "SIN DATOS";
-    const ok = estadoObtenido === escenario.esperado;
-    agregarLog(
-      `${escenario.label} → esperado ${escenario.esperado}, obtenido ${estadoObtenido}`,
-      ok
-    );
-    setCorriendo(false);
-  };
-
-  const correrIdempotencia = async () => {
-    setCorriendo(true);
-    const escenario = { fecha: DIA_1, horaNumero: 12 };
-    const resultados = [];
-    for (let i = 0; i < 3; i++) {
-      const r = await syncCashShift([], {
-        override: escenario,
-        storageKey: TEST_CASH_SHIFT_STORAGE_KEY,
-      });
-      resultados.push(JSON.stringify(r));
-    }
-    setTestCaja(JSON.parse(resultados[2]));
-    const estable = resultados[0] === resultados[1] && resultados[1] === resultados[2];
-    agregarLog(
-      estable
-        ? "Ejecutada 3 veces seguidas a las 12:00 → mismo resultado, sin duplicar (OK)"
-        : "Ejecutada 3 veces seguidas → los resultados difieren (revisar)",
-      estable
-    );
-    setCorriendo(false);
-  };
-
-  const intentarVentaConCajaCerrada = () => {
-    const bloqueada = !testCaja || testCaja.estado !== "ABIERTA";
-    agregarLog(
-      bloqueada
-        ? "Intento de venta con caja cerrada → bloqueada correctamente (OK)"
-        : "Intento de venta con caja cerrada → NO se bloqueó (revisar)",
-      bloqueada
-    );
-  };
-
-  const reiniciarSandbox = async () => {
-    setCorriendo(true);
-    try {
-      await removeKey(TEST_CASH_SHIFT_STORAGE_KEY);
-    } catch (e) {}
-    setTestCaja(null);
-    setLog([]);
-    setCorriendo(false);
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-1">
-        <p className="text-sm font-semibold text-stone-800">Estado sandbox actual</p>
-        {testCaja ? (
-          <EstadoCajaCard caja={testCaja} totalHoy={0} />
-        ) : (
-          <p className="text-xs text-stone-400">Todavía no corriste ningún escenario.</p>
-        )}
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-        <p className="text-xs font-semibold text-stone-500 px-1">Escenarios de horario</p>
-        {ESCENARIOS_PRUEBA.map((e, i) => (
-          <button
-            key={i}
-            type="button"
-            disabled={corriendo}
-            onClick={() => correr(e)}
-            className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-            style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
-          >
-            {e.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-        <p className="text-xs font-semibold text-stone-500 px-1">Otras verificaciones</p>
-        <button
-          type="button"
-          disabled={corriendo}
-          onClick={correrIdempotencia}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
-        >
-          Ejecutar 3 veces seguidas a las 12:00 (idempotencia)
-        </button>
-        <button
-          type="button"
-          disabled={corriendo}
-          onClick={intentarVentaConCajaCerrada}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
-        >
-          Simular intento de venta con la caja del sandbox cerrada
-        </button>
-        <button
-          type="button"
-          disabled={corriendo}
-          onClick={reiniciarSandbox}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FAF8F5", color: "#C0392B", borderColor: "#E7E5E4" }}
-        >
-          Reiniciar sandbox de pruebas
-        </button>
-      </div>
-
-      {log.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-          <p className="text-xs font-semibold text-stone-500 px-1">Resultados</p>
-          {log.map((l) => (
-            <div key={l.id} className="flex items-start gap-2 text-xs px-1">
-              <span>{l.ok ? "✅" : "⚠️"}</span>
-              <span className="text-stone-600 flex-1">{l.texto}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function BorrarDatos() {
   const [confirmando, setConfirmando] = useState(false);
@@ -329,7 +174,7 @@ function Configuracion({ pop }) {
           <p className="text-xs font-semibold text-stone-500 px-1 mb-2">
             Pruebas · caja automática
           </p>
-          <PruebasCaja />
+          <CashRegisterSandboxView />
         </div>
       </div>
     </div>
