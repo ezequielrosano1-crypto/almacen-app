@@ -46,12 +46,10 @@ import {
   upsertProduct,
 } from "./data/productsRepository";
 import {
-  createSale,
-  insertSaleItems,
-  deleteSale,
   listSalesWithItems,
   listSaleItems,
 } from "./data/salesRepository";
+import { submitSale } from "./data/submitSale";
 import { insertStockEntry } from "./data/stockMovementsRepository";
 import {
   closeShiftManually,
@@ -150,39 +148,7 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarSt
   setEnviando(true);
 
   try {
-    const venta = await createSale({
-      negocio_id: 1,
-      jornada_id: null,
-      fecha: new Date().toISOString(),
-      total: Number(total),
-      pago,
-    });
-
-    const itemsVenta = items.map((it) => ({
-      venta_id: venta.id,
-      producto_id: it.producto.id,
-      nombre: it.producto.nombre,
-      cantidad: Number(it.cantidad),
-      unidad: it.producto.unidad,
-      precio_unitario: Number(it.producto.precio),
-      subtotal: Number(it.subtotal),
-    }));
-
-    try {
-      await insertSaleItems(itemsVenta);
-    } catch (errorItems) {
-      await deleteSale(venta.id);
-      throw errorItems;
-    }
-
-    for (const it of items) {
-      const nuevoStock =
-        Math.round((it.producto.stock - it.cantidad) * 100) / 100;
-      await updateProductStock(it.producto.id, nuevoStock);
-    }
-
- 
-
+    await submitSale({ total, pago, items });
     setConfirmada({ total, pago });
   } catch (error) {
     console.error("Error registrando venta:", error);
