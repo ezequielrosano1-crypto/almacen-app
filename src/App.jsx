@@ -49,9 +49,6 @@ import {
   listSaleItems,
 } from "./data/salesRepository";
 import { insertStockEntry } from "./data/stockMovementsRepository";
-import {
-  closeShiftManually,
-} from "./data/cashShiftRepository";
 import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
 import { Header } from "./components/Header";
@@ -68,6 +65,7 @@ import { BarcodeScanner } from "./components/BarcodeScanner";
 import { HomeView } from "./views/HomeView";
 import { SalesView } from "./views/SalesView";
 import { NewSaleView } from "./views/NewSaleView";
+import { DayClosingView } from "./views/DayClosingView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -94,159 +92,7 @@ import { NewSaleView } from "./views/NewSaleView";
 
 
 
-function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, actualizarCaja }) {
-  const claveHoy = `cierre:${todayDateKey()}`;
-  const [cargando, setCargando] = useState(true);
-  const [cierre, setCierre] = useState(null);
-  const [confirmando, setConfirmando] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-  const [errorGuardado, setErrorGuardado] = useState(false);
 
-  useEffect(() => {
-    let activo = true;
-    (async () => {
-      try {
-        const guardado = await readJson(claveHoy);
-        if (activo && guardado) {
-          setCierre(guardado);
-        }
-      } catch (e) {
-        // Todavía no existe un cierre guardado para hoy: se mantiene cierre en null
-      } finally {
-        if (activo) setCargando(false);
-      }
-    })();
-    return () => {
-      activo = false;
-    };
-  }, [claveHoy]);
-
-  const confirmarCierre = async () => {
-    if (guardando || cierre) return;
-    setGuardando(true);
-    setErrorGuardado(false);
-    const registro = {
-      fecha: todayDateKey(),
-      hora: formatUruguayTime(),
-      total: totalHoy,
-      cantidadVentas: ventasHoy.length,
-    };
-    try {
-  if (!caja?.id) {
-    throw new Error("No hay una jornada de caja activa.");
-  }
-
-    await closeShiftManually(caja.id, {
-      estado: "CERRADA",
-      hora_cierre: registro.hora,
-      cerrado_automatico: false,
-      total: Number(registro.total),
-      cantidad_ventas: Number(registro.cantidadVentas),
-      updated_at: new Date().toISOString(),
-    });
-
-  const cerrada = {
-    ...(caja || {}),
-    id: caja.id,
-    fecha: todayDateKey(),
-    estado: "CERRADA",
-    horaCierre: registro.hora,
-    cerradoAutomaticamente: false,
-    total: Number(registro.total),
-    cantidadVentas: Number(registro.cantidadVentas),
-  };
-
-  if (actualizarCaja) actualizarCaja(cerrada);
-  setCierre(registro);
-  setConfirmando(false);
-   
- } catch (e) {
-  console.error("Error guardando cierre de jornada:", e);
-  setErrorGuardado(true);
-} finally {
-      setGuardando(false);
-    }
-  };
-
-  return (
-    <div className="px-5 space-y-3">
-      <Header title="Cierre del día" onBack={pop} />
-      <EstadoCajaCard caja={caja} totalHoy={totalHoy} />
-      <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
-        <div className="flex justify-between">
-          <span className="text-stone-500 text-sm">Total del día</span>
-          <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>{formatMoney(totalHoy)}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-stone-500">Efectivo</span>
-          <span className="text-stone-800 font-medium">{formatMoney(efectivoHoy)}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-stone-500">Débito</span>
-          <span className="text-stone-800 font-medium">{formatMoney(debitoHoy)}</span>
-        </div>
-        <div className="flex justify-between text-sm border-t border-stone-100 pt-3">
-          <span className="text-stone-500">Cantidad de ventas</span>
-          <span className="text-stone-800 font-medium">{ventasHoy.length}</span>
-        </div>
-      </div>
-
-      {cargando ? (
-        <p className="text-stone-400 text-sm text-center py-3">Verificando el estado del día...</p>
-      ) : cierre ? (
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-2">
-          <p className="text-sm font-semibold" style={{ color: "#2E6B4F" }}>
-            Día cerrado
-          </p>
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Fecha</span>
-            <span className="text-stone-800 font-medium">{cierre.fecha}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Hora de cierre</span>
-            <span className="text-stone-800 font-medium">{cierre.hora}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Total cerrado</span>
-            <span className="text-stone-800 font-medium">{formatMoney(cierre.total)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Cantidad de ventas</span>
-            <span className="text-stone-800 font-medium">{cierre.cantidadVentas}</span>
-          </div>
-        </div>
-      ) : confirmando ? (
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
-          <p className="text-stone-700 text-sm text-center">
-            ¿Confirmás el cierre del día? Esta acción no se puede deshacer.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setConfirmando(false)}
-              className="rounded-2xl py-3 text-sm font-semibold border"
-              style={{ backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }}
-            >
-              Cancelar
-            </button>
-            <PrimaryButton onClick={confirmarCierre} disabled={guardando}>
-              Confirmar cierre
-            </PrimaryButton>
-          </div>
-        </div>
-      ) : (
-        <div>
-          <PrimaryButton onClick={() => setConfirmando(true)}>Cerrar día</PrimaryButton>
-          {errorGuardado && (
-            <p className="text-xs text-center mt-2" style={{ color: "#C0392B" }}>
-              No se pudo guardar el cierre. Intentá nuevamente.
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ===========================================================================
 // STOCK
@@ -1677,14 +1523,14 @@ const actualizarStock = async (id, nuevoStock) => {
         );
       if (current.screen === "dayClosing")
         return (
-          <CierreDia
-            totalHoy={totalHoy}
-            efectivoHoy={efectivoHoy}
-            debitoHoy={debitoHoy}
-            ventasHoy={ventasHoy}
+          <DayClosingView
+            todayTotal={totalHoy}
+            todayCashTotal={efectivoHoy}
+            todayDebitTotal={debitoHoy}
+            todaySales={ventasHoy}
             pop={pop}
-            caja={caja}
-            actualizarCaja={setCaja}
+            cashShift={caja}
+            onUpdateCashShift={setCaja}
           />
         );
       if (current.screen === "closingHistory") return <HistorialCierres pop={pop} />;
