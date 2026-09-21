@@ -1,0 +1,73 @@
+{
+  "user:datos:movimientos": [
+    {
+      "id": 1001,
+      "fecha": "2026-09-21T10:30:00.000Z",
+      "tipo": "venta",
+      "total": 350,
+      "pago": "Efectivo",
+      "items": [
+        {
+          "productoId": 1,
+          "nombre": "Yerba",
+          "cantidad": 2,
+          "unidad": "un.",
+          "precio": 150,
+          "subtotal": 300
+        },
+        {
+          "productoId": 2,
+          "nombre": "Azúcar",
+          "cantidad": 1,
+          "unidad": "un.",
+          "precio": 50,
+          "subtotal": 50
+        }
+      ]
+    },
+    {
+      "id": 1002,
+      "fecha": "2026-09-21T09:00:00.000Z",
+      "tipo": "entrada",
+      "productoId": 1,
+      "producto": "Yerba",
+      "cantidad": 10,
+      "unidad": "un."
+    },
+    {
+      "id": 1003,
+      "fecha": "2026-09-20T18:00:00.000Z",
+      "tipo": "ajuste",
+      "producto": "Pan",
+      "diferencia": -2,
+      "motivo": "Producto vencido/roto"
+    }
+  ],
+  "user:datos:infoNegocio": {
+    "nombre": "Almacén Central",
+    "contacto": "099000111"
+  },
+  "user:cierre:2026-09-20": {
+    "fecha": "2026-09-20",
+    "hora": "22:00",
+    "total": 1540,
+    "cantidadVentas": 8,
+    "automatico": true
+  },
+  "user:cierre:2026-09-19": {
+    "fecha": "2026-09-19",
+    "hora": "21:30",
+    "total": 890,
+    "cantidadVentas": 4
+  },
+  "user:caja:jornada:test": {
+    "id": "caja-2026-09-21",
+    "fecha": "2026-09-21",
+    "estado": "ABIERTA",
+    "horaApertura": "08:00",
+    "horaCierre": null,
+    "cerradoAutomaticamente": false,
+    "total": 0,
+    "cantidadVentas": 0
+  }
+}

@@ -1,5 +1,6 @@
 import { createElement, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "./lib/storage/localStorageShim";
 import App from "./App";
 import "./index.css";
 

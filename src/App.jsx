@@ -44,61 +44,7 @@ import {
   getOutOfStockProducts,
   getWeekSales,
 } from "./lib/metrics";
-// ===========================================================================
-// Compatibilidad de almacenamiento fuera de Claude.ai
-// -----------------------------------------------------------------------
-// Dentro de Claude.ai, `window.storage` lo provee la plataforma. Si esta app
-// se despliega como sitio propio (Vercel, Netlify, etc.) esa función no
-// existe, y sin este bloque la app cargaría pero no guardaría nada. Este
-// shim implementa la misma interfaz (get/set/delete/list, todas async) pero
-// guardando en localStorage del navegador — así el resto del código (que ya
-// usa window.storage en todos lados) no necesita tocarse. Datos quedan
-// guardados solo en ESE navegador/dispositivo, no se comparten entre
-// dispositivos ni entre usuarios.
-// ===========================================================================
-if (typeof window !== "undefined" && !window.storage) {
-  const LS_KEY = "almacen-app:storage-v1";
-  const leerTodo = () => {
-    try { return JSON.parse(window.localStorage.getItem(LS_KEY) || "{}"); }
-    catch (e) { return {}; }
-  };
-  const escribirTodo = (obj) => {
-    try { window.localStorage.setItem(LS_KEY, JSON.stringify(obj)); } catch (e) {}
-  };
-  const clave = (key, shared) => (shared ? "shared:" : "user:") + key;
-
-  window.storage = {
-    async get(key, shared = false) {
-      const todo = leerTodo();
-      const k = clave(key, shared);
-      if (!(k in todo)) throw new Error(`Clave no encontrada: ${key}`);
-      return { key, value: todo[k], shared };
-    },
-    async set(key, value, shared = false) {
-      const todo = leerTodo();
-      todo[clave(key, shared)] = value;
-      escribirTodo(todo);
-      return { key, value, shared };
-    },
-    async delete(key, shared = false) {
-      const todo = leerTodo();
-      const k = clave(key, shared);
-      const existia = k in todo;
-      delete todo[k];
-      escribirTodo(todo);
-      return { key, deleted: existia, shared };
-    },
-    async list(prefix = "", shared = false) {
-      const todo = leerTodo();
-      const pfx = clave(prefix, shared);
-      const base = shared ? "shared:" : "user:";
-      const keys = Object.keys(todo)
-        .filter((k) => k.startsWith(pfx))
-        .map((k) => k.slice(base.length));
-      return { keys, prefix, shared };
-    },
-  };
-}
+import { readJson, writeJson, listKeys, removeKey } from "./lib/storage/storage";
 
 // ===========================================================================
 // Constantes / configuración
@@ -144,8 +90,11 @@ try {
       };
     }
   } else {
-    const resultado = await window.storage.get(storageKey, false);
-    if (resultado?.value) actual = JSON.parse(resultado.value);
+    try {
+      actual = await readJson(storageKey);
+    } catch (e) {
+      // Clave inexistente en storage
+    }
   }
 } catch (e) {
   console.error("Error cargando jornada:", e);
@@ -185,12 +134,8 @@ try {
 
     if (error) throw error;
   } else {
-    await window.storage.set(storageKey, JSON.stringify(cierre), false);
-    await window.storage.set(
-      claveCierre(actual.fecha),
-      JSON.stringify(resumen),
-      false
-    );
+    await writeJson(storageKey, cierre);
+    await writeJson(claveCierre(actual.fecha), resumen);
   }
 } catch (e) {
   console.error("Error guardando cierre de jornada:", e);
@@ -235,7 +180,7 @@ try {
 
     nueva.id = data.id;
   } else {
-    await window.storage.set(storageKey, JSON.stringify(nueva), false);
+    await writeJson(storageKey, nueva);
   }
 } catch (e) {
   console.error("Error guardando jornada:", e);
@@ -1073,9 +1018,9 @@ function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, act
     let activo = true;
     (async () => {
       try {
-        const resultado = await window.storage.get(claveHoy, false);
-        if (activo && resultado && resultado.value) {
-          setCierre(JSON.parse(resultado.value));
+        const guardado = await readJson(claveHoy);
+        if (activo && guardado) {
+          setCierre(guardado);
         }
       } catch (e) {
         // Todavía no existe un cierre guardado para hoy: se mantiene cierre en null
@@ -1235,13 +1180,13 @@ function HistorialCierres({ pop }) {
       try {
         // Recorre todas las claves "cierre:YYYY-MM-DD" guardadas (una por
         // cada día cerrado, manual o automáticamente) y trae cada resumen.
-        const listado = await window.storage.list("cierre:", false);
-        const claves = (listado?.keys || []).slice().sort().reverse();
+        const listado = await listKeys("cierre:");
+        const claves = (listado || []).slice().sort().reverse();
         const registros = [];
         for (const clave of claves) {
           try {
-            const r = await window.storage.get(clave, false);
-            if (r?.value) registros.push(JSON.parse(r.value));
+            const data = await readJson(clave);
+            if (data) registros.push(data);
           } catch (e) {}
         }
         if (activo) setCierres(registros);
@@ -2068,7 +2013,7 @@ function PruebasCaja() {
   const reiniciarSandbox = async () => {
     setCorriendo(true);
     try {
-      await window.storage.delete(TEST_CASH_SHIFT_STORAGE_KEY, false);
+      await removeKey(TEST_CASH_SHIFT_STORAGE_KEY);
     } catch (e) {}
     setTestCaja(null);
     setLog([]);
@@ -2154,8 +2099,8 @@ function BorrarDatos() {
 
   const borrarTodo = async () => {
     setBorrando(true);
-    try { await window.storage.delete("datos:productos", false); } catch (e) {}
-    try { await window.storage.delete("datos:movimientos", false); } catch (e) {}
+    try { await removeKey("datos:productos"); } catch (e) {}
+    try { await removeKey("datos:movimientos"); } catch (e) {}
     window.location.reload();
   };
 
@@ -2273,9 +2218,9 @@ if (data && data.length > 0) {
   console.error("Error cargando productos:", e);
 }
       try {
-        const r = await window.storage.get("datos:movimientos", false);
-        if (activo && r?.value) {
-          const lista = JSON.parse(r.value).map((m) => ({ ...m, fecha: new Date(m.fecha) }));
+        const movs = await readJson("datos:movimientos");
+        if (activo && movs) {
+          const lista = movs.map((m) => ({ ...m, fecha: new Date(m.fecha) }));
           setMovimientos(lista);
         }
       } catch (e) {}
@@ -2329,8 +2274,8 @@ if (data && data.length > 0) {
   console.error("Error cargando ventas:", e);
 }
       try {
-        const r = await window.storage.get("datos:infoNegocio", false);
-        if (activo && r?.value) setInfoNegocio(JSON.parse(r.value));
+        const info = await readJson("datos:infoNegocio");
+        if (activo && info) setInfoNegocio(info);
       } catch (e) {}
       if (activo) setCargado(true);
     })();
@@ -2531,12 +2476,12 @@ useEffect(() => {
  
   useEffect(() => {
     if (!cargado) return;
-    window.storage.set("datos:movimientos", JSON.stringify(movimientos), false).catch(() => {});
+    writeJson("datos:movimientos", movimientos).catch(() => {});
   }, [cargado, movimientos]);
 
   useEffect(() => {
     if (!cargado) return;
-    window.storage.set("datos:infoNegocio", JSON.stringify(infoNegocio), false).catch(() => {});
+    writeJson("datos:infoNegocio", infoNegocio).catch(() => {});
   }, [cargado, infoNegocio]);
 
   const [tab, setTab] = useState("home");
