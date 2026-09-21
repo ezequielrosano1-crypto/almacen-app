@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Plus,
-  Minus,
   ChevronRight,
   ArrowLeft,
   AlertTriangle,
@@ -69,6 +68,7 @@ import { ProductList as ListaProductos } from "./components/ProductList";
 import { ProductRow as ProductoListRow } from "./components/ProductRow";
 import { BarcodeScanner } from "./components/BarcodeScanner";
 import { BarcodeScannerCartPanel } from "./components/BarcodeScannerCartPanel";
+import { SaleCartFooter } from "./components/SaleCartFooter";
 import { HomeView } from "./views/HomeView";
 import { SalesView } from "./views/SalesView";
 
@@ -211,68 +211,16 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarSt
         </div>
       </div>
 
-      {items.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-stone-200 max-w-sm mx-auto flex flex-col">
-          {/* Zona con scroll propio: SOLO la lista de productos del carrito */}
-          <div className="px-5 pt-3 space-y-2 max-h-40 overflow-y-auto">
-            {items.map((it) => (
-              <div key={it.id} className="flex items-center justify-between text-sm">
-                <div className="flex-1">
-                  <p className="text-stone-800 font-medium">{it.producto.nombre}</p>
-                  <p className="text-stone-400 text-xs">{formatMoney(it.subtotal)}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => cambiarCantidad(it.id, -1)} className="p-1 bg-stone-100 rounded-full">
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-10 text-center text-stone-700">
-                    {it.cantidad}
-                    {it.producto.unidad === "kg" ? "kg" : ""}
-                  </span>
-                  <button type="button" onClick={() => cambiarCantidad(it.id, 1)} className="p-1 bg-stone-100 rounded-full">
-                    <Plus size={14} />
-                  </button>
-                  <button type="button" onClick={() => quitarProducto(it.id)} className="p-1 text-stone-400">
-                    <X size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Zona fija: Total, medio de pago y Confirmar venta — nunca dentro del scroll */}
-          <div className="px-5 pt-2 pb-4 space-y-2 border-t border-stone-100 bg-white">
-            <div className="flex justify-between items-center">
-              <span className="text-stone-500 text-sm">Total</span>
-              <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>{formatMoney(total)}</span>
-            </div>
-
-            <div className="flex gap-2">
-              {["Efectivo", "Débito"].map((m) => (
-                <button
-                  type="button"
-                  key={m}
-                  onClick={() => setPago(m)}
-                  className="flex-1 rounded-xl py-2.5 text-sm font-semibold border"
-                  style={
-                    pago === m
-                      ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                      : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
-                  }
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-
-            <div className="pt-1">
-              <PrimaryButton onClick={confirmarVenta} disabled={!pago || enviando}>
-                Confirmar venta
-              </PrimaryButton>
-            </div>
-          </div>
-        </div>
-      )}
+      <SaleCartFooter
+        items={items}
+        total={total}
+        pago={pago}
+        setPago={setPago}
+        confirmarVenta={confirmarVenta}
+        enviando={enviando}
+        cambiarCantidad={cambiarCantidad}
+        quitarProducto={quitarProducto}
+      />
 
       {escaneando && (
         <BarcodeScanner
