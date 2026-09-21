@@ -2348,6 +2348,8 @@ if (error) throw error;
 
 // Si Supabase ya tiene productos, los cargamos normalmente.
 if (data && data.length > 0) {
+  idCounter = Math.max(...data.map((p) => Number(p.id) || 0)) + 1;
+
   if (activo) {
     setProductos(
       data.map((p) => ({
