@@ -70,6 +70,8 @@ import { ProductList as ListaProductos } from "./components/ProductList";
 import { ProductRow as ProductoListRow } from "./components/ProductRow";
 import { BarcodeScanner } from "./components/BarcodeScanner";
 import { BarcodeScannerCartPanel } from "./components/BarcodeScannerCartPanel";
+import { HomeView } from "./views/HomeView";
+import { SalesView } from "./views/SalesView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -92,139 +94,7 @@ import { BarcodeScannerCartPanel } from "./components/BarcodeScannerCartPanel";
 // ===========================================================================
 // INICIO — sin estado propio, recibe todo por props
 // ===========================================================================
-function PantallaInicio({
-  totalHoy,
-  efectivoHoy,
-  debitoHoy,
-  productosVendidosHoy,
-  productosBajo,
-  productosAgotados,
-  goTabScreen,
-  caja,
-}) {
-  return (
-    <div className="px-5 pt-6 pb-4 space-y-5">
-      <div>
-        <p className="text-stone-500 text-sm">Hoy</p>
-        <h1 className="text-2xl font-bold text-stone-800">Resumen del día</h1>
-      </div>
 
-      <EstadoCajaCard caja={caja} totalHoy={totalHoy} />
-
-      <div className="bg-white rounded-2xl shadow-sm px-5 py-5">
-        <p className="text-stone-500 text-sm mb-1">Ventas de hoy</p>
-        <p className="text-4xl font-bold mb-4" style={{ color: "#2E6B4F" }}>{formatMoney(totalHoy)}</p>
-        <div className="flex justify-between text-sm text-stone-600 border-t border-stone-100 pt-3">
-          <span>
-            Efectivo: <strong className="text-stone-800">{formatMoney(efectivoHoy)}</strong>
-          </span>
-          <span>
-            Débito: <strong className="text-stone-800">{formatMoney(debitoHoy)}</strong>
-          </span>
-        </div>
-        <p className="text-sm text-stone-500 mt-2">{productosVendidosHoy} productos vendidos</p>
-      </div>
-
-      {(productosBajo.length > 0 || productosAgotados.length > 0) && (
-        <div className="space-y-2">
-          {productosAgotados.length > 0 && (
-            <button
-              type="button"
-              onClick={() => goTabScreen("stock", "lowStock")}
-              className="w-full flex items-center gap-3 bg-white rounded-2xl shadow-sm px-4 py-3 text-left"
-            >
-              <XCircle size={22} color={COLORS.agotado} />
-              <span className="text-stone-700 text-sm">
-                <strong style={{ color: COLORS.agotado }}>{productosAgotados.length}</strong> productos agotados
-              </span>
-            </button>
-          )}
-          {productosBajo.length > 0 && (
-            <button
-              type="button"
-              onClick={() => goTabScreen("stock", "lowStock")}
-              className="w-full flex items-center gap-3 bg-white rounded-2xl shadow-sm px-4 py-3 text-left"
-            >
-              <AlertTriangle size={22} color={COLORS.bajo} />
-              <span className="text-stone-700 text-sm">
-                <strong style={{ color: COLORS.bajo }}>{productosBajo.length}</strong> productos con stock bajo
-              </span>
-            </button>
-          )}
-        </div>
-      )}
-
-      <div className="space-y-3 pt-1">
-        <button
-          type="button"
-          onClick={() => goTabScreen("sales", "newSale")}
-          className="w-full font-semibold rounded-2xl py-4 text-lg shadow-sm flex items-center justify-center gap-2"
-          style={{ backgroundColor: "#2E6B4F", color: "#FFFFFF" }}
-        >
-          <Plus size={22} />
-          Nueva venta
-        </button>
-        <button
-          type="button"
-          onClick={() => goTabScreen("stock", "addStockEntry")}
-          className="w-full font-semibold rounded-2xl py-3.5 text-base shadow-sm border flex items-center justify-center gap-2"
-          style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
-        >
-          <Plus size={20} />
-          Agregar entrada
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ===========================================================================
-// VENTAS
-// ===========================================================================
-function VentasMain({ push, caja, totalHoy, abrirCajaManual }) {
-  const [avisoFueraHorario, setAvisoFueraHorario] = useState(false);
-  const [abriendo, setAbriendo] = useState(false);
-
-  const tocarAbrir = async () => {
-    setAbriendo(true);
-    const resultado = await abrirCajaManual();
-    setAbriendo(false);
-    if (!resultado) {
-      setAvisoFueraHorario(true);
-      setTimeout(() => setAvisoFueraHorario(false), 3500);
-    }
-  };
-
-  return (
-    <div>
-      <Header title="Ventas" />
-      <div className="px-5 space-y-3">
-        <EstadoCajaCard caja={caja} totalHoy={totalHoy} />
-        {caja?.estado !== "ABIERTA" && (
-          <div className="space-y-1.5">
-            <button
-              type="button"
-              onClick={tocarAbrir}
-              disabled={abriendo}
-              className="w-full font-semibold rounded-2xl py-3 text-sm shadow-sm border flex items-center justify-center gap-2"
-              style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
-            >
-              Abrir caja ahora (manual)
-            </button>
-            {avisoFueraHorario && (
-              <p className="text-xs text-center" style={{ color: COLORS.agotado }}>
-                Solo se puede abrir manualmente entre 08:00 y 22:00.
-              </p>
-            )}
-          </div>
-        )}
-        <Row label="Nueva venta" onClick={() => push("newSale")} />
-        <Row label="Cierre del día" onClick={() => push("dayClosing")} />
-        <Row label="Historial de cierres" onClick={() => push("closingHistory")} />
-      </div>
-    </div>
-  );
-}
 
 function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarStock, pop, resetStack, caja }) {
   const [busqueda, setBusqueda] = useState("");
@@ -2040,15 +1910,15 @@ const actualizarStock = async (id, nuevoStock) => {
   function renderTab() {
     if (tab === "home") {
       return (
-        <PantallaInicio
-          totalHoy={totalHoy}
-          efectivoHoy={efectivoHoy}
-          debitoHoy={debitoHoy}
-          productosVendidosHoy={productosVendidosHoy}
-          productosBajo={productosBajo}
-          productosAgotados={productosAgotados}
+        <HomeView
+          todayTotal={totalHoy}
+          todayCashTotal={efectivoHoy}
+          todayDebitTotal={debitoHoy}
+          todayProductsSold={productosVendidosHoy}
+          lowStockProducts={productosBajo}
+          outOfStockProducts={productosAgotados}
           goTabScreen={goTabScreen}
-          caja={caja}
+          cashShift={caja}
         />
       );
     }
@@ -2079,7 +1949,14 @@ const actualizarStock = async (id, nuevoStock) => {
           />
         );
       if (current.screen === "closingHistory") return <HistorialCierres pop={pop} />;
-      return <VentasMain push={push} caja={caja} totalHoy={totalHoy} abrirCajaManual={abrirCajaManual} />;
+      return (
+        <SalesView
+          push={push}
+          cashShift={caja}
+          todayTotal={totalHoy}
+          openCashShiftManually={abrirCajaManual}
+        />
+      );
     }
 
     if (tab === "stock") {
