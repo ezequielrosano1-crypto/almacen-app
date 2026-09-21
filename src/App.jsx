@@ -48,7 +48,6 @@ import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
 import { Header } from "./components/Header";
 import { PrimaryButton } from "./components/PrimaryButton";
-import { Row } from "./components/Row";
 import { SearchBar } from "./components/SearchBar";
 import { BottomNav } from "./components/BottomNav";
 import { CashRegisterStatusCard as EstadoCajaCard } from "./components/CashRegisterStatusCard";
@@ -67,6 +66,8 @@ import { AddStockEntryView } from "./views/AddStockEntryView";
 import { AdjustStockView } from "./views/AdjustStockView";
 import { StockMovementsView } from "./views/StockMovementsView";
 import { StockMovementDetailView } from "./views/StockMovementDetailView";
+import { MoreView } from "./views/MoreView";
+import { BusinessInfoView } from "./views/BusinessInfoView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -106,18 +107,6 @@ import { StockMovementDetailView } from "./views/StockMovementDetailView";
 // ===========================================================================
 // MÁS
 // ===========================================================================
-function MasMain({ push }) {
-  return (
-    <div>
-      <Header title="Más" />
-      <div className="px-5 space-y-3">
-        <Row label="Productos" onClick={() => push("products")} />
-        <Row label="Información del negocio" onClick={() => push("businessInfo")} />
-        <Row label="Configuración" onClick={() => push("settings")} />
-      </div>
-    </div>
-  );
-}
 
 function ProductosMain({ productos, pop, onOpenDetalle, onNuevo }) {
   const [busqueda, setBusqueda] = useState("");
@@ -287,45 +276,7 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
   );
 }
 
-function InfoNegocio({ infoNegocio, guardarInfoNegocio, pop }) {
-  const [nombre, setNombre] = useState(infoNegocio.nombre);
-  const [contacto, setContacto] = useState(infoNegocio.contacto);
 
-  const guardar = () => {
-    if (!nombre) return;
-    guardarInfoNegocio({ nombre, contacto });
-    pop();
-  };
-
-  return (
-    <div>
-      <Header title="Información del negocio" onBack={pop} />
-      <div className="px-5 space-y-3">
-        <div>
-          <label className="text-stone-500 text-sm">Nombre del almacén</label>
-          <input
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-          />
-        </div>
-        <div>
-          <label className="text-stone-500 text-sm">Teléfono / WhatsApp de contacto</label>
-          <input
-            value={contacto}
-            onChange={(e) => setContacto(e.target.value)}
-            className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-          />
-        </div>
-        <div className="pt-1">
-          <PrimaryButton onClick={guardar} disabled={!nombre}>
-            Guardar cambios
-          </PrimaryButton>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ===========================================================================
 // Panel de pruebas de caja automática (punto 14 del pedido) — corre la
@@ -1112,9 +1063,15 @@ const actualizarStock = async (id, nuevoStock) => {
           />
         );
       if (current.screen === "businessInfo")
-        return <InfoNegocio infoNegocio={infoNegocio} guardarInfoNegocio={guardarInfoNegocio} pop={pop} />;
+        return (
+          <BusinessInfoView
+            businessInfo={infoNegocio}
+            saveBusinessInfo={guardarInfoNegocio}
+            pop={pop}
+          />
+        );
       if (current.screen === "settings") return <Configuracion pop={pop} />;
-      return <MasMain push={push} />;
+      return <MoreView push={push} />;
     }
 
     return null;
