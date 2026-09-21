@@ -61,9 +61,9 @@ import {
 import { insertStockEntry } from "./data/stockMovementsRepository";
 import {
   closeShiftManually,
-  reopenShift,
 } from "./data/cashShiftRepository";
 import { syncCashShift } from "./data/cashShiftSync";
+import { useCashRegister } from "./hooks/useCashRegister";
 
 // ===========================================================================
 // Constantes / configuración
@@ -2315,7 +2315,11 @@ useEffect(() => {
 
   const [tab, setTab] = useState("home");
   const [stack, setStack] = useState([]); // [{screen, params}]
-  const [caja, setCaja] = useState(null);
+  const {
+    cashShift: caja,
+    setCashShift: setCaja,
+    openCashShiftManually: abrirCajaManual,
+  } = useCashRegister();
 
   useEffect(() => {
     let activo = true;
@@ -2327,58 +2331,6 @@ useEffect(() => {
     const intervalo = setInterval(verificarCaja, 30000);
     return () => { activo = false; clearInterval(intervalo); };
   }, [movimientos]);
-
-  // Apertura manual: solo tiene sentido dentro del horario habilitado
-  // (08:00–22:00). Además de abrir la jornada, borra el registro de cierre
-  // guardado para hoy — si no se borra, un cierre manual anterior ese mismo
-  // día deja "cierre:<fecha>" guardado, y CierreDia lo lee al montar y
-  // piensa que el día ya está cerrado, bloqueando un cierre posterior. El
-  // cierre y la apertura automáticos (sincronizarCaja) siguen funcionando
-  // igual después de esto: si llega a las 22:00 con la caja reabierta, la
-  // cierra sola; al otro día a las 08:00 abre una jornada nueva.
-const abrirCajaManual = async () => {
-  const ahora = nowInUruguay();
-
-  if (ahora.horaNumero < 8 || ahora.horaNumero >= 22) return null;
-
-  const nueva = {
-    id: `caja-${ahora.fecha}`,
-    fecha: ahora.fecha,
-    estado: "ABIERTA",
-    horaApertura: ahora.hora,
-    horaCierre: null,
-    cerradoAutomaticamente: false,
-  };
-
-  try {
-    const data = await reopenShift(nueva.id, {
-      estado: "ABIERTA",
-      hora_apertura: nueva.horaApertura,
-      hora_cierre: null,
-      cerrado_automatico: false,
-      updated_at: new Date().toISOString(),
-    });
-
-    const jornadaAbierta = {
-      id: data.id,
-      fecha: data.fecha,
-      estado: data.estado,
-      horaApertura: data.hora_apertura,
-      horaCierre: data.hora_cierre,
-      cerradoAutomaticamente: data.cerrado_automatico,
-      total: Number(data.total || 0),
-      cantidadVentas: Number(data.cantidad_ventas || 0),
-    };
-
-    setCaja(jornadaAbierta);
-
-    return jornadaAbierta;
-  } catch (e) {
-    console.error("Error abriendo jornada:", e);
-    alert("No se pudo abrir la caja.");
-    return null;
-  }
-};
 
   const current = stack.length ? stack[stack.length - 1] : { screen: "main", params: {} };
 
