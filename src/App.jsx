@@ -223,8 +223,13 @@ for (const jornadaAnterior of jornadasAbiertasAnteriores) {
   }
 }
   } else {
-    const resultado = await window.storage.get(storageKey, false);
-    if (resultado?.value) actual = JSON.parse(resultado.value);
+try {
+  const resultado = await window.storage.get(storageKey, false);
+  if (resultado?.value) actual = JSON.parse(resultado.value);
+} catch (e) {
+  // La clave puede no existir en el sandbox recién reiniciado.
+  actual = null;
+}
   }
 } catch (e) {
   console.error("Error cargando jornada:", e);
