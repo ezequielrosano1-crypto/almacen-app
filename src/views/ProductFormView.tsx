@@ -3,6 +3,7 @@ import { useState } from "react";
 import { BarcodeScanner } from "../components/BarcodeScanner";
 import { Header } from "../components/Header";
 import { PrimaryButton } from "../components/PrimaryButton";
+import type { ProductItem } from "../hooks/useProducts";
 import { nextId } from "../lib/ids";
 import type { ProductId } from "../types/domain";
 
@@ -26,8 +27,8 @@ export interface ProductFormViewProps {
   productos?: ProductFormData[];
   productId?: ProductId | null;
   productoId?: ProductId | null;
-  saveProduct?: (product: Record<string, unknown>) => void;
-  guardarProducto?: (product: Record<string, unknown>) => void;
+  saveProduct?: (product: ProductItem) => unknown;
+  guardarProducto?: (product: ProductItem) => unknown;
   pop: () => void;
 }
 

@@ -3,7 +3,7 @@ import { StatusDot } from "../components/StatusDot";
 import { formatMoney } from "../lib/format";
 import { formatStock, getProductStatus, getStatusColor } from "../lib/stock";
 import type { ProductId } from "../types/domain";
-import type { ScreenId, TabId } from "../types/navigation";
+import type { ScreenId, ScreenParams, TabId } from "../types/navigation";
 
 export interface ProductDetailItem {
   id: ProductId;
@@ -24,11 +24,7 @@ export interface ProductDetailViewProps {
   productId?: ProductId | null;
   productoId?: ProductId | null;
   pop: () => void;
-  goTabScreen: (
-    tab: TabId | string,
-    screen: ScreenId | string,
-    params?: Record<string, unknown>,
-  ) => void;
+  goTabScreen: (tab: TabId, screen: ScreenId, params?: ScreenParams) => void;
 }
 
 export function ProductDetailView(props: ProductDetailViewProps) {

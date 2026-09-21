@@ -1,9 +1,9 @@
 import { Header } from "../components/Header";
 import { Row } from "../components/Row";
-import type { ScreenId } from "../types/navigation";
+import type { ScreenId, ScreenParams } from "../types/navigation";
 
 export interface MoreViewProps {
-  push: (screen: ScreenId | string, params?: Record<string, unknown>) => void;
+  push: (screen: ScreenId, params?: ScreenParams) => void;
 }
 
 export function MoreView({ push }: MoreViewProps) {

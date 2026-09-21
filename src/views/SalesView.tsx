@@ -10,12 +10,12 @@ export interface SalesViewProps {
   push: (screen: ScreenId) => void;
   cashShift?: StoredCashShift | null;
   todayTotal?: number;
-  openCashShiftManually?: () => Promise<boolean>;
+  openCashShiftManually?: () => Promise<unknown>;
 
   // Aliases legacy para compatibilidad
   caja?: StoredCashShift | null;
   totalHoy?: number;
-  abrirCajaManual?: () => Promise<boolean>;
+  abrirCajaManual?: () => Promise<unknown>;
 }
 
 export function SalesView(props: SalesViewProps) {
