@@ -60,138 +60,16 @@ import {
 } from "./data/salesRepository";
 import { insertStockEntry } from "./data/stockMovementsRepository";
 import {
-  findShiftByDate,
-  closeShift,
-  createShift,
   closeShiftManually,
   reopenShift,
 } from "./data/cashShiftRepository";
+import { syncCashShift } from "./data/cashShiftSync";
 
 // ===========================================================================
 // Constantes / configuración
 // ===========================================================================
 
-// ===========================================================================
-// Jornada de caja automática (America/Montevideo)
-// ===========================================================================
 
-async function sincronizarCaja(movimientos = [], opciones = {}) {
-  // `opciones.override` simula la fecha/hora (para pruebas, ver PruebasCaja).
-  // `opciones.storageKey` permite correr la sincronización sobre una caja
-  // "sandbox" sin tocar la caja real (CASH_SHIFT_STORAGE_KEY) ni sus cierres.
-  const { override, storageKey = CASH_SHIFT_STORAGE_KEY } = opciones;
-  const claveCierre = (fecha) =>
-    storageKey === CASH_SHIFT_STORAGE_KEY ? `cierre:${fecha}` : `${storageKey}:cierre:${fecha}`;
-
-  const ahora = nowInUruguay(override);
-  const abiertaPorHorario = ahora.horaNumero >= 8 && ahora.horaNumero < 22;
-  let actual = null;
-
-try {
-  if (storageKey === CASH_SHIFT_STORAGE_KEY) {
-    const data = await findShiftByDate(ahora.fecha);
-
-    if (data) {
-      actual = {
-        id: data.id,
-        fecha: data.fecha,
-        estado: data.estado,
-        horaApertura: data.hora_apertura,
-        horaCierre: data.hora_cierre,
-        cerradoAutomaticamente: data.cerrado_automatico,
-        total: Number(data.total || 0),
-        cantidadVentas: Number(data.cantidad_ventas || 0),
-      };
-    }
-  } else {
-    try {
-      actual = await readJson(storageKey);
-    } catch (e) {
-      // Clave inexistente en storage
-    }
-  }
-} catch (e) {
-  console.error("Error cargando jornada:", e);
-}
-
-  // Cerrar una jornada que quedó abierta cuando ya pasó la hora de cierre
-  // (22:00) o cuando cambió el día sin que nadie la cerrara a tiempo.
-  if (actual?.estado === "ABIERTA" && (!abiertaPorHorario || actual.fecha !== ahora.fecha)) {
-    const ventasJornada = movimientos.filter((m) => m.tipo === "venta" && localDateKey(m.fecha) === actual.fecha);
-    const cierre = {
-      ...actual,
-      estado: "CERRADA",
-      horaCierre: "22:00",
-      cerradoAutomaticamente: true,
-    };
-    const resumen = {
-      fecha: actual.fecha,
-      hora: "22:00",
-      total: ventasJornada.reduce((a, v) => a + (Number(v.total) || 0), 0),
-      cantidadVentas: ventasJornada.length,
-      automatico: true,
-    };
-try {
-  if (storageKey === CASH_SHIFT_STORAGE_KEY) {
-    await closeShift(actual.id, {
-      estado: cierre.estado,
-      hora_cierre: cierre.horaCierre,
-      cerrado_automatico: cierre.cerradoAutomaticamente,
-      total: resumen.total,
-      cantidad_ventas: resumen.cantidadVentas,
-      updated_at: new Date().toISOString(),
-    });
-  } else {
-    await writeJson(storageKey, cierre);
-    await writeJson(claveCierre(actual.fecha), resumen);
-  }
-} catch (e) {
-  console.error("Error guardando cierre de jornada:", e);
-}
-    actual = cierre;
-  }
-
-  // Abrir una única jornada para el día actual dentro del horario.
-  // OJO: la condición NO vuelve a mirar el estado ("ABIERTA"/"CERRADA") de la
-  // jornada de hoy, solo si YA EXISTE un registro para la fecha de hoy. Así,
-  // una jornada cerrada manualmente antes de las 22:00 queda cerrada el
-  // resto del día y no se reabre en la siguiente verificación (bug que
-  // existía antes: reabría apenas el usuario cerraba caja manualmente).
-  if (abiertaPorHorario && (!actual || actual.fecha !== ahora.fecha)) {
-    const nueva = {
-      id: `caja-${ahora.fecha}`,
-      fecha: ahora.fecha,
-      estado: "ABIERTA",
-      horaApertura: ahora.hora,
-      horaCierre: null,
-      cerradoAutomaticamente: false,
-    };
-  try {
-  if (storageKey === CASH_SHIFT_STORAGE_KEY) {
-    const data = await createShift({
-      id: nueva.id,
-      negocio_id: 1,
-      fecha: nueva.fecha,
-      estado: nueva.estado,
-      hora_apertura: nueva.horaApertura,
-      hora_cierre: nueva.horaCierre,
-      cerrado_automatico: nueva.cerradoAutomaticamente,
-      total: 0,
-      cantidad_ventas: 0,
-    });
-
-    nueva.id = data.id;
-  } else {
-    await writeJson(storageKey, nueva);
-  }
-} catch (e) {
-  console.error("Error guardando jornada:", e);
-}
-    actual = nueva;
-  }
-
-  return actual;
-}
 
 // ===========================================================================
 // Datos iniciales (mock) — en estado local de React, listos para reemplazarse
@@ -1943,7 +1821,7 @@ function PruebasCaja() {
 
   const correr = async (escenario) => {
     setCorriendo(true);
-    const resultado = await sincronizarCaja([], {
+    const resultado = await syncCashShift([], {
       override: { fecha: escenario.fecha, horaNumero: escenario.horaNumero },
       storageKey: TEST_CASH_SHIFT_STORAGE_KEY,
     });
@@ -1962,7 +1840,7 @@ function PruebasCaja() {
     const escenario = { fecha: DIA_1, horaNumero: 12 };
     const resultados = [];
     for (let i = 0; i < 3; i++) {
-      const r = await sincronizarCaja([], {
+      const r = await syncCashShift([], {
         override: escenario,
         storageKey: TEST_CASH_SHIFT_STORAGE_KEY,
       });
@@ -2442,7 +2320,7 @@ useEffect(() => {
   useEffect(() => {
     let activo = true;
     const verificarCaja = async () => {
-      const estado = await sincronizarCaja(movimientos);
+      const estado = await syncCashShift(movimientos);
       if (activo) setCaja(estado);
     };
     verificarCaja();
