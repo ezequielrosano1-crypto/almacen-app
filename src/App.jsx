@@ -27,6 +27,23 @@ import { formatMoney, formatDate } from "./lib/format";
 import { formatStock, getProductStatus, getStatusColor } from "./lib/stock";
 import { nextId } from "./lib/ids";
 import { initialProducts, initialStockMovements } from "./lib/initialData";
+import {
+  isToday,
+  todayDateKey,
+  localDateKey,
+  nowInUruguay,
+  formatUruguayTime,
+} from "./lib/dates";
+import {
+  getTodaySales,
+  getTodayTotal,
+  getTodayCashTotal,
+  getTodayDebitTotal,
+  getTodayProductsSold,
+  getLowStockProducts,
+  getOutOfStockProducts,
+  getWeekSales,
+} from "./lib/metrics";
 // ===========================================================================
 // Compatibilidad de almacenamiento fuera de Claude.ai
 // -----------------------------------------------------------------------
@@ -87,47 +104,9 @@ if (typeof window !== "undefined" && !window.storage) {
 // Constantes / configuración
 // ===========================================================================
 
-const esHoy = (date) => date.toDateString() === new Date().toDateString();
-
-const claveFechaHoy = () => {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mm}-${dd}`;
-};
-
 // ===========================================================================
 // Jornada de caja automática (America/Montevideo)
 // ===========================================================================
-
-function ahoraUY(override) {
-  // `override` permite simular fecha/hora para pruebas (ver PruebasCaja) sin
-  // tocar el reloj real. Forma: { fecha: "YYYY-MM-DD", horaNumero: 8.5 }
-  if (override) {
-    const horaNumero = override.horaNumero;
-    const hh = String(Math.floor(horaNumero)).padStart(2, "0");
-    const mm = String(Math.round((horaNumero % 1) * 60)).padStart(2, "0");
-    return { fecha: override.fecha, hora: `${hh}:${mm}`, horaNumero };
-  }
-  const partes = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Montevideo",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date());
-  const get = (tipo) => partes.find((p) => p.type === tipo)?.value || "00";
-  return {
-    fecha: `${get("year")}-${get("month")}-${get("day")}`,
-    hora: `${get("hour")}:${get("minute")}`,
-    horaNumero: Number(get("hour")) + Number(get("minute")) / 60,
-  };
-}
-
-function horaUYTexto() {
-  return new Intl.DateTimeFormat("es-UY", {
-    timeZone: "America/Montevideo", hour: "2-digit", minute: "2-digit", hourCycle: "h23"
-  }).format(new Date());
-}
 
 async function sincronizarCaja(movimientos = [], opciones = {}) {
   // `opciones.override` simula la fecha/hora (para pruebas, ver PruebasCaja).
@@ -137,7 +116,7 @@ async function sincronizarCaja(movimientos = [], opciones = {}) {
   const claveCierre = (fecha) =>
     storageKey === CASH_SHIFT_STORAGE_KEY ? `cierre:${fecha}` : `${storageKey}:cierre:${fecha}`;
 
-  const ahora = ahoraUY(override);
+  const ahora = nowInUruguay(override);
   const abiertaPorHorario = ahora.horaNumero >= 8 && ahora.horaNumero < 22;
   let actual = null;
 
@@ -175,7 +154,7 @@ try {
   // Cerrar una jornada que quedó abierta cuando ya pasó la hora de cierre
   // (22:00) o cuando cambió el día sin que nadie la cerrara a tiempo.
   if (actual?.estado === "ABIERTA" && (!abiertaPorHorario || actual.fecha !== ahora.fecha)) {
-    const ventasJornada = movimientos.filter((m) => m.tipo === "venta" && String(m.fecha instanceof Date ? (() => { const d=m.fecha; return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })() : m.fecha) === actual.fecha);
+    const ventasJornada = movimientos.filter((m) => m.tipo === "venta" && localDateKey(m.fecha) === actual.fecha);
     const cierre = {
       ...actual,
       estado: "CERRADA",
@@ -1083,7 +1062,7 @@ if (errorStock) {
 }
 
 function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, actualizarCaja }) {
-  const claveHoy = `cierre:${claveFechaHoy()}`;
+  const claveHoy = `cierre:${todayDateKey()}`;
   const [cargando, setCargando] = useState(true);
   const [cierre, setCierre] = useState(null);
   const [confirmando, setConfirmando] = useState(false);
@@ -1114,8 +1093,8 @@ function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, act
     setGuardando(true);
     setErrorGuardado(false);
     const registro = {
-      fecha: claveFechaHoy(),
-      hora: horaUYTexto(),
+      fecha: todayDateKey(),
+      hora: formatUruguayTime(),
       total: totalHoy,
       cantidadVentas: ventasHoy.length,
     };
@@ -1142,7 +1121,7 @@ function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, act
   const cerrada = {
     ...(caja || {}),
     id: caja.id,
-    fecha: claveFechaHoy(),
+    fecha: todayDateKey(),
     estado: "CERRADA",
     horaCierre: registro.hora,
     cerradoAutomaticamente: false,
@@ -2584,7 +2563,7 @@ useEffect(() => {
   // igual después de esto: si llega a las 22:00 con la caja reabierta, la
   // cierra sola; al otro día a las 08:00 abre una jornada nueva.
 const abrirCajaManual = async () => {
-  const ahora = ahoraUY();
+  const ahora = nowInUruguay();
 
   if (ahora.horaNumero < 8 || ahora.horaNumero >= 22) return null;
 
@@ -2740,54 +2719,15 @@ const actualizarStock = async (id, nuevoStock) => {
     setInfoNegocio(datos);
   };
 
-  const ventasHoy = movimientos.filter((m) => m.tipo === "venta" && esHoy(m.fecha));
-  const totalHoy = ventasHoy.reduce((acc, v) => acc + v.total, 0);
-  const efectivoHoy = ventasHoy.filter((v) => v.pago === "Efectivo").reduce((a, v) => a + v.total, 0);
-  const debitoHoy = ventasHoy.filter((v) => v.pago === "Débito").reduce((a, v) => a + v.total, 0);
-  const productosVendidosHoy = ventasHoy.reduce(
-    (acc, v) => acc + v.items.reduce((a, it) => a + it.cantidad, 0),
-    0
-  );
+  const ventasHoy = getTodaySales(movimientos);
+  const totalHoy = getTodayTotal(ventasHoy);
+  const efectivoHoy = getTodayCashTotal(ventasHoy);
+  const debitoHoy = getTodayDebitTotal(ventasHoy);
+  const productosVendidosHoy = getTodayProductsSold(ventasHoy);
 
-  const productosBajo = productos.filter((p) => getProductStatus(p) === "bajo");
-  const productosAgotados = productos.filter((p) => getProductStatus(p) === "agotado");
-const ventasSemana = Array.from({ length: 7 }, (_, i) => {
-  const fecha = new Date();
-  fecha.setDate(fecha.getDate() - (6 - i));
-
-  const fechaUY = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Montevideo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(fecha);
-
-  const total = movimientos
-    .filter((m) => {
-      if (m.tipo !== "venta") return false;
-
-      const fechaVenta = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "America/Montevideo",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(new Date(m.fecha));
-
-      return fechaVenta === fechaUY;
-    })
-    .reduce((acc, m) => acc + Number(m.total || 0), 0);
-
-  const dia = new Intl.DateTimeFormat("es-UY", {
-    timeZone: "America/Montevideo",
-    weekday: "short",
-  }).format(fecha);
-
-  return {
-    fecha: fechaUY,
-    dia: dia.replace(".", ""),
-    total,
-  };
-});
+  const productosBajo = getLowStockProducts(productos);
+  const productosAgotados = getOutOfStockProducts(productos);
+  const ventasSemana = getWeekSales(movimientos);
   function renderTab() {
     if (tab === "inicio") {
       return (

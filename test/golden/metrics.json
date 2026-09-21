@@ -1,0 +1,45 @@
+{
+  "totalHoy": 420,
+  "efectivoHoy": 300,
+  "debitoHoy": 120,
+  "productosVendidosHoy": 5,
+  "productosBajoCount": 1,
+  "productosAgotadosCount": 2,
+  "ventasSemana": [
+    {
+      "fecha": "2026-09-15",
+      "dia": "mar",
+      "total": 0
+    },
+    {
+      "fecha": "2026-09-16",
+      "dia": "mié",
+      "total": 0
+    },
+    {
+      "fecha": "2026-09-17",
+      "dia": "jue",
+      "total": 0
+    },
+    {
+      "fecha": "2026-09-18",
+      "dia": "vie",
+      "total": 0
+    },
+    {
+      "fecha": "2026-09-19",
+      "dia": "sáb",
+      "total": 0
+    },
+    {
+      "fecha": "2026-09-20",
+      "dia": "dom",
+      "total": 500
+    },
+    {
+      "fecha": "2026-09-21",
+      "dia": "lun",
+      "total": 420
+    }
+  ]
+}
