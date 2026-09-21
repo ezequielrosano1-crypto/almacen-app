@@ -45,6 +45,7 @@ import {
   getWeekSales,
 } from "./lib/metrics";
 import { readJson, writeJson, listKeys, removeKey } from "./lib/storage/storage";
+import { toProductUpsert } from "./data/mappers";
 
 // ===========================================================================
 // Constantes / configuración
@@ -2630,16 +2631,15 @@ const actualizarStock = async (id, nuevoStock) => {
 };
 
  const guardarProducto = async (producto) => {
-  const productoSupabase = {
+  const productoSupabase = toProductUpsert({
     id: producto.id,
-    negocio_id: 1,
-    nombre: producto.nombre,
-    precio: Number(producto.precio),
-    unidad: producto.unidad,
-    stock: Number(producto.stock),
-    stock_minimo: Number(producto.stockMinimo),
-    codigo_barras: producto.codigoBarras || null,
-  };
+    name: producto.nombre,
+    price: producto.precio,
+    unit: producto.unidad,
+    stock: producto.stock,
+    minimumStock: producto.stockMinimo,
+    barcode: producto.codigoBarras,
+  });
 
   const { error } = await supabase
     .from("productos")
