@@ -1,0 +1,229 @@
+{
+  "colors": {
+    "principal": "#2E6B4F",
+    "fondo": "#FAF8F5",
+    "normal": "#2E6B4F",
+    "bajo": "#E0A526",
+    "agotado": "#C0392B"
+  },
+  "adjustmentReasons": ["Conteo físico", "Producto vencido/roto", "Error de carga", "Otro"],
+  "money": [
+    {
+      "input": 0,
+      "output": "$0"
+    },
+    {
+      "input": 10,
+      "output": "$10"
+    },
+    {
+      "input": 99.4,
+      "output": "$99"
+    },
+    {
+      "input": 99.5,
+      "output": "$100"
+    },
+    {
+      "input": 100,
+      "output": "$100"
+    },
+    {
+      "input": 1250,
+      "output": "$1.250"
+    },
+    {
+      "input": 1234567,
+      "output": "$1.234.567"
+    },
+    {
+      "input": -50,
+      "output": "$-50"
+    },
+    {
+      "input": -1200.5,
+      "output": "$-1.200"
+    }
+  ],
+  "stock": [
+    {
+      "input": {
+        "stock": 0,
+        "unidad": "un."
+      },
+      "output": "0 un."
+    },
+    {
+      "input": {
+        "stock": 5,
+        "unidad": "un."
+      },
+      "output": "5 un."
+    },
+    {
+      "input": {
+        "stock": 1250,
+        "unidad": "un."
+      },
+      "output": "1250 un."
+    },
+    {
+      "input": {
+        "stock": 0,
+        "unidad": "kg"
+      },
+      "output": "0 kg"
+    },
+    {
+      "input": {
+        "stock": 2.5,
+        "unidad": "kg"
+      },
+      "output": "2,5 kg"
+    },
+    {
+      "input": {
+        "stock": 1000.5,
+        "unidad": "kg"
+      },
+      "output": "1.000,5 kg"
+    },
+    {
+      "input": {
+        "stock": -1.5,
+        "unidad": "kg"
+      },
+      "output": "-1,5 kg"
+    }
+  ],
+  "productStatus": [
+    {
+      "input": {
+        "stock": 0,
+        "stockMinimo": 5
+      },
+      "output": "agotado"
+    },
+    {
+      "input": {
+        "stock": -1,
+        "stockMinimo": 5
+      },
+      "output": "agotado"
+    },
+    {
+      "input": {
+        "stock": 1,
+        "stockMinimo": 5
+      },
+      "output": "bajo"
+    },
+    {
+      "input": {
+        "stock": 5,
+        "stockMinimo": 5
+      },
+      "output": "bajo"
+    },
+    {
+      "input": {
+        "stock": 6,
+        "stockMinimo": 5
+      },
+      "output": "normal"
+    },
+    {
+      "input": {
+        "stock": 100,
+        "stockMinimo": 10
+      },
+      "output": "normal"
+    }
+  ],
+  "statusColor": [
+    {
+      "input": "normal",
+      "output": "#2E6B4F"
+    },
+    {
+      "input": "bajo",
+      "output": "#E0A526"
+    },
+    {
+      "input": "agotado",
+      "output": "#C0392B"
+    },
+    {
+      "input": "desconocido",
+      "output": "#2E6B4F"
+    }
+  ],
+  "dates": [
+    {
+      "input": "2026-01-01T00:00:00.000Z",
+      "output": "31/12 21:00"
+    },
+    {
+      "input": "2026-06-15T12:30:00.000Z",
+      "output": "15/6 09:30"
+    },
+    {
+      "input": "2026-09-21T02:30:00.000Z",
+      "output": "20/9 23:30"
+    },
+    {
+      "input": "2026-09-21T23:30:00.000Z",
+      "output": "21/9 20:30"
+    },
+    {
+      "input": "2026-12-31T23:59:59.000Z",
+      "output": "31/12 20:59"
+    }
+  ],
+  "ahoraUYOverride": [
+    {
+      "input": {
+        "fecha": "2026-09-21",
+        "horaNumero": 8.5
+      },
+      "output": {
+        "fecha": "2026-09-21",
+        "hora": "08:30",
+        "horaNumero": 8.5
+      }
+    },
+    {
+      "input": {
+        "fecha": "2026-09-21",
+        "horaNumero": 22
+      },
+      "output": {
+        "fecha": "2026-09-21",
+        "hora": "22:00",
+        "horaNumero": 22
+      }
+    },
+    {
+      "input": {
+        "fecha": "2026-12-31",
+        "horaNumero": 23.75
+      },
+      "output": {
+        "fecha": "2026-12-31",
+        "hora": "23:45",
+        "horaNumero": 23.75
+      }
+    },
+    {
+      "input": {
+        "fecha": "2026-01-01",
+        "horaNumero": 0
+      },
+      "output": {
+        "fecha": "2026-01-01",
+        "hora": "00:00",
+        "horaNumero": 0
+      }
+    }
+  ]
+}
