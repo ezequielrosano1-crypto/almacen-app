@@ -4,7 +4,12 @@ import type { CashShiftCloseUpdate, CashShiftInsert, CashShiftRow } from "../typ
 import type { ClockOverride, UruguayClock } from "../types/domain";
 import type { StoredCashShift, StoredClosingSummary } from "../types/storage";
 import type { StorageShim } from "../types/window";
-import { closeShift, createShift, findShiftByDate } from "./cashShiftRepository";
+import {
+  closeShift,
+  createShift,
+  findShiftByDate,
+  listOpenShiftsBefore,
+} from "./cashShiftRepository";
 
 export type ClockOverrideInput = ClockOverride | { fecha: string; horaNumero: number };
 
@@ -15,6 +20,7 @@ export interface CashShiftSyncOptions {
 
 export interface CashShiftSyncRepository {
   findShiftByDate: (date: string) => Promise<CashShiftRow | null>;
+  listOpenShiftsBefore: (date: string) => Promise<CashShiftRow[]>;
   closeShift: (id: string, payload: CashShiftCloseUpdate) => Promise<void>;
   createShift: (row: CashShiftInsert) => Promise<CashShiftRow>;
 }
@@ -28,6 +34,7 @@ export interface CashShiftSyncDeps {
 export const defaultCashShiftSyncDeps: CashShiftSyncDeps = {
   repository: {
     findShiftByDate,
+    listOpenShiftsBefore,
     closeShift,
     createShift,
   },
@@ -56,6 +63,49 @@ function normalizeOverride(override?: ClockOverrideInput): ClockOverride | undef
     date: legacy.fecha,
     hourNumber: legacy.horaNumero,
   };
+}
+
+const isSaleMovement = (m: GenericStockMovement) => m.tipo === "venta" || m.type === "venta";
+
+// A jornada left open on an earlier day is closed automatically at 22:00 with the totals
+// of the sales made on that day. Each one is handled on its own: a failure on one must not
+// stop the others, nor today's jornada.
+async function closeStaleShifts(
+  today: string,
+  stockMovements: GenericStockMovement[],
+  deps: CashShiftSyncDeps,
+): Promise<void> {
+  let stale: CashShiftRow[];
+  try {
+    stale = await deps.repository.listOpenShiftsBefore(today);
+  } catch (e) {
+    console.error("Error buscando jornadas anteriores abiertas:", e);
+    return;
+  }
+
+  for (const shift of stale) {
+    const sales = stockMovements.filter((m) => {
+      const movementDate = m.fecha ?? m.date;
+      return (
+        isSaleMovement(m) &&
+        movementDate !== undefined &&
+        localDateKey(movementDate) === shift.fecha
+      );
+    });
+
+    try {
+      await deps.repository.closeShift(shift.id, {
+        estado: "CERRADA",
+        hora_cierre: "22:00",
+        cerrado_automatico: true,
+        total: sales.reduce((sum, m) => sum + (Number(m.total) || 0), 0),
+        cantidad_ventas: sales.length,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error("Error cerrando jornada anterior:", e);
+    }
+  }
 }
 
 export async function syncCashShift(
@@ -88,13 +138,22 @@ export async function syncCashShift(
         };
       }
     } else {
-      const resultado = await deps.storage.get(storageKey, false);
-      if (resultado?.value) {
-        actual = JSON.parse(resultado.value);
+      try {
+        const resultado = await deps.storage.get(storageKey, false);
+        if (resultado?.value) {
+          actual = JSON.parse(resultado.value);
+        }
+      } catch {
+        // The key does not exist yet in a freshly reset sandbox: that is not an error.
+        actual = null;
       }
     }
   } catch (e) {
     console.error("Error cargando jornada:", e);
+  }
+
+  if (storageKey === CASH_SHIFT_STORAGE_KEY) {
+    await closeStaleShifts(ahora.date, stockMovements, deps);
   }
 
   // Cerrar una jornada que quedó abierta cuando ya pasó la hora de cierre

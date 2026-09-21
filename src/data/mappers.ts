@@ -364,7 +364,7 @@ export function fromStoredClosingSummary(stored: StoredClosingSummary): ClosingS
 export function cashShiftRowToClosingSummary(row: CashShiftRow): ClosingSummary {
   return {
     date: row.fecha,
-    time: row.hora_cierre ?? "",
+    time: row.hora_cierre || "--:--",
     total: Number(row.total ?? 0),
     salesCount: Number(row.cantidad_ventas ?? 0),
     isAutoClosed: row.cerrado_automatico,

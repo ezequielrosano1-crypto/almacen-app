@@ -73,3 +73,20 @@ export async function listClosedShifts(): Promise<CashShiftRow[]> {
 
   return (data || []) as CashShiftRow[];
 }
+
+// Jornadas of earlier days that nobody closed (the app was closed at 22:00, or the
+// device was offline): syncCashShift closes them automatically.
+export async function listOpenShiftsBefore(date: string): Promise<CashShiftRow[]> {
+  const { data, error } = await supabase
+    .from("jornada")
+    .select("*")
+    .eq("negocio_id", 1)
+    .eq("estado", "ABIERTA")
+    .lt("fecha", date);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []) as CashShiftRow[];
+}

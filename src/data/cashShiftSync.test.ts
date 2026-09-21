@@ -70,6 +70,11 @@ function createFakeRepository() {
       }
       return null;
     },
+    async listOpenShiftsBefore(date: string): Promise<CashShiftRow[]> {
+      return [...shifts.values()]
+        .filter((s) => s.negocio_id === 1 && s.estado === "ABIERTA" && s.fecha < date)
+        .map((s) => ({ ...s }));
+    },
     async closeShift(id: string, payload: CashShiftCloseUpdate): Promise<void> {
       const existing = shifts.get(id);
       if (existing) {
@@ -207,5 +212,96 @@ describe("syncCashShift unit tests with injected deps (parity with goldens)", ()
 
     // Pin bug #11: In production, storage is never written
     expect(fakeStore.map.has(`cierre:${DIA_1}`)).toBe(false);
+  });
+});
+
+describe("syncCashShift closes jornadas left open on previous days", () => {
+  let fakeRepo: ReturnType<typeof createFakeRepository>;
+  let deps: CashShiftSyncDeps;
+  let consoleSpy: ReturnType<typeof vi.spyOn>;
+
+  const openShift = (fecha: string, over: Partial<CashShiftRow> = {}): CashShiftRow => ({
+    id: `caja-${fecha}`,
+    negocio_id: 1,
+    fecha,
+    estado: "ABIERTA",
+    hora_apertura: "08:05:00",
+    hora_cierre: null,
+    cerrado_automatico: false,
+    total: 0,
+    cantidad_ventas: 0,
+    ...over,
+  });
+
+  beforeEach(() => {
+    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    fakeRepo = createFakeRepository();
+    deps = { repository: fakeRepo, storage: createFakeStorage().storage, now: fakeNow };
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
+
+  it("auto-closes yesterday's open jornada with its own sales totals and opens today's", async () => {
+    fakeRepo.shifts.set(`caja-${DIA_1}`, openShift(DIA_1));
+    const movimientos = [
+      { tipo: "venta", fecha: new Date(`${DIA_1}T10:00:00`), total: 100 },
+      { tipo: "venta", fecha: new Date(`${DIA_1}T15:00:00`), total: 50 },
+      { tipo: "venta", fecha: new Date(`${DIA_2}T09:00:00`), total: 999 },
+    ];
+
+    const res = await syncCashShift(
+      movimientos,
+      { override: { date: DIA_2, hourNumber: 9 } },
+      deps,
+    );
+
+    const yesterday = fakeRepo.shifts.get(`caja-${DIA_1}`);
+    expect(yesterday?.estado).toBe("CERRADA");
+    expect(yesterday?.hora_cierre).toBe("22:00");
+    expect(yesterday?.cerrado_automatico).toBe(true);
+    expect(yesterday?.total).toBe(150);
+    expect(yesterday?.cantidad_ventas).toBe(2);
+    expect(res?.fecha).toBe(DIA_2);
+    expect(res?.estado).toBe("ABIERTA");
+    expect(fakeRepo.shifts.get(`caja-${DIA_2}`)?.estado).toBe("ABIERTA");
+  });
+
+  it("closes previous open jornadas even outside opening hours (23:00)", async () => {
+    fakeRepo.shifts.set(`caja-${DIA_1}`, openShift(DIA_1));
+
+    await syncCashShift([], { override: { date: DIA_2, hourNumber: 23 } }, deps);
+
+    expect(fakeRepo.shifts.get(`caja-${DIA_1}`)?.estado).toBe("CERRADA");
+  });
+
+  it("leaves already closed previous jornadas untouched", async () => {
+    fakeRepo.shifts.set(
+      `caja-${DIA_1}`,
+      openShift(DIA_1, { estado: "CERRADA", hora_cierre: "19:30", total: 80, cantidad_ventas: 3 }),
+    );
+
+    await syncCashShift([], { override: { date: DIA_2, hourNumber: 12 } }, deps);
+
+    const yesterday = fakeRepo.shifts.get(`caja-${DIA_1}`);
+    expect(yesterday?.hora_cierre).toBe("19:30");
+    expect(yesterday?.cerrado_automatico).toBe(false);
+    expect(yesterday?.total).toBe(80);
+  });
+
+  it("keeps working when closing an old jornada fails, and still opens today's", async () => {
+    fakeRepo.shifts.set(`caja-${DIA_1}`, openShift(DIA_1));
+    const realClose = fakeRepo.closeShift.bind(fakeRepo);
+    fakeRepo.closeShift = async (id, payload) => {
+      if (id === `caja-${DIA_1}`) throw new Error("offline");
+      return realClose(id, payload);
+    };
+
+    const res = await syncCashShift([], { override: { date: DIA_2, hourNumber: 12 } }, deps);
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(res?.estado).toBe("ABIERTA");
+    expect(res?.fecha).toBe(DIA_2);
   });
 });

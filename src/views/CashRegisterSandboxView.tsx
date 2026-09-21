@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
 import { syncCashShift } from "../data/cashShiftSync";
+import { isScenarioPassing } from "../lib/cashShiftScenarios";
 import { TEST_CASH_SHIFT_STORAGE_KEY } from "../lib/constants";
 import { nextId } from "../lib/ids";
 import { removeKey } from "../lib/storage/storage";
@@ -95,7 +96,7 @@ export function CashRegisterSandboxView() {
     });
     setTestCaja(resultado);
     const estadoObtenido = resultado?.estado || "SIN DATOS";
-    const ok = estadoObtenido === escenario.esperado;
+    const ok = isScenarioPassing(escenario.esperado, estadoObtenido);
     agregarLog(
       `${escenario.label} → esperado ${escenario.esperado}, obtenido ${estadoObtenido}`,
       ok,

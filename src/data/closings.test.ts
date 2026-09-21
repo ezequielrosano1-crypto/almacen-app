@@ -32,7 +32,7 @@ describe("closing mappers", () => {
     });
   });
 
-  it("cashShiftRowToClosingSummary tolerates null totals and close time", async () => {
+  it("cashShiftRowToClosingSummary shows --:-- when the close time is missing and tolerates null totals", async () => {
     const { cashShiftRowToClosingSummary } = await import("./mappers");
 
     const summary = cashShiftRowToClosingSummary({
@@ -42,7 +42,7 @@ describe("closing mappers", () => {
       cantidad_ventas: null,
     });
 
-    expect(summary).toMatchObject({ time: "", total: 0, salesCount: 0 });
+    expect(summary).toMatchObject({ time: "--:--", total: 0, salesCount: 0 });
   });
 
   it("storedShiftToClosingSummary returns null while the shift is open", async () => {
