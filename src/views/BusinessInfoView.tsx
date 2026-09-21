@@ -11,16 +11,14 @@ export interface BusinessInfoData {
 
 export interface BusinessInfoViewProps {
   businessInfo?: BusinessInfoData;
-  infoNegocio?: BusinessInfoData;
   saveBusinessInfo?: (info: { nombre: string; contacto: string }) => void;
-  guardarInfoNegocio?: (info: { nombre: string; contacto: string }) => void;
   pop: () => void;
 }
 
 export function BusinessInfoView(props: BusinessInfoViewProps) {
   const { pop } = props;
-  const info = props.businessInfo ?? props.infoNegocio ?? {};
-  const save = props.saveBusinessInfo ?? props.guardarInfoNegocio ?? (() => {});
+  const info = props.businessInfo ?? {};
+  const save = props.saveBusinessInfo ?? (() => {});
 
   const [nombre, setNombre] = useState(info.nombre ?? info.name ?? "");
   const [contacto, setContacto] = useState(info.contacto ?? info.contact ?? "");

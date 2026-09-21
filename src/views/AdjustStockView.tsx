@@ -24,13 +24,9 @@ export interface AdjustStockProductItem {
 
 export interface AdjustStockViewProps {
   products?: AdjustStockProductItem[];
-  productos?: AdjustStockProductItem[];
   initialProductId?: ProductId | null;
-  productoIdInicial?: ProductId | null;
   updateStock?: (id: ProductId, realStock: number) => void;
-  actualizarStock?: (id: ProductId, realStock: number) => void;
   recordMovement?: (movement: Record<string, unknown>) => void;
-  registrarMovimiento?: (movement: Record<string, unknown>) => void;
   pop: () => void;
   resetStack: () => void;
 }
@@ -42,10 +38,10 @@ interface ConfirmedAdjustment {
 
 export function AdjustStockView(props: AdjustStockViewProps) {
   const { pop, resetStack } = props;
-  const products = props.products ?? props.productos ?? [];
-  const initialProductId = props.initialProductId ?? props.productoIdInicial ?? null;
-  const updateStock = props.updateStock ?? props.actualizarStock ?? (() => {});
-  const recordMovement = props.recordMovement ?? props.registrarMovimiento ?? (() => {});
+  const products = props.products ?? [];
+  const initialProductId = props.initialProductId ?? null;
+  const updateStock = props.updateStock ?? (() => {});
+  const recordMovement = props.recordMovement ?? (() => {});
 
   const [productoId, setProductoId] = useState<ProductId | null>(initialProductId);
   const [busqueda, setBusqueda] = useState("");

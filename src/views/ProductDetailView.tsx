@@ -20,17 +20,15 @@ export interface ProductDetailItem {
 
 export interface ProductDetailViewProps {
   products?: ProductDetailItem[];
-  productos?: ProductDetailItem[];
   productId?: ProductId | null;
-  productoId?: ProductId | null;
   pop: () => void;
   goTabScreen: (tab: TabId, screen: ScreenId, params?: ScreenParams) => void;
 }
 
 export function ProductDetailView(props: ProductDetailViewProps) {
   const { pop, goTabScreen } = props;
-  const products = props.products ?? props.productos ?? [];
-  const productId = props.productId ?? props.productoId;
+  const products = props.products ?? [];
+  const productId = props.productId;
 
   const p = products.find((pr) => pr.id === productId);
   if (!p) return null;

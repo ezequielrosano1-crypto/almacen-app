@@ -14,25 +14,16 @@ export interface HomeViewProps {
   outOfStockProducts?: unknown[];
   goTabScreen: (tab: TabId, screen: ScreenId) => void;
   cashShift?: StoredCashShift | null;
-
-  // Aliases legacy para compatibilidad
-  totalHoy?: number;
-  efectivoHoy?: number;
-  debitoHoy?: number;
-  productosVendidosHoy?: number;
-  productosBajo?: unknown[];
-  productosAgotados?: unknown[];
-  caja?: StoredCashShift | null;
 }
 
 export function HomeView(props: HomeViewProps) {
-  const total = props.todayTotal ?? props.totalHoy ?? 0;
-  const cashTotal = props.todayCashTotal ?? props.efectivoHoy ?? 0;
-  const debitTotal = props.todayDebitTotal ?? props.debitoHoy ?? 0;
-  const productsSold = props.todayProductsSold ?? props.productosVendidosHoy ?? 0;
-  const lowStock = props.lowStockProducts ?? props.productosBajo ?? [];
-  const outOfStock = props.outOfStockProducts ?? props.productosAgotados ?? [];
-  const cashShift = props.cashShift ?? props.caja ?? null;
+  const total = props.todayTotal ?? 0;
+  const cashTotal = props.todayCashTotal ?? 0;
+  const debitTotal = props.todayDebitTotal ?? 0;
+  const productsSold = props.todayProductsSold ?? 0;
+  const lowStock = props.lowStockProducts ?? [];
+  const outOfStock = props.outOfStockProducts ?? [];
+  const cashShift = props.cashShift ?? null;
   const goTabScreen = props.goTabScreen;
 
   return (

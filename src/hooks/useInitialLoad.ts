@@ -2,12 +2,20 @@ import { useEffect, useState } from "react";
 import { listProducts as defaultListProducts } from "../data/productsRepository";
 import { listSalesWithItems as defaultListSalesWithItems } from "../data/salesRepository";
 import { readJson as defaultReadJson } from "../lib/storage/storage";
+import type { MovementRecordItem } from "../types/domain";
+import type { StoredStockMovement } from "../types/storage";
+import type { BusinessInfoData } from "./useBusinessInfo";
+import type { ProductItem } from "./useProducts";
+
+type StockMovementsSetter = (
+  updater: MovementRecordItem[] | ((prev: MovementRecordItem[]) => MovementRecordItem[]),
+) => void;
 
 export interface InitialLoadCallbacks {
   isActive: () => boolean;
-  setProducts: (products: any[]) => void;
-  setStockMovements: (updater: any) => void;
-  setBusinessInfo: (info: any) => void;
+  setProducts: (products: ProductItem[]) => void;
+  setStockMovements: StockMovementsSetter;
+  setBusinessInfo: (info: BusinessInfoData) => void;
   setLoaded: (loaded: boolean) => void;
 }
 
@@ -52,9 +60,9 @@ export async function runInitialLoad(
   }
 
   try {
-    const movs = await loadJson<any[]>("datos:movimientos");
+    const movs = await loadJson<StoredStockMovement[]>("datos:movimientos");
     if (callbacks.isActive() && movs) {
-      const lista = movs.map((m: any) => ({ ...m, fecha: new Date(m.fecha) }));
+      const lista = movs.map((m) => ({ ...m, fecha: new Date(m.fecha) }));
       callbacks.setStockMovements(lista);
     }
   } catch (_e) {}
@@ -70,7 +78,7 @@ export async function runInitialLoad(
         total: Number(v.total),
         pago: v.pago,
         paymentMethod: v.pago,
-        items: (v.venta_items || []).map((it: any) => ({
+        items: (v.venta_items || []).map((it) => ({
           productoId: it.producto_id,
           productId: it.producto_id,
           nombre: it.nombre,
@@ -85,7 +93,7 @@ export async function runInitialLoad(
         })),
       }));
 
-      callbacks.setStockMovements((prev: any[]) => {
+      callbacks.setStockMovements((prev) => {
         const otros = (prev || []).filter((m) => (m.tipo || m.type) !== "venta");
         return [...ventasFormateadas, ...otros];
       });
@@ -95,7 +103,7 @@ export async function runInitialLoad(
   }
 
   try {
-    const info = await loadJson("datos:infoNegocio");
+    const info = await loadJson<BusinessInfoData>("datos:infoNegocio");
     if (callbacks.isActive() && info) {
       callbacks.setBusinessInfo(info);
     }
@@ -108,9 +116,9 @@ export async function runInitialLoad(
 
 export function useInitialLoad(
   callbacks: {
-    setProducts: (products: any[]) => void;
-    setStockMovements: (updater: any) => void;
-    setBusinessInfo: (info: any) => void;
+    setProducts: (products: ProductItem[]) => void;
+    setStockMovements: StockMovementsSetter;
+    setBusinessInfo: (info: BusinessInfoData) => void;
   },
   deps?: InitialLoadDeps,
 ) {

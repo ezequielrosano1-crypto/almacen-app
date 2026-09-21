@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { supabase } from "../data/supabaseClient";
+import type { MovementRecordItem } from "../types/domain";
 
 export interface RealtimeStockMovementPayload {
   id: number | string;
@@ -15,7 +16,7 @@ export interface RealtimeStockMovementPayload {
 
 export function handleStockMovementRealtimeInsert(
   movimiento: RealtimeStockMovementPayload | null | undefined,
-  setMovements: (updater: (prev: any[]) => any[]) => void,
+  setMovements: (updater: (prev: MovementRecordItem[]) => MovementRecordItem[]) => void,
 ) {
   if (!movimiento || movimiento.tipo === "venta") return;
 
@@ -44,7 +45,7 @@ export function handleStockMovementRealtimeInsert(
 }
 
 export function useStockMovementsRealtime(
-  setMovements: (updater: (prev: any[]) => any[]) => void,
+  setMovements: (updater: (prev: MovementRecordItem[]) => MovementRecordItem[]) => void,
   client = supabase,
 ) {
   useEffect(() => {
@@ -58,8 +59,11 @@ export function useStockMovementsRealtime(
           table: "movimientos_stock",
           filter: "negocio_id=eq.1",
         },
-        (payload: any) => {
-          handleStockMovementRealtimeInsert(payload.new, setMovements);
+        (payload: unknown) => {
+          handleStockMovementRealtimeInsert(
+            (payload as { new: RealtimeStockMovementPayload }).new,
+            setMovements,
+          );
         },
       )
       .subscribe();

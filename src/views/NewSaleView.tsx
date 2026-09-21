@@ -1,5 +1,5 @@
 import { Camera, CheckCircle2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 import { BarcodeScanner } from "../components/BarcodeScanner";
 import { BarcodeScannerCartPanel } from "../components/BarcodeScannerCartPanel";
 import { ConfirmationScreen } from "../components/ConfirmationScreen";
@@ -7,31 +7,28 @@ import { Header } from "../components/Header";
 import { ProductRow } from "../components/ProductRow";
 import { SaleCartFooter } from "../components/SaleCartFooter";
 import { SearchBar } from "../components/SearchBar";
-import { submitSale } from "../data/submitSale";
+import { type SubmitSaleCartItem, submitSale } from "../data/submitSale";
+import type { ProductItem } from "../hooks/useProducts";
 import { useSaleCart } from "../hooks/useSaleCart";
+import type { StockMovementInput } from "../hooks/useStockMovements";
 import { COLORS } from "../lib/constants";
 import { formatMoney } from "../lib/format";
-import type { PaymentMethod, Product } from "../types/domain";
+import type { PaymentMethod, ProductId } from "../types/domain";
 import type { StoredCashShift } from "../types/storage";
 
 export interface NewSaleViewProps {
-  products?: Product[] | any[];
-  productos?: Product[] | any[];
-  setProducts?: (p: any) => void;
-  recordStockMovement?: (m: any) => void;
-  registrarMovimiento?: (m: any) => void;
-  updateStock?: (id: any, delta: any) => void;
-  actualizarStock?: (id: any, delta: any) => void;
+  products: ProductItem[];
+  setProducts: Dispatch<SetStateAction<ProductItem[]>>;
+  recordStockMovement: (m: StockMovementInput) => Promise<boolean>;
+  updateStock: (id: ProductId, newStock: number) => Promise<boolean>;
   pop: () => void;
   resetStack: () => void;
-  cashShift?: StoredCashShift | null;
-  caja?: StoredCashShift | null;
+  cashShift: StoredCashShift | null;
 }
 
 export function NewSaleView(props: NewSaleViewProps) {
   const { pop, resetStack } = props;
-  const products = (props.products ?? props.productos ?? []) as any[];
-  const cashShift = props.cashShift ?? props.caja ?? null;
+  const { products, cashShift } = props;
 
   const [busqueda, setBusqueda] = useState("");
   const [pago, setPago] = useState<PaymentMethod | string | null>(null);
@@ -45,11 +42,11 @@ export function NewSaleView(props: NewSaleViewProps) {
   const { items, total, agregarProducto, cambiarCantidad, quitarProducto } = useSaleCart(products);
 
   const disponibles = products
-    .filter((p: any) => {
+    .filter((p) => {
       const nombre = p.nombre ?? p.name ?? "";
       return nombre.toLowerCase().includes(busqueda.toLowerCase());
     })
-    .sort((a: any, b: any) => {
+    .sort((a, b) => {
       const nomA = a.nombre ?? a.name ?? "";
       const nomB = b.nombre ?? b.name ?? "";
       return nomA.localeCompare(nomB);
@@ -64,7 +61,7 @@ export function NewSaleView(props: NewSaleViewProps) {
       ultimoCodigoRef.current = null;
     }, 1500);
 
-    const producto = products.find((p: any) => {
+    const producto = products.find((p) => {
       const cb = p.codigoBarras ?? p.barcode;
       return cb && cb.trim() === limpio;
     });
@@ -85,7 +82,12 @@ export function NewSaleView(props: NewSaleViewProps) {
     setEnviando(true);
 
     try {
-      await submitSale({ total, pago: String(pago), items: items as any });
+      // Los items del carrito guardan `producto` sin tipar; en runtime son los productos del estado.
+      await submitSale({
+        total,
+        pago: String(pago),
+        items: items as unknown as SubmitSaleCartItem[],
+      });
       setConfirmada({ total, pago: String(pago) });
     } catch (error) {
       console.error("Error registrando venta:", error);
@@ -143,7 +145,7 @@ export function NewSaleView(props: NewSaleViewProps) {
         </div>
         <div className="space-y-2">
           {disponibles.length > 0 ? (
-            disponibles.map((p: any) => (
+            disponibles.map((p) => (
               <ProductRow key={p.id} producto={p} onClick={() => agregarProducto(p)} />
             ))
           ) : (

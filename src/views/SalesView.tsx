@@ -11,18 +11,13 @@ export interface SalesViewProps {
   cashShift?: StoredCashShift | null;
   todayTotal?: number;
   openCashShiftManually?: () => Promise<unknown>;
-
-  // Aliases legacy para compatibilidad
-  caja?: StoredCashShift | null;
-  totalHoy?: number;
-  abrirCajaManual?: () => Promise<unknown>;
 }
 
 export function SalesView(props: SalesViewProps) {
   const { push } = props;
-  const cashShift = props.cashShift ?? props.caja ?? null;
-  const todayTotal = props.todayTotal ?? props.totalHoy ?? 0;
-  const openCashShift = props.openCashShiftManually ?? props.abrirCajaManual;
+  const cashShift = props.cashShift ?? null;
+  const todayTotal = props.todayTotal ?? 0;
+  const openCashShift = props.openCashShiftManually;
 
   const [avisoFueraHorario, setAvisoFueraHorario] = useState(false);
   const [abriendo, setAbriendo] = useState(false);

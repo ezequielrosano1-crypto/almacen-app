@@ -1,20 +1,17 @@
 import { Header } from "../components/Header";
 import { formatDate, formatMoney } from "../lib/format";
-import type { MovementId } from "../types/domain";
-import type { MovementRecordItem } from "./StockMovementsView";
+import type { MovementId, MovementRecordItem } from "../types/domain";
 
 export interface StockMovementDetailViewProps {
   movements?: MovementRecordItem[];
-  movimientos?: MovementRecordItem[];
   movementId?: MovementId | null;
-  movimientoId?: MovementId | null;
   pop: () => void;
 }
 
 export function StockMovementDetailView(props: StockMovementDetailViewProps) {
   const { pop } = props;
-  const movimientos = props.movements ?? props.movimientos ?? [];
-  const movimientoId = props.movementId ?? props.movimientoId;
+  const movimientos = props.movements ?? [];
+  const movimientoId = props.movementId;
 
   const m = movimientos.find((mv) => mv.id === movimientoId);
   if (!m) return null;

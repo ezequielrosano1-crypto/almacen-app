@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { supabase } from "../data/supabaseClient";
+import type { StoredCashShift } from "../types/storage";
 
 export interface RealtimeCashShiftPayload {
   new?: {
@@ -17,7 +18,7 @@ export interface RealtimeCashShiftPayload {
 
 export function handleCashShiftRealtimeEvent(
   payload: RealtimeCashShiftPayload,
-  setCashShift: (updater: (prev: any) => any) => void,
+  setCashShift: (updater: (prev: StoredCashShift | null) => StoredCashShift | null) => void,
 ) {
   const jornada = payload.new;
 
@@ -37,7 +38,9 @@ export function handleCashShiftRealtimeEvent(
   // Se ignora el evento si ya hay una jornada distinta cargada.
   setCashShift((prev) => {
     if (!prev || prev.id === jornadaFormateada.id) {
-      return jornadaFormateada;
+      // El payload de Supabase puede traer id numérico u hora nula; se preserva tal cual el
+      // comportamiento original y solo se ajusta el tipo al de la jornada almacenada.
+      return jornadaFormateada as StoredCashShift;
     }
 
     return prev;
@@ -45,7 +48,7 @@ export function handleCashShiftRealtimeEvent(
 }
 
 export function useCashShiftRealtime(
-  setCashShift: (updater: (prev: any) => any) => void,
+  setCashShift: (updater: (prev: StoredCashShift | null) => StoredCashShift | null) => void,
   client = supabase,
 ) {
   useEffect(() => {
@@ -59,8 +62,8 @@ export function useCashShiftRealtime(
           table: "jornada",
           filter: "negocio_id=eq.1",
         },
-        (payload: any) => {
-          handleCashShiftRealtimeEvent(payload, setCashShift);
+        (payload: unknown) => {
+          handleCashShiftRealtimeEvent(payload as RealtimeCashShiftPayload, setCashShift);
         },
       )
       .subscribe();

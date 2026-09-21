@@ -2,6 +2,7 @@ import { useState } from "react";
 import { insertStockEntry as defaultInsertStockEntry } from "../data/stockMovementsRepository";
 import { nextId as defaultNextId } from "../lib/ids";
 import { initialStockMovements } from "../lib/initialData";
+import type { MovementRecordItem } from "../types/domain";
 
 export interface StockMovementInput {
   tipo?: string;
@@ -59,13 +60,13 @@ export async function recordStockMovementToRepository(
 }
 
 export function useStockMovements(
-  initial: any[] = initialStockMovements(),
+  initial: MovementRecordItem[] = initialStockMovements() as unknown as MovementRecordItem[],
   deps = {
     insertStockEntry: defaultInsertStockEntry,
     nextId: defaultNextId,
   },
 ) {
-  const [movements, setMovements] = useState<any[]>(initial);
+  const [movements, setMovements] = useState<MovementRecordItem[]>(initial);
 
   const recordStockMovement = async (mov: StockMovementInput): Promise<boolean> => {
     const fecha = new Date();

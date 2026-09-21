@@ -18,18 +18,15 @@ export interface LowStockProductItem {
 export interface LowStockViewProps {
   outOfStockProducts?: LowStockProductItem[];
   lowStockProducts?: LowStockProductItem[];
-  productosAgotados?: LowStockProductItem[];
-  productosBajo?: LowStockProductItem[];
   pop: () => void;
   onOpenDetail?: (id: ProductId) => void;
-  onOpenDetalle?: (id: ProductId) => void;
 }
 
 export function LowStockView(props: LowStockViewProps) {
   const { pop } = props;
-  const productosAgotados = props.outOfStockProducts ?? props.productosAgotados ?? [];
-  const productosBajo = props.lowStockProducts ?? props.productosBajo ?? [];
-  const onOpenDetalle = props.onOpenDetail ?? props.onOpenDetalle ?? (() => {});
+  const productosAgotados = props.outOfStockProducts ?? [];
+  const productosBajo = props.lowStockProducts ?? [];
+  const onOpenDetalle = props.onOpenDetail ?? (() => {});
 
   const lista = [...productosAgotados, ...productosBajo];
   return (

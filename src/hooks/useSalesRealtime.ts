@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { listSaleItems as defaultListSaleItems } from "../data/salesRepository";
 import { supabase } from "../data/supabaseClient";
+import type { SaleItemRow } from "../types/db";
+import type { MovementRecordItem } from "../types/domain";
 
 export interface RealtimeSalePayload {
   id: number | string;
@@ -12,13 +14,13 @@ export interface RealtimeSalePayload {
 
 export async function handleSaleRealtimeInsert(
   venta: RealtimeSalePayload | null | undefined,
-  setMovements: (updater: (prev: any[]) => any[]) => void,
+  setMovements: (updater: (prev: MovementRecordItem[]) => MovementRecordItem[]) => void,
   fetchItems: typeof defaultListSaleItems = defaultListSaleItems,
 ) {
   if (!venta) return;
 
   // El handler es async: espera los items ANTES de actualizar el estado.
-  let items: any[];
+  let items: SaleItemRow[];
   try {
     items = await fetchItems(Number(venta.id));
   } catch (error) {
@@ -59,7 +61,7 @@ export async function handleSaleRealtimeInsert(
 }
 
 export function useSalesRealtime(
-  setMovements: (updater: (prev: any[]) => any[]) => void,
+  setMovements: (updater: (prev: MovementRecordItem[]) => MovementRecordItem[]) => void,
   client = supabase,
   listSaleItems = defaultListSaleItems,
 ) {
@@ -74,8 +76,12 @@ export function useSalesRealtime(
           table: "ventas",
           filter: "negocio_id=eq.1",
         },
-        async (payload: any) => {
-          await handleSaleRealtimeInsert(payload.new, setMovements, listSaleItems);
+        async (payload: unknown) => {
+          await handleSaleRealtimeInsert(
+            (payload as { new: RealtimeSalePayload }).new,
+            setMovements,
+            listSaleItems,
+          );
         },
       )
       .subscribe();

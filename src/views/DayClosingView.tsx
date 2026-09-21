@@ -6,6 +6,7 @@ import { closeShiftManually } from "../data/cashShiftRepository";
 import { formatUruguayTime, todayDateKey } from "../lib/dates";
 import { formatMoney } from "../lib/format";
 import { readJson } from "../lib/storage/storage";
+import type { MovementRecordItem } from "../types/domain";
 import type { StoredCashShift } from "../types/storage";
 
 export interface DayClosingRecord {
@@ -19,28 +20,20 @@ export interface DayClosingViewProps {
   todayTotal?: number;
   todayCashTotal?: number;
   todayDebitTotal?: number;
-  todaySales?: any[];
+  todaySales?: MovementRecordItem[];
   pop: () => void;
   cashShift?: StoredCashShift | null;
   onUpdateCashShift?: (shift: StoredCashShift) => void;
-
-  // Aliases legacy para compatibilidad
-  totalHoy?: number;
-  efectivoHoy?: number;
-  debitoHoy?: number;
-  ventasHoy?: any[];
-  caja?: StoredCashShift | null;
-  actualizarCaja?: (shift: StoredCashShift) => void;
 }
 
 export function DayClosingView(props: DayClosingViewProps) {
   const { pop } = props;
-  const totalHoy = props.todayTotal ?? props.totalHoy ?? 0;
-  const efectivoHoy = props.todayCashTotal ?? props.efectivoHoy ?? 0;
-  const debitoHoy = props.todayDebitTotal ?? props.debitoHoy ?? 0;
-  const ventasHoy = props.todaySales ?? props.ventasHoy ?? [];
-  const caja = props.cashShift ?? props.caja ?? null;
-  const actualizarCaja = props.onUpdateCashShift ?? props.actualizarCaja;
+  const totalHoy = props.todayTotal ?? 0;
+  const efectivoHoy = props.todayCashTotal ?? 0;
+  const debitoHoy = props.todayDebitTotal ?? 0;
+  const ventasHoy = props.todaySales ?? [];
+  const caja = props.cashShift ?? null;
+  const actualizarCaja = props.onUpdateCashShift;
 
   const claveHoy = `cierre:${todayDateKey()}`;
   const [cargando, setCargando] = useState(true);

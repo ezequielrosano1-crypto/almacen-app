@@ -24,19 +24,16 @@ export interface ProductFormData {
 
 export interface ProductFormViewProps {
   products?: ProductFormData[];
-  productos?: ProductFormData[];
   productId?: ProductId | null;
-  productoId?: ProductId | null;
   saveProduct?: (product: ProductItem) => unknown;
-  guardarProducto?: (product: ProductItem) => unknown;
   pop: () => void;
 }
 
 export function ProductFormView(props: ProductFormViewProps) {
   const { pop } = props;
-  const products = props.products ?? props.productos ?? [];
-  const productId = props.productId ?? props.productoId ?? null;
-  const saveProduct = props.saveProduct ?? props.guardarProducto ?? (() => {});
+  const products = props.products ?? [];
+  const productId = props.productId ?? null;
+  const saveProduct = props.saveProduct ?? (() => {});
 
   const existente = products.find((p) => p.id === productId);
   const esNuevo = !existente;

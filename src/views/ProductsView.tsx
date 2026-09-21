@@ -7,19 +7,16 @@ import type { ProductId } from "../types/domain";
 
 export interface ProductsViewProps {
   products?: ProductRowItem[];
-  productos?: ProductRowItem[];
   pop: () => void;
   onOpenDetail?: (id: ProductId) => void;
-  onOpenDetalle?: (id: ProductId) => void;
   onNew?: () => void;
-  onNuevo?: () => void;
 }
 
 export function ProductsView(props: ProductsViewProps) {
   const { pop } = props;
-  const products = props.products ?? props.productos ?? [];
-  const onOpenDetail = props.onOpenDetail ?? props.onOpenDetalle ?? (() => {});
-  const onNew = props.onNew ?? props.onNuevo ?? (() => {});
+  const products = props.products ?? [];
+  const onOpenDetail = props.onOpenDetail ?? (() => {});
+  const onNew = props.onNew ?? (() => {});
 
   const [busqueda, setBusqueda] = useState("");
 

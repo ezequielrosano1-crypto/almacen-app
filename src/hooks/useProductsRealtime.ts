@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { supabase } from "../data/supabaseClient";
+import type { ProductItem } from "./useProducts";
 
 export interface RealtimeProductPayload {
   eventType: string;
@@ -18,7 +19,7 @@ export interface RealtimeProductPayload {
 
 export function handleProductRealtimeEvent(
   payload: RealtimeProductPayload,
-  setProducts: (updater: (prev: any[]) => any[]) => void,
+  setProducts: (updater: (prev: ProductItem[]) => ProductItem[]) => void,
 ) {
   const producto = payload.new;
 
@@ -57,7 +58,7 @@ export function handleProductRealtimeEvent(
 }
 
 export function useProductsRealtime(
-  setProducts: (updater: (prev: any[]) => any[]) => void,
+  setProducts: (updater: (prev: ProductItem[]) => ProductItem[]) => void,
   client = supabase,
 ) {
   useEffect(() => {
@@ -71,8 +72,8 @@ export function useProductsRealtime(
           table: "productos",
           filter: "negocio_id=eq.1",
         },
-        (payload: any) => {
-          handleProductRealtimeEvent(payload, setProducts);
+        (payload: unknown) => {
+          handleProductRealtimeEvent(payload as RealtimeProductPayload, setProducts);
         },
       )
       .subscribe();

@@ -109,3 +109,41 @@ export interface WeekSalesBucket {
   day: string;
   total: number;
 }
+
+// Registro de movimiento tal como circula en el estado y en las vistas: mezcla
+// claves en español (persistidas) e inglés (alias), por eso casi todo es opcional.
+export interface MovementRecordItem {
+  id: MovementId;
+  tipo?: string;
+  type?: string;
+  fecha: Date | string;
+  date?: Date | string;
+  productoId?: ProductId;
+  productId?: ProductId;
+  total?: number;
+  producto?: string;
+  productName?: string;
+  cantidad?: number;
+  quantity?: number;
+  unidad?: string;
+  unit?: string;
+  diferencia?: number;
+  difference?: number;
+  motivo?: string;
+  reason?: string;
+  pago?: string;
+  paymentMethod?: string;
+  items?: Array<{
+    productId?: ProductId;
+    nombre?: string;
+    name?: string;
+    cantidad: number;
+    unidad?: string;
+    unit?: string;
+    precio?: number;
+    price?: number;
+    quantity?: number;
+    subtotal?: number;
+    productoId?: ProductId;
+  }>;
+}

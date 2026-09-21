@@ -3,47 +3,16 @@ import { useState } from "react";
 import { Header } from "../components/Header";
 import { COLORS } from "../lib/constants";
 import { formatDate, formatMoney } from "../lib/format";
-import type { MovementId, ProductId } from "../types/domain";
-
-export interface MovementRecordItem {
-  id: MovementId;
-  tipo?: string;
-  type?: string;
-  fecha: Date | string;
-  total?: number;
-  producto?: string;
-  productName?: string;
-  cantidad?: number;
-  quantity?: number;
-  unidad?: string;
-  unit?: string;
-  diferencia?: number;
-  difference?: number;
-  motivo?: string;
-  reason?: string;
-  pago?: string;
-  paymentMethod?: string;
-  items?: Array<{
-    productId?: ProductId;
-    nombre?: string;
-    name?: string;
-    cantidad: number;
-    unidad?: string;
-    unit?: string;
-    precio?: number;
-  }>;
-}
+import type { MovementId, MovementRecordItem } from "../types/domain";
 
 export interface StockMovementsViewProps {
   movements?: MovementRecordItem[];
-  movimientos?: MovementRecordItem[];
   onOpenDetail?: (id: MovementId) => void;
-  onOpenDetalle?: (id: MovementId) => void;
 }
 
 export function StockMovementsView(props: StockMovementsViewProps) {
-  const movimientos = props.movements ?? props.movimientos ?? [];
-  const onOpenDetalle = props.onOpenDetail ?? props.onOpenDetalle ?? (() => {});
+  const movimientos = props.movements ?? [];
+  const onOpenDetalle = props.onOpenDetail ?? (() => {});
 
   const [filtro, setFiltro] = useState("Todos");
   const filtros = ["Todos", "Ventas", "Entradas", "Ajustes"];
