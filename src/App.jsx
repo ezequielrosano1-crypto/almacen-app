@@ -48,14 +48,12 @@ import {
   listSalesWithItems,
   listSaleItems,
 } from "./data/salesRepository";
-import { submitSale } from "./data/submitSale";
 import { insertStockEntry } from "./data/stockMovementsRepository";
 import {
   closeShiftManually,
 } from "./data/cashShiftRepository";
 import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
-import { useSaleCart } from "./hooks/useSaleCart";
 import { Header } from "./components/Header";
 import { PrimaryButton } from "./components/PrimaryButton";
 import { Row } from "./components/Row";
@@ -67,10 +65,9 @@ import { ConfirmationScreen } from "./components/ConfirmationScreen";
 import { ProductList as ListaProductos } from "./components/ProductList";
 import { ProductRow as ProductoListRow } from "./components/ProductRow";
 import { BarcodeScanner } from "./components/BarcodeScanner";
-import { BarcodeScannerCartPanel } from "./components/BarcodeScannerCartPanel";
-import { SaleCartFooter } from "./components/SaleCartFooter";
 import { HomeView } from "./views/HomeView";
 import { SalesView } from "./views/SalesView";
+import { NewSaleView } from "./views/NewSaleView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -95,152 +92,7 @@ import { SalesView } from "./views/SalesView";
 // ===========================================================================
 
 
-function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarStock, pop, resetStack, caja }) {
-  const [busqueda, setBusqueda] = useState("");
-  const [pago, setPago] = useState(null);
-  const [confirmada, setConfirmada] = useState(null);
-  const [enviando, setEnviando] = useState(false);
-  const [escaneando, setEscaneando] = useState(false);
-  const [mensajeEscaneo, setMensajeEscaneo] = useState(null);
-  const ultimoCodigoRef = useRef(null);
-  const cooldownCodigoRef = useRef(null);
 
-  const {
-    carrito,
-    items,
-    total,
-    agregarProducto,
-    cambiarCantidad,
-    quitarProducto,
-    cantidadEnCarrito,
-  } = useSaleCart(productos);
-
-  const disponibles = productos
-    .filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-  const manejarCodigoDetectado = (codigo) => {
-    const limpio = (codigo || "").trim();
-    if (!limpio || limpio === ultimoCodigoRef.current) return;
-    ultimoCodigoRef.current = limpio;
-    // Después de un ratito se "olvida" el último código leído, para poder
-    // escanear el MISMO producto de nuevo (por ejemplo, si el cliente lleva
-    // 2 unidades). Sin esto, una vez leído un código quedaba bloqueado para
-    // siempre en esta pantalla.
-    if (cooldownCodigoRef.current) clearTimeout(cooldownCodigoRef.current);
-    cooldownCodigoRef.current = setTimeout(() => {
-      ultimoCodigoRef.current = null;
-    }, 1500);
-
-    const producto = productos.find((p) => p.codigoBarras && p.codigoBarras.trim() === limpio);
-    if (producto) {
-      agregarProducto(producto);
-      setMensajeEscaneo(`Agregado: ${producto.nombre}`);
-    } else {
-      setMensajeEscaneo("Código no asociado a ningún producto todavía.");
-    }
-    setTimeout(() => setMensajeEscaneo(null), 2500);
-  };
-
- const confirmarVenta = async () => {
-  if (items.length === 0 || !pago || enviando || !caja || caja.estado !== "ABIERTA") return;
-
-  setEnviando(true);
-
-  try {
-    await submitSale({ total, pago, items });
-    setConfirmada({ total, pago });
-  } catch (error) {
-    console.error("Error registrando venta:", error);
-    alert("No se pudo registrar la venta.");
-  } finally {
-    setEnviando(false);
-  }
-};
-
-  if (confirmada) {
-    return (
-      <ConfirmationScreen
-        icon={<CheckCircle2 size={56} color={COLORS.principal} />}
-        title="Venta registrada"
-        message={`Total ${formatMoney(confirmada.total)} · ${confirmada.pago}`}
-        buttonLabel="Volver a Ventas"
-        onDone={resetStack}
-      />
-    );
-  }
-
-  if (!caja || caja.estado !== "ABIERTA") {
-    return (
-      <div className="px-5 pt-6">
-        <Header title="Nueva venta" onBack={pop} />
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-6 text-center space-y-2">
-          <p className="text-lg font-bold text-stone-800">Caja cerrada</p>
-          <p className="text-sm text-stone-500">No se pueden registrar ventas fuera del horario de caja.</p>
-          <p className="text-sm font-medium" style={{ color: COLORS.principal }}>Próxima apertura: 08:00</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="pb-72">
-      <Header title="Nueva venta" onBack={pop} />
-      <div className="px-5 space-y-3">
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-          </div>
-          <button
-            type="button"
-            onClick={() => setEscaneando(true)}
-            className="shrink-0 rounded-2xl shadow-sm w-12 flex items-center justify-center"
-            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E7E5E4" }}
-          >
-            <Camera size={20} color="#2E6B4F" />
-          </button>
-        </div>
-        <div className="space-y-2">
-          {disponibles.length > 0 ? (
-            disponibles.map((p) => (
-              <ProductoListRow key={p.id} producto={p} onClick={() => agregarProducto(p)} />
-            ))
-          ) : (
-            <p className="text-stone-400 text-xs text-center py-6">Ningún producto coincide con la búsqueda</p>
-          )}
-        </div>
-      </div>
-
-      <SaleCartFooter
-        items={items}
-        total={total}
-        pago={pago}
-        setPago={setPago}
-        confirmarVenta={confirmarVenta}
-        enviando={enviando}
-        cambiarCantidad={cambiarCantidad}
-        quitarProducto={quitarProducto}
-      />
-
-      {escaneando && (
-        <BarcodeScanner
-          onClose={() => setEscaneando(false)}
-          onCodigoDetectado={manejarCodigoDetectado}
-          mensaje={mensajeEscaneo}
-        >
-          <BarcodeScannerCartPanel
-            items={items}
-            total={total}
-            pago={pago}
-            setPago={setPago}
-            onConfirmar={confirmarVenta}
-            enviando={enviando}
-          />
-        </BarcodeScanner>
-      )}
-    </div>
-  );
-}
 
 function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, actualizarCaja }) {
   const claveHoy = `cierre:${todayDateKey()}`;
@@ -1813,15 +1665,15 @@ const actualizarStock = async (id, nuevoStock) => {
     if (tab === "sales") {
       if (current.screen === "newSale")
         return (
-       <NuevaVenta
-  productos={productos}
-  setProductos={setProductos}
-  registrarMovimiento={registrarMovimiento}
-  actualizarStock={actualizarStock}
-  pop={pop}
-  resetStack={resetStack}
-  caja={caja}
-/>
+          <NewSaleView
+            products={productos}
+            setProducts={setProductos}
+            recordStockMovement={registrarMovimiento}
+            updateStock={actualizarStock}
+            pop={pop}
+            resetStack={resetStack}
+            cashShift={caja}
+          />
         );
       if (current.screen === "dayClosing")
         return (

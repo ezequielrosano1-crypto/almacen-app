@@ -3,17 +3,12 @@ import { formatMoney } from "../lib/format";
 import type { PaymentMethod } from "../types/domain";
 import { PrimaryButton } from "./PrimaryButton";
 
-export interface SaleCartFooterItem {
+export interface SaleCartFooterItem<P = unknown> {
   id: number | string;
   cantidad?: number;
   quantity?: number;
   subtotal: number;
-  producto?: {
-    nombre?: string;
-    name?: string;
-    unidad?: string;
-    unit?: string;
-  };
+  producto?: P;
   nombre?: string;
   name?: string;
   unidad?: string;
@@ -82,9 +77,12 @@ export function SaleCartFooter({
       {/* Zona con scroll propio: SOLO la lista de productos del carrito */}
       <div className="px-5 pt-3 space-y-2 max-h-40 overflow-y-auto">
         {items.map((it) => {
-          const name = it.producto?.nombre ?? it.producto?.name ?? it.nombre ?? it.name ?? "";
+          const prod = it.producto as
+            | { nombre?: string; name?: string; unidad?: string; unit?: string }
+            | undefined;
+          const name = prod?.nombre ?? prod?.name ?? it.nombre ?? it.name ?? "";
           const qty = it.cantidad ?? it.quantity ?? 0;
-          const unit = it.producto?.unidad ?? it.producto?.unit ?? it.unidad ?? it.unit;
+          const unit = prod?.unidad ?? prod?.unit ?? it.unidad ?? it.unit;
 
           return (
             <div key={it.id} className="flex items-center justify-between text-sm">
