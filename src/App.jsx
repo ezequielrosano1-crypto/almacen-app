@@ -58,7 +58,7 @@ import { MoreView } from "./views/MoreView";
 import { BusinessInfoView } from "./views/BusinessInfoView";
 import { ProductsView } from "./views/ProductsView";
 import { ProductFormView } from "./views/ProductFormView";
-import { CashRegisterSandboxView } from "./views/CashRegisterSandboxView";
+import { SettingsView } from "./views/SettingsView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -103,83 +103,7 @@ import { CashRegisterSandboxView } from "./views/CashRegisterSandboxView";
 
 
 
-function BorrarDatos() {
-  const [confirmando, setConfirmando] = useState(false);
-  const [borrando, setBorrando] = useState(false);
 
-  const borrarTodo = async () => {
-    setBorrando(true);
-    try { await removeKey("datos:productos"); } catch (e) {}
-    try { await removeKey("datos:movimientos"); } catch (e) {}
-    window.location.reload();
-  };
-
-  return (
-    <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-      <p className="text-xs font-semibold text-stone-500 px-1">Empezar de cero</p>
-      <p className="text-xs text-stone-500 px-1">
-        Borra todos los productos y todo el historial de ventas de este dispositivo. La caja (abierta/cerrada)
-        no se toca. No se puede deshacer.
-      </p>
-      {!confirmando ? (
-        <button
-          type="button"
-          onClick={() => setConfirmando(true)}
-          className="w-full text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#C0392B", borderColor: "#E7E5E4" }}
-        >
-          Borrar todos los productos y ventas
-        </button>
-      ) : (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold px-1" style={{ color: COLORS.agotado }}>
-            ¿Seguro? Esto borra todo y no se puede deshacer.
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setConfirmando(false)}
-              className="flex-1 text-sm rounded-xl px-3 py-2.5 border"
-              style={{ backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={borrarTodo}
-              disabled={borrando}
-              className="flex-1 text-sm rounded-xl px-3 py-2.5"
-              style={{ backgroundColor: "#C0392B", color: "#FFFFFF" }}
-            >
-              {borrando ? "Borrando..." : "Sí, borrar todo"}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Configuracion({ pop }) {
-  return (
-    <div>
-      <Header title="Configuración" onBack={pop} />
-      <div className="px-5 space-y-4 pb-6">
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-8 text-center">
-          <p className="text-stone-600 font-medium">Configuración</p>
-          <p className="text-stone-400 text-sm mt-2">Esta sección estará disponible en una etapa futura.</p>
-        </div>
-        <BorrarDatos />
-        <div>
-          <p className="text-xs font-semibold text-stone-500 px-1 mb-2">
-            Pruebas · caja automática
-          </p>
-          <CashRegisterSandboxView />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ===========================================================================
 // App principal — SOLO estado global y orquestación. Ningún componente con
@@ -738,7 +662,7 @@ const actualizarStock = async (id, nuevoStock) => {
             pop={pop}
           />
         );
-      if (current.screen === "settings") return <Configuracion pop={pop} />;
+      if (current.screen === "settings") return <SettingsView pop={pop} />;
       return <MoreView push={push} />;
     }
 
