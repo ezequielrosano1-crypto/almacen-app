@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Home,
-  ShoppingCart,
-  Package,
-  ListOrdered,
-  Menu,
   Plus,
   Minus,
   ChevronRight,
@@ -68,6 +63,11 @@ import { PrimaryButton } from "./components/PrimaryButton";
 import { Row } from "./components/Row";
 import { SearchBar } from "./components/SearchBar";
 import { StatusDot } from "./components/StatusDot";
+import { BottomNav } from "./components/BottomNav";
+import { CashRegisterStatusCard as EstadoCajaCard } from "./components/CashRegisterStatusCard";
+import { ConfirmationScreen } from "./components/ConfirmationScreen";
+import { ProductList as ListaProductos } from "./components/ProductList";
+import { ProductRow as ProductoListRow } from "./components/ProductRow";
 
 // ===========================================================================
 // Constantes / configuración
@@ -81,70 +81,7 @@ import { StatusDot } from "./components/StatusDot";
 // ===========================================================================
 
 
-// ===========================================================================
-// Barra de navegación inferior
-// ===========================================================================
-const NAV_ITEMS = [
-  { key: "home", label: "Inicio", icon: Home },
-  { key: "sales", label: "Ventas", icon: ShoppingCart },
-  { key: "stock", label: "Stock", icon: Package },
-  { key: "movements", label: "Movimientos", icon: ListOrdered },
-  { key: "more", label: "Más", icon: Menu },
-];
 
-function BottomNav({ active, onChange }) {
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 flex justify-around items-center py-2 px-1 max-w-sm mx-auto">
-      {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
-        const isActive = active === key;
-        return (
-          <button
-            type="button"
-            key={key}
-            onClick={() => onChange(key)}
-            className="flex flex-col items-center justify-center flex-1 py-1"
-          >
-            <div
-              className="flex items-center justify-center rounded-full px-3 py-1 transition-colors"
-              style={{ backgroundColor: isActive ? "#2E6B4F" : "transparent" }}
-            >
-              <Icon size={22} strokeWidth={2} color={isActive ? "#FFFFFF" : "#8A8478"} />
-            </div>
-            <span
-              className={"text-xs mt-1 " + (isActive ? "font-semibold" : "")}
-              style={{ color: isActive ? "#2E6B4F" : "#A8A29E" }}
-            >
-              {label}
-            </span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-// ===========================================================================
-// Componentes visuales reutilizables (sin estado propio)
-// ===========================================================================
-function ProductoListRow({ producto, onClick }) {
-  const estado = getProductStatus(producto);
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
-    >
-      <div className="flex items-center gap-3">
-        <StatusDot estado={estado} />
-        <div>
-          <p className="text-stone-800 font-medium text-sm">{producto.nombre}</p>
-          <p className="text-stone-400 text-xs">{formatMoney(producto.precio)}{producto.unidad === "kg" ? " / kg" : ""}</p>
-        </div>
-      </div>
-      <span className="text-stone-600 text-sm font-medium">{formatStock(producto)}</span>
-    </button>
-  );
-}
 
 function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total, pago, setPago, onConfirmar, enviando }) {
   const videoRef = useRef(null);
@@ -365,53 +302,7 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
   );
 }
 
-function EstadoCajaCard({ caja, totalHoy }) {
-  const abierta = caja?.estado === "ABIERTA";
-  return (
-    <div className="bg-white rounded-2xl shadow-sm px-4 py-3.5 space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-base leading-none">{abierta ? "🟢" : "🔴"}</span>
-          <span className="text-sm font-semibold text-stone-800">
-            {abierta ? "Caja abierta" : "Caja cerrada"}
-          </span>
-          {caja?.cerradoAutomaticamente && (
-            <span className="text-[10px] text-stone-400">(cierre automático)</span>
-          )}
-        </div>
-        <span className="text-xs font-medium" style={{ color: abierta ? COLORS.principal : COLORS.agotado }}>
-          {abierta ? "Jornada actual" : "Jornada cerrada"}
-        </span>
-      </div>
-      <div className="flex justify-between text-xs text-stone-500 border-t border-stone-100 pt-2">
-        {abierta ? (
-          <>
-            <span>Apertura: <strong className="text-stone-700">{caja?.horaApertura || "—"}</strong></span>
-            <span>Vendido hoy: <strong className="text-stone-700">{formatMoney(totalHoy || 0)}</strong></span>
-          </>
-        ) : (
-          <>
-            <span>Cierre: <strong className="text-stone-700">{caja?.horaCierre || "—"}</strong></span>
-            <span>Próxima apertura: <strong className="text-stone-700">08:00</strong></span>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
-function ConfirmationScreen({ icon, title, message, buttonLabel, onDone }) {
-  return (
-    <div className="px-5 pt-16 pb-4 flex flex-col items-center text-center">
-      {icon}
-      <h2 className="text-xl font-bold text-stone-800 mt-4">{title}</h2>
-      <p className="text-stone-500 text-sm mt-2">{message}</p>
-      <div className="w-full mt-8">
-        <PrimaryButton onClick={onDone}>{buttonLabel}</PrimaryButton>
-      </div>
-    </div>
-  );
-}
 
 // ===========================================================================
 // INICIO — sin estado propio, recibe todo por props
@@ -1049,23 +940,7 @@ function StockMain({ push }) {
   );
 }
 
-function ListaProductos({ productos, busqueda, onProductoClick }) {
-  const disponibles = productos
-    .filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-  return (
-    <div className="space-y-2">
-      {disponibles.length > 0 ? (
-        disponibles.map((p) => (
-          <ProductoListRow key={p.id} producto={p} onClick={() => onProductoClick(p.id)} />
-        ))
-      ) : (
-        <p className="text-stone-400 text-xs text-center py-6">Ningún producto coincide con la búsqueda</p>
-      )}
-    </div>
-  );
-}
 
 function VerProductos({ productos, pop, onOpenDetalle }) {
   const [busqueda, setBusqueda] = useState("");
