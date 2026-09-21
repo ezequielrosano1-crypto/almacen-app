@@ -5,6 +5,7 @@ import { Header } from "../components/Header";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ProductRow } from "../components/ProductRow";
 import { SearchBar } from "../components/SearchBar";
+import type { StockMovementInput } from "../hooks/useStockMovements";
 import { COLORS } from "../lib/constants";
 import { formatStock } from "../lib/stock";
 import type { ProductId } from "../types/domain";
@@ -25,8 +26,7 @@ export interface StockEntryProductItem {
 export interface AddStockEntryViewProps {
   products?: StockEntryProductItem[];
   initialProductId?: ProductId | null;
-  updateStock?: (id: ProductId, newStock: number) => void;
-  recordMovement?: (movement: Record<string, unknown>) => void;
+  recordMovement?: (movement: StockMovementInput) => Promise<unknown>;
   pop: () => void;
   resetStack: () => void;
 }
@@ -41,13 +41,13 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
   const { pop, resetStack } = props;
   const products = props.products ?? [];
   const initialProductId = props.initialProductId ?? null;
-  const updateStock = props.updateStock ?? (() => {});
-  const recordMovement = props.recordMovement ?? (() => {});
+  const recordMovement = props.recordMovement ?? (async () => null);
 
   const [productoId, setProductoId] = useState<ProductId | null>(initialProductId);
   const [busqueda, setBusqueda] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [confirmada, setConfirmada] = useState<ConfirmedStockEntry | null>(null);
+  const [guardando, setGuardando] = useState(false);
 
   const producto = products.find((p) => p.id === productoId);
   const disponibles = products.filter((p) => {
@@ -55,21 +55,23 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
     return nombre.toLowerCase().includes(busqueda.toLowerCase());
   });
 
-  const confirmar = () => {
+  const confirmar = async () => {
     const cant = parseFloat(cantidad);
-    if (!producto || !cant || cant <= 0) return;
+    if (!producto || !cant || cant <= 0 || guardando) return;
     const nombre = producto.nombre ?? producto.name ?? "";
     const unidad = producto.unidad ?? producto.unit ?? "unidad";
-    const nuevoStock = Math.round((producto.stock + cant) * 100) / 100;
 
-    updateStock(producto.id, nuevoStock);
-    recordMovement({
+    // One server call updates the stock and records the movement together; the
+    // confirmation only shows once it succeeded (the hook alerts on failure).
+    setGuardando(true);
+    const saved = await recordMovement({
       tipo: "entrada",
       productoId: producto.id,
-      producto: nombre,
       cantidad: cant,
-      unidad,
     });
+    setGuardando(false);
+    if (!saved) return;
+
     setConfirmada({ nombre, cantidad: cant, unidad });
   };
 
@@ -131,7 +133,10 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
                 />
               </label>
             </div>
-            <PrimaryButton onClick={confirmar} disabled={!cantidad || parseFloat(cantidad) <= 0}>
+            <PrimaryButton
+              onClick={confirmar}
+              disabled={guardando || !cantidad || parseFloat(cantidad) <= 0}
+            >
               Registrar entrada
             </PrimaryButton>
           </>

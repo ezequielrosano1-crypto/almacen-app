@@ -4,7 +4,7 @@ vi.mock("../data/supabaseClient", () => ({
   supabase: { from: vi.fn() },
 }));
 
-import { runInitialLoad } from "./useInitialLoad";
+import { type InitialLoadDeps, runInitialLoad } from "./useInitialLoad";
 
 describe("useInitialLoad / runInitialLoad", () => {
   beforeEach(() => {
@@ -29,11 +29,27 @@ describe("useInitialLoad / runInitialLoad", () => {
       ];
     });
 
+    const mockListStockMovements = vi.fn(async () => {
+      callOrder.push("listStockMovements");
+      return [
+        {
+          id: 10,
+          negocio_id: 1,
+          producto_id: 1,
+          producto_nombre: "Yerba",
+          jornada_id: null,
+          fecha: "2026-09-20T10:00:00.000Z",
+          tipo: "ajuste",
+          cantidad: 3,
+          unidad: "unidad",
+          diferencia: -2,
+          motivo: "Rotura",
+        },
+      ];
+    });
+
     const mockReadJson = vi.fn(async (key: string) => {
       callOrder.push(`readJson:${key}`);
-      if (key === "datos:movimientos") {
-        return [{ id: 10, tipo: "ajuste", fecha: "2026-09-20T10:00:00.000Z" }];
-      }
       if (key === "datos:infoNegocio") {
         return { nombre: "Mi Almacén", contacto: "099 000 111" };
       }
@@ -77,6 +93,8 @@ describe("useInitialLoad / runInitialLoad", () => {
       },
       {
         listProducts: mockListProducts as any,
+        listStockMovements:
+          mockListStockMovements as unknown as InitialLoadDeps["listStockMovements"],
         readJson: mockReadJson as any,
         listSalesWithItems: mockListSales as any,
       },
@@ -84,7 +102,7 @@ describe("useInitialLoad / runInitialLoad", () => {
 
     expect(callOrder).toEqual([
       "listProducts",
-      "readJson:datos:movimientos",
+      "listStockMovements",
       "listSalesWithItems",
       "readJson:datos:infoNegocio",
     ]);
@@ -93,7 +111,12 @@ describe("useInitialLoad / runInitialLoad", () => {
       expect.arrayContaining([expect.objectContaining({ id: 1, nombre: "Yerba", precio: 100 })]),
     );
 
-    expect(setStockMovements).toHaveBeenCalledTimes(2); // once for stored movs, once for sales
+    expect(setStockMovements).toHaveBeenCalledTimes(2); // once for DB movements, once for sales
+    // Entradas/ajustes come from the database (with the product name), not from localStorage.
+    expect(setStockMovements.mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({ id: 10, tipo: "ajuste", producto: "Yerba", diferencia: -2 }),
+    ]);
+    expect(mockReadJson).not.toHaveBeenCalledWith("datos:movimientos");
     expect(setBusinessInfo).toHaveBeenCalledWith({
       nombre: "Mi Almacén",
       contacto: "099 000 111",
@@ -107,6 +130,7 @@ describe("useInitialLoad / runInitialLoad", () => {
     ]);
     const mockReadJson = vi.fn(async () => ({}));
     const mockListSales = vi.fn(async () => []);
+    const mockListStockMovements = vi.fn(async () => []);
 
     const setProducts = vi.fn();
     const setStockMovements = vi.fn();
@@ -123,6 +147,8 @@ describe("useInitialLoad / runInitialLoad", () => {
       },
       {
         listProducts: mockListProducts as any,
+        listStockMovements:
+          mockListStockMovements as unknown as InitialLoadDeps["listStockMovements"],
         readJson: mockReadJson as any,
         listSalesWithItems: mockListSales as any,
       },
@@ -132,5 +158,42 @@ describe("useInitialLoad / runInitialLoad", () => {
     expect(setStockMovements).not.toHaveBeenCalled();
     expect(setBusinessInfo).not.toHaveBeenCalled();
     expect(setLoaded).not.toHaveBeenCalled();
+  });
+
+  it("keeps loading (sales, business info) when the movements query fails", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const setStockMovements = vi.fn();
+    const setLoaded = vi.fn();
+
+    await runInitialLoad(
+      {
+        isActive: () => true,
+        setProducts: vi.fn(),
+        setStockMovements,
+        setBusinessInfo: vi.fn(),
+        setLoaded,
+      },
+      {
+        listProducts: vi.fn(async () => []),
+        listStockMovements: vi.fn(async () => {
+          throw new Error("offline");
+        }),
+        readJson: vi.fn(async () => null),
+        listSalesWithItems: vi.fn(async () => [
+          {
+            id: 1,
+            fecha: "2026-09-21T11:00:00.000Z",
+            total: 10,
+            pago: "Efectivo",
+            venta_items: [],
+          },
+        ]),
+      } as unknown as InitialLoadDeps,
+    );
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(setStockMovements).toHaveBeenCalledTimes(1); // sales only
+    expect(setLoaded).toHaveBeenCalledWith(true);
+    consoleSpy.mockRestore();
   });
 });

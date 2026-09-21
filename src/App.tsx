@@ -5,10 +5,10 @@ import { useCashShiftAutoSync } from "./hooks/useCashShiftAutoSync";
 import { useCashShiftRealtime } from "./hooks/useCashShiftRealtime";
 import { useInitialLoad } from "./hooks/useInitialLoad";
 import { useNavigation } from "./hooks/useNavigation";
-import { useProducts } from "./hooks/useProducts";
+import { applyStockUpdate, useProducts } from "./hooks/useProducts";
 import { useProductsRealtime } from "./hooks/useProductsRealtime";
 import { useSalesRealtime } from "./hooks/useSalesRealtime";
-import { useStockMovements } from "./hooks/useStockMovements";
+import { type StockMovementInput, useStockMovements } from "./hooks/useStockMovements";
 import { useStockMovementsRealtime } from "./hooks/useStockMovementsRealtime";
 import { useStorageSync } from "./hooks/useStorageSync";
 import {
@@ -47,6 +47,17 @@ import { StockView } from "./views/StockView";
 export default function App() {
   const { products, setProducts, updateStock, saveProduct } = useProducts();
   const { movements, setMovements, recordStockMovement } = useStockMovements();
+
+  // Entradas and ajustes: the server updates the stock and records the movement in one
+  // transaction; the product in state is set from the stock it returns (no client math).
+  const registerStockMovement = async (mov: StockMovementInput) => {
+    const saved = await recordStockMovement(mov);
+    if (saved?.movimiento.producto_id != null) {
+      const productId = saved.movimiento.producto_id;
+      setProducts((prev) => applyStockUpdate(prev, productId, saved.stock));
+    }
+    return saved;
+  };
   const { businessInfo, setBusinessInfo, saveBusinessInfo } = useBusinessInfo();
   const { loaded } = useInitialLoad({
     setProducts,
@@ -65,7 +76,6 @@ export default function App() {
   useSalesRealtime(setMovements);
   useCashShiftRealtime(setCashShift);
   const { tab, current, goTab, goTabScreen, push, pop, resetStack } = useNavigation();
-  useStorageSync("datos:movimientos", movements, loaded);
   useStorageSync("datos:infoNegocio", businessInfo, loaded);
   useCashShiftAutoSync(movements, setCashShift);
 
@@ -100,7 +110,7 @@ export default function App() {
           <NewSaleView
             products={products}
             setProducts={setProducts}
-            recordStockMovement={recordStockMovement}
+            recordStockMovement={registerStockMovement}
             updateStock={updateStock}
             pop={pop}
             resetStack={resetStack}
@@ -162,8 +172,7 @@ export default function App() {
           <AddStockEntryView
             products={products}
             initialProductId={current.params.productId}
-            updateStock={updateStock}
-            recordMovement={recordStockMovement}
+            recordMovement={registerStockMovement}
             pop={pop}
             resetStack={resetStack}
           />
@@ -173,8 +182,7 @@ export default function App() {
           <AdjustStockView
             products={products}
             initialProductId={current.params.productId}
-            updateStock={updateStock}
-            recordMovement={recordStockMovement}
+            recordMovement={registerStockMovement}
             pop={pop}
             resetStack={resetStack}
           />

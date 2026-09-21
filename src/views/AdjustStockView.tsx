@@ -5,6 +5,7 @@ import { Header } from "../components/Header";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ProductRow } from "../components/ProductRow";
 import { SearchBar } from "../components/SearchBar";
+import type { StockMovementInput } from "../hooks/useStockMovements";
 import { ADJUSTMENT_REASONS, COLORS } from "../lib/constants";
 import { formatStock } from "../lib/stock";
 import type { ProductId } from "../types/domain";
@@ -25,10 +26,14 @@ export interface AdjustStockProductItem {
 export interface AdjustStockViewProps {
   products?: AdjustStockProductItem[];
   initialProductId?: ProductId | null;
-  updateStock?: (id: ProductId, realStock: number) => void;
-  recordMovement?: (movement: Record<string, unknown>) => void;
+  recordMovement?: (movement: StockMovementInput) => Promise<AdjustmentResult | null>;
   pop: () => void;
   resetStack: () => void;
+}
+
+// Only what the view needs from the server result.
+interface AdjustmentResult {
+  movimiento: { diferencia: number | null };
 }
 
 interface ConfirmedAdjustment {
@@ -40,14 +45,14 @@ export function AdjustStockView(props: AdjustStockViewProps) {
   const { pop, resetStack } = props;
   const products = props.products ?? [];
   const initialProductId = props.initialProductId ?? null;
-  const updateStock = props.updateStock ?? (() => {});
-  const recordMovement = props.recordMovement ?? (() => {});
+  const recordMovement = props.recordMovement ?? (async () => null);
 
   const [productoId, setProductoId] = useState<ProductId | null>(initialProductId);
   const [busqueda, setBusqueda] = useState("");
   const [stockReal, setStockReal] = useState("");
   const [motivo, setMotivo] = useState<string | null>(null);
   const [confirmada, setConfirmada] = useState<ConfirmedAdjustment | null>(null);
+  const [guardando, setGuardando] = useState(false);
 
   const producto = products.find((p) => p.id === productoId);
   const disponibles = products.filter((p) => {
@@ -55,20 +60,24 @@ export function AdjustStockView(props: AdjustStockViewProps) {
     return nombre.toLowerCase().includes(busqueda.toLowerCase());
   });
 
-  const confirmar = () => {
+  const confirmar = async () => {
     const real = parseFloat(stockReal);
-    if (!producto || Number.isNaN(real) || real < 0 || !motivo) return;
+    if (!producto || Number.isNaN(real) || real < 0 || !motivo || guardando) return;
     const nombre = producto.nombre ?? producto.name ?? "";
-    const diferencia = Math.round((real - producto.stock) * 100) / 100;
 
-    updateStock(producto.id, real);
-    recordMovement({
+    // The server compares against the stock it holds (not the possibly stale one on this
+    // screen), updates it and records the adjustment in one transaction.
+    setGuardando(true);
+    const saved = await recordMovement({
       tipo: "ajuste",
-      producto: nombre,
-      diferencia,
+      productoId: producto.id,
+      cantidad: real,
       motivo,
     });
-    setConfirmada({ nombre, diferencia });
+    setGuardando(false);
+    if (!saved) return;
+
+    setConfirmada({ nombre, diferencia: Number(saved.movimiento.diferencia ?? 0) });
   };
 
   if (confirmada) {
@@ -148,7 +157,7 @@ export function AdjustStockView(props: AdjustStockViewProps) {
                 ))}
               </div>
             </div>
-            <PrimaryButton onClick={confirmar} disabled={stockReal === "" || !motivo}>
+            <PrimaryButton onClick={confirmar} disabled={guardando || stockReal === "" || !motivo}>
               Confirmar ajuste
             </PrimaryButton>
           </>

@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import type { StockMovementRow } from "../types/db";
+import type { MovementRecordItem } from "../types/domain";
 
 vi.mock("../data/supabaseClient", () => ({
   supabase: { from: vi.fn() },
@@ -6,50 +8,70 @@ vi.mock("../data/supabaseClient", () => ({
 
 import { handleStockMovementRealtimeInsert } from "./useStockMovementsRealtime";
 
+const payload: StockMovementRow = {
+  id: 99,
+  negocio_id: 1,
+  jornada_id: null,
+  fecha: "2026-09-21T12:00:00.000Z",
+  tipo: "entrada",
+  producto_id: 1,
+  producto_nombre: "Yerba",
+  cantidad: 5,
+  unidad: "unidad",
+  diferencia: 5,
+  motivo: "Entrada de stock",
+};
+
+function harness(initial: MovementRecordItem[]) {
+  let state = initial;
+  const setMovements = (updater: (prev: MovementRecordItem[]) => MovementRecordItem[]) => {
+    state = updater(state);
+  };
+  return { setMovements, get: () => state };
+}
+
 describe("useStockMovementsRealtime / pure handlers", () => {
-  it("pins bug #2: blindly prepends entrada without deduplication (twin duplicated entrada)", () => {
-    // Existing list already contains movement 99
-    let state = [{ id: 99, tipo: "entrada", productoId: 1, cantidad: 5 }];
-    const setMovements = (updater: any) => {
-      state = updater(state);
-    };
+  it("prepends a movement made on another device, with its product name", () => {
+    const h = harness([{ id: 1, tipo: "entrada", fecha: new Date() }]);
 
-    // Realtime notification arrives with the same id 99 (or duplicate)
-    handleStockMovementRealtimeInsert(
-      {
-        id: 99,
-        fecha: "2026-09-21T12:00:00.000Z",
-        tipo: "entrada",
-        producto_id: 1,
-        cantidad: 5,
-        unidad: "unidad",
-        diferencia: 5,
-        motivo: "Entrada de stock",
-      },
-      setMovements,
-    );
+    handleStockMovementRealtimeInsert(payload, h.setMovements);
 
-    // BUG #2 pinned: state now contains TWO entries with id 99 (duplicated twin entrada)
-    expect(state).toHaveLength(2);
-    expect(state[0].id).toBe(99);
-    expect(state[1].id).toBe(99);
+    expect(h.get()).toHaveLength(2);
+    expect(h.get()[0]).toMatchObject({ id: 99, producto: "Yerba", cantidad: 5, diferencia: 5 });
   });
 
-  it("ignores movements with tipo 'venta'", () => {
-    let state = [{ id: 1, tipo: "entrada" }];
-    const setMovements = (updater: any) => {
-      state = updater(state);
-    };
+  it("handles ajustes too, keeping the server-computed difference", () => {
+    const h = harness([]);
 
     handleStockMovementRealtimeInsert(
-      {
-        id: 2,
-        fecha: "2026-09-21T12:00:00.000Z",
-        tipo: "venta",
-      },
-      setMovements,
+      { ...payload, id: 100, tipo: "ajuste", cantidad: 3, diferencia: -2, motivo: "Rotura" },
+      h.setMovements,
     );
 
-    expect(state).toHaveLength(1);
+    expect(h.get()[0]).toMatchObject({ tipo: "ajuste", diferencia: -2, motivo: "Rotura" });
+  });
+
+  it("bug #2 fixed: the echo of a movement already in the list is not added again", () => {
+    const h = harness([{ id: 99, tipo: "entrada", fecha: new Date(), producto: "Yerba" }]);
+
+    handleStockMovementRealtimeInsert(payload, h.setMovements);
+
+    expect(h.get()).toHaveLength(1);
+  });
+
+  it("ignores movements with tipo 'venta' (sales come from the ventas channel)", () => {
+    const h = harness([{ id: 1, tipo: "entrada", fecha: new Date() }]);
+
+    handleStockMovementRealtimeInsert({ ...payload, id: 2, tipo: "venta" }, h.setMovements);
+
+    expect(h.get()).toHaveLength(1);
+  });
+
+  it("ignores empty payloads", () => {
+    const h = harness([]);
+
+    handleStockMovementRealtimeInsert(null, h.setMovements);
+
+    expect(h.get()).toHaveLength(0);
   });
 });

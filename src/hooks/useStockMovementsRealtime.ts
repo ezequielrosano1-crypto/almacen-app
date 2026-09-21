@@ -1,18 +1,11 @@
 import { useEffect } from "react";
+import { toMovementRecord } from "../data/mappers";
 import { supabase } from "../data/supabaseClient";
+import type { StockMovementRow } from "../types/db";
 import type { MovementRecordItem } from "../types/domain";
+import { applyStockMovement } from "./useStockMovements";
 
-export interface RealtimeStockMovementPayload {
-  id: number | string;
-  fecha: string;
-  tipo: string;
-  producto_id?: number | string;
-  cantidad?: number | string;
-  unidad?: string;
-  diferencia?: number | string;
-  motivo?: string;
-  [key: string]: unknown;
-}
+export type RealtimeStockMovementPayload = StockMovementRow;
 
 export function handleStockMovementRealtimeInsert(
   movimiento: RealtimeStockMovementPayload | null | undefined,
@@ -20,28 +13,9 @@ export function handleStockMovementRealtimeInsert(
 ) {
   if (!movimiento || movimiento.tipo === "venta") return;
 
-  // BUG #2: en movimientos-stock-realtime no se deduplica contra prev.
-  // Esto genera una entrada gemela duplicada ("duplicated twin entrada")
-  // observable en el historial de movimientos cuando se registra localmente e inserta en Supabase.
-  const movimientoFormateado = {
-    id: movimiento.id,
-    fecha: new Date(movimiento.fecha),
-    date: new Date(movimiento.fecha),
-    tipo: movimiento.tipo,
-    type: movimiento.tipo,
-    productoId: movimiento.producto_id,
-    productId: movimiento.producto_id,
-    cantidad: Number(movimiento.cantidad ?? 0),
-    quantity: Number(movimiento.cantidad ?? 0),
-    unidad: movimiento.unidad,
-    unit: movimiento.unidad,
-    diferencia: Number(movimiento.diferencia ?? 0),
-    difference: Number(movimiento.diferencia ?? 0),
-    motivo: movimiento.motivo,
-    reason: movimiento.motivo,
-  };
-
-  setMovements((prev) => [movimientoFormateado, ...prev]);
+  // Our own registrations come back here too (realtime echo): applyStockMovement skips
+  // a movement that is already in the list, so it is never shown twice.
+  setMovements((prev) => applyStockMovement(prev, toMovementRecord(movimiento)));
 }
 
 export function useStockMovementsRealtime(

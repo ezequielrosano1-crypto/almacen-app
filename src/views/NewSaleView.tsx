@@ -19,7 +19,7 @@ import type { StoredCashShift } from "../types/storage";
 export interface NewSaleViewProps {
   products: ProductItem[];
   setProducts: Dispatch<SetStateAction<ProductItem[]>>;
-  recordStockMovement: (m: StockMovementInput) => Promise<boolean>;
+  recordStockMovement: (m: StockMovementInput) => Promise<unknown>;
   updateStock: (id: ProductId, newStock: number) => Promise<boolean>;
   pop: () => void;
   resetStack: () => void;

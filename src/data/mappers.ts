@@ -14,6 +14,7 @@ import type {
   CashShiftStatus,
   ClosingSummary,
   MeasurementUnit,
+  MovementRecordItem,
   PaymentMethod,
   Product,
   SaleItem,
@@ -156,6 +157,37 @@ export function toStockMovementFromRealtime(row: StockMovementRow): StockMovemen
     productId: row.producto_id !== null ? row.producto_id : undefined,
     quantity: Number(row.cantidad),
     unit: (row.unidad || "unidad") as MeasurementUnit,
+  };
+}
+
+/**
+ * The record the movement views render, built from a `movimientos_stock` row. One mapper
+ * for every path (initial load, realtime, RPC result) so the list never depends on which
+ * path delivered the row.
+ */
+export function toMovementRecord(row: StockMovementRow): MovementRecordItem {
+  const name = row.producto_nombre ?? "";
+  const productId = row.producto_id ?? undefined;
+  const reason = row.motivo ?? "";
+
+  return {
+    id: row.id,
+    fecha: new Date(row.fecha),
+    date: new Date(row.fecha),
+    tipo: row.tipo,
+    type: row.tipo,
+    productoId: productId,
+    productId,
+    producto: name,
+    productName: name,
+    cantidad: Number(row.cantidad ?? 0),
+    quantity: Number(row.cantidad ?? 0),
+    unidad: row.unidad ?? undefined,
+    unit: row.unidad ?? undefined,
+    diferencia: Number(row.diferencia ?? 0),
+    difference: Number(row.diferencia ?? 0),
+    motivo: reason,
+    reason,
   };
 }
 

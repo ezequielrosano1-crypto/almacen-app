@@ -47,6 +47,7 @@ export interface StockMovementRow {
   id: number | string;
   negocio_id: number;
   producto_id: number | string | null;
+  producto_nombre: string | null;
   jornada_id: string | null;
   fecha: string;
   tipo: string;
@@ -119,16 +120,18 @@ export interface RegisterSaleInput {
   items: RegisterSaleItem[];
 }
 
-export interface StockMovementInsert {
-  negocio_id: number;
+// Payload of the registrar_movimiento_stock RPC. `cantidad` is the units added for an
+// entrada and the COUNTED real stock for an ajuste (the server computes the difference).
+export interface RegisterStockMovementInput {
   producto_id: number | string;
-  jornada_id: string | null;
-  fecha: string;
-  tipo: string;
+  tipo: "entrada" | "ajuste";
   cantidad: number;
-  unidad: string;
-  diferencia: number;
-  motivo: string;
+  motivo?: string | null;
+}
+
+export interface RegisterStockMovementResult {
+  movimiento: StockMovementRow;
+  stock: number;
 }
 
 export interface ProductUpsert {

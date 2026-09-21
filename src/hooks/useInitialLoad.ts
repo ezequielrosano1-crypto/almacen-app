@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { toMovementRecord } from "../data/mappers";
 import { listProducts as defaultListProducts } from "../data/productsRepository";
 import { listSalesWithItems as defaultListSalesWithItems } from "../data/salesRepository";
+import { listStockMovements as defaultListStockMovements } from "../data/stockMovementsRepository";
 import { readJson as defaultReadJson } from "../lib/storage/storage";
 import type { MovementRecordItem } from "../types/domain";
-import type { StoredStockMovement } from "../types/storage";
 import type { BusinessInfoData } from "./useBusinessInfo";
 import type { ProductItem } from "./useProducts";
 
@@ -21,6 +22,7 @@ export interface InitialLoadCallbacks {
 
 export interface InitialLoadDeps {
   listProducts?: typeof defaultListProducts;
+  listStockMovements?: typeof defaultListStockMovements;
   readJson?: typeof defaultReadJson;
   listSalesWithItems?: typeof defaultListSalesWithItems;
 }
@@ -30,6 +32,7 @@ export async function runInitialLoad(
   deps: InitialLoadDeps = {},
 ): Promise<void> {
   const fetchProducts = deps.listProducts ?? defaultListProducts;
+  const fetchStockMovements = deps.listStockMovements ?? defaultListStockMovements;
   const loadJson = deps.readJson ?? defaultReadJson;
   const fetchSales = deps.listSalesWithItems ?? defaultListSalesWithItems;
 
@@ -60,12 +63,13 @@ export async function runInitialLoad(
   }
 
   try {
-    const movs = await loadJson<StoredStockMovement[]>("datos:movimientos");
-    if (callbacks.isActive() && movs) {
-      const lista = movs.map((m) => ({ ...m, fecha: new Date(m.fecha) }));
-      callbacks.setStockMovements(lista);
+    const rows = await fetchStockMovements();
+    if (callbacks.isActive() && rows) {
+      callbacks.setStockMovements(rows.map(toMovementRecord));
     }
-  } catch (_e) {}
+  } catch (e) {
+    console.error("Error cargando movimientos de stock:", e);
+  }
 
   try {
     const data = await fetchSales();
