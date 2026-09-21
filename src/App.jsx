@@ -46,6 +46,26 @@ import {
 } from "./lib/metrics";
 import { readJson, writeJson, listKeys, removeKey } from "./lib/storage/storage";
 import { toProductUpsert } from "./data/mappers";
+import {
+  listProducts,
+  updateProductStock,
+  upsertProduct,
+} from "./data/productsRepository";
+import {
+  createSale,
+  insertSaleItems,
+  deleteSale,
+  listSalesWithItems,
+  listSaleItems,
+} from "./data/salesRepository";
+import { insertStockEntry } from "./data/stockMovementsRepository";
+import {
+  findShiftByDate,
+  closeShift,
+  createShift,
+  closeShiftManually,
+  reopenShift,
+} from "./data/cashShiftRepository";
 
 // ===========================================================================
 // Constantes / configuración
@@ -69,14 +89,7 @@ async function sincronizarCaja(movimientos = [], opciones = {}) {
 
 try {
   if (storageKey === CASH_SHIFT_STORAGE_KEY) {
-    const { data, error } = await supabase
-      .from("jornada")
-      .select("*")
-      .eq("negocio_id", 1)
-      .eq("fecha", ahora.fecha)
-      .maybeSingle();
-
-    if (error) throw error;
+    const data = await findShiftByDate(ahora.fecha);
 
     if (data) {
       actual = {
@@ -120,20 +133,14 @@ try {
     };
 try {
   if (storageKey === CASH_SHIFT_STORAGE_KEY) {
-    const { error } = await supabase
-      .from("jornada")
-      .update({
-        estado: cierre.estado,
-        hora_cierre: cierre.horaCierre,
-        cerrado_automatico: cierre.cerradoAutomaticamente,
-        total: resumen.total,
-        cantidad_ventas: resumen.cantidadVentas,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", actual.id)
-      .eq("negocio_id", 1);
-
-    if (error) throw error;
+    await closeShift(actual.id, {
+      estado: cierre.estado,
+      hora_cierre: cierre.horaCierre,
+      cerrado_automatico: cierre.cerradoAutomaticamente,
+      total: resumen.total,
+      cantidad_ventas: resumen.cantidadVentas,
+      updated_at: new Date().toISOString(),
+    });
   } else {
     await writeJson(storageKey, cierre);
     await writeJson(claveCierre(actual.fecha), resumen);
@@ -161,23 +168,17 @@ try {
     };
   try {
   if (storageKey === CASH_SHIFT_STORAGE_KEY) {
-    const { data, error } = await supabase
-      .from("jornada")
-      .insert({
-        id: nueva.id,
-        negocio_id: 1,
-        fecha: nueva.fecha,
-        estado: nueva.estado,
-        hora_apertura: nueva.horaApertura,
-        hora_cierre: nueva.horaCierre,
-        cerrado_automatico: nueva.cerradoAutomaticamente,
-        total: 0,
-        cantidad_ventas: 0,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
+    const data = await createShift({
+      id: nueva.id,
+      negocio_id: 1,
+      fecha: nueva.fecha,
+      estado: nueva.estado,
+      hora_apertura: nueva.horaApertura,
+      hora_cierre: nueva.horaCierre,
+      cerrado_automatico: nueva.cerradoAutomaticamente,
+      total: 0,
+      cantidad_ventas: 0,
+    });
 
     nueva.id = data.id;
   } else {
@@ -815,19 +816,13 @@ function NuevaVenta({ productos, setProductos, registrarMovimiento, actualizarSt
   setEnviando(true);
 
   try {
-    const { data: venta, error: errorVenta } = await supabase
-      .from("ventas")
-      .insert({
-        negocio_id: 1,
-        jornada_id: null,
-fecha: new Date().toISOString(),
-        total: Number(total),
-        pago,
-      })
-      .select("id")
-      .single();
-
-    if (errorVenta) throw errorVenta;
+    const venta = await createSale({
+      negocio_id: 1,
+      jornada_id: null,
+      fecha: new Date().toISOString(),
+      total: Number(total),
+      pago,
+    });
 
     const itemsVenta = items.map((it) => ({
       venta_id: venta.id,
@@ -839,28 +834,17 @@ fecha: new Date().toISOString(),
       subtotal: Number(it.subtotal),
     }));
 
-    const { error: errorItems } = await supabase
-      .from("venta_items")
-      .insert(itemsVenta);
-
-    if (errorItems) {
-      await supabase.from("ventas").delete().eq("id", venta.id);
+    try {
+      await insertSaleItems(itemsVenta);
+    } catch (errorItems) {
+      await deleteSale(venta.id);
       throw errorItems;
     }
 
     for (const it of items) {
       const nuevoStock =
         Math.round((it.producto.stock - it.cantidad) * 100) / 100;
-
-     const { error: errorStock } = await supabase
-  .from("productos")
-  .update({ stock: Number(nuevoStock) })
-  .eq("id", it.producto.id)
-  .eq("negocio_id", 1);
-
-if (errorStock) {
-  throw errorStock;
-}
+      await updateProductStock(it.producto.id, nuevoStock);
     }
 
  
@@ -1049,20 +1033,14 @@ function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, act
     throw new Error("No hay una jornada de caja activa.");
   }
 
-  const { error } = await supabase
-    .from("jornada")
-    .update({
+    await closeShiftManually(caja.id, {
       estado: "CERRADA",
       hora_cierre: registro.hora,
       cerrado_automatico: false,
       total: Number(registro.total),
       cantidad_ventas: Number(registro.cantidadVentas),
       updated_at: new Date().toISOString(),
-    })
-    .eq("id", caja.id)
-    .eq("negocio_id", 1);
-
-  if (error) throw error;
+    });
 
   const cerrada = {
     ...(caja || {}),
@@ -2192,12 +2170,7 @@ export default function App() {
     let activo = true;
     (async () => {
       try {
-       const { data, error } = await supabase
-  .from("productos")
-  .select("*")
-  .eq("negocio_id", 1);
-
-if (error) throw error;
+       const data = await listProducts();
 
 // Si Supabase ya tiene productos, los cargamos normalmente.
 if (data && data.length > 0) {
@@ -2226,28 +2199,7 @@ if (data && data.length > 0) {
         }
       } catch (e) {}
       try {
-  const { data, error } = await supabase
-    .from("ventas")
-    .select(`
-      id,
-      negocio_id,
-      fecha,
-      total,
-      pago,
-      venta_items (
-        id,
-        producto_id,
-        nombre,
-        cantidad,
-        unidad,
-        precio_unitario,
-        subtotal
-      )
-    `)
-    .eq("negocio_id", 1)
-    .order("fecha", { ascending: false });
-
-  if (error) throw error;
+  const data = await listSalesWithItems();
 
   if (activo && data) {
     const ventasFormateadas = data.map((v) => ({
@@ -2389,12 +2341,10 @@ useEffect(() => {
 
         if (!venta) return;
 
-        const { data: items, error } = await supabase
-          .from("venta_items")
-          .select("*")
-          .eq("venta_id", venta.id);
-
-        if (error) {
+        let items;
+        try {
+          items = await listSaleItems(venta.id);
+        } catch (error) {
           console.error("Error cargando items de venta:", error);
           return;
         }
@@ -2523,21 +2473,13 @@ const abrirCajaManual = async () => {
   };
 
   try {
-    const { data, error } = await supabase
-      .from("jornada")
-      .update({
-        estado: "ABIERTA",
-        hora_apertura: nueva.horaApertura,
-        hora_cierre: null,
-        cerrado_automatico: false,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", nueva.id)
-      .eq("negocio_id", 1)
-      .select()
-      .single();
-
-    if (error) throw error;
+    const data = await reopenShift(nueva.id, {
+      estado: "ABIERTA",
+      hora_apertura: nueva.horaApertura,
+      hora_cierre: null,
+      cerrado_automatico: false,
+      updated_at: new Date().toISOString(),
+    });
 
     const jornadaAbierta = {
       id: data.id,
@@ -2584,9 +2526,8 @@ const registrarMovimiento = async (mov) => {
   if (mov.tipo === "entrada") {
     console.log("REGISTRANDO MOVIMIENTO:", mov);
     
-    const { error } = await supabase
-      .from("movimientos_stock")
-      .insert({
+    try {
+      await insertStockEntry({
         negocio_id: 1,
         producto_id: mov.productoId,
         jornada_id: null,
@@ -2597,8 +2538,7 @@ const registrarMovimiento = async (mov) => {
         diferencia: Number(mov.cantidad),
         motivo: "Entrada de stock",
       });
-
-    if (error) {
+    } catch (error) {
       console.error("Error guardando movimiento de entrada:", error);
       alert("No se pudo guardar el movimiento de stock.");
       return false;
@@ -2611,13 +2551,9 @@ const registrarMovimiento = async (mov) => {
 };
 
 const actualizarStock = async (id, nuevoStock) => {
-  const { error } = await supabase
-    .from("productos")
-    .update({ stock: Number(nuevoStock) })
-    .eq("id", id)
-    .eq("negocio_id", 1);
-
-  if (error) {
+  try {
+    await updateProductStock(id, nuevoStock);
+  } catch (error) {
     console.error("Error actualizando stock en Supabase:", error);
     alert("No se pudo actualizar el stock.");
     return false;
@@ -2641,11 +2577,9 @@ const actualizarStock = async (id, nuevoStock) => {
     barcode: producto.codigoBarras,
   });
 
-  const { error } = await supabase
-    .from("productos")
-    .upsert(productoSupabase, { onConflict: "id" });
-
-  if (error) {
+  try {
+    await upsertProduct(productoSupabase);
+  } catch (error) {
     console.error("Error guardando producto en Supabase:", error);
     alert("No se pudo guardar el producto.");
     return;

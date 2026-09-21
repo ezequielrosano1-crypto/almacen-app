@@ -93,6 +93,14 @@ export interface CashShiftCloseUpdate {
   updated_at: string;
 }
 
+export interface CashShiftReopenUpdate {
+  estado: string;
+  hora_apertura: string;
+  hora_cierre: null;
+  cerrado_automatico: boolean;
+  updated_at: string;
+}
+
 export interface SaleInsert {
   negocio_id: number;
   jornada_id: string | null;
