@@ -17,6 +17,16 @@ import {
   Camera,
 } from "lucide-react";
 import { supabase } from "./data/supabaseClient";
+import {
+  COLORS,
+  ADJUSTMENT_REASONS,
+  CASH_SHIFT_STORAGE_KEY,
+  TEST_CASH_SHIFT_STORAGE_KEY,
+} from "./lib/constants";
+import { formatMoney, formatDate } from "./lib/format";
+import { formatStock, getProductStatus, getStatusColor } from "./lib/stock";
+import { nextId } from "./lib/ids";
+import { initialProducts, initialStockMovements } from "./lib/initialData";
 // ===========================================================================
 // Compatibilidad de almacenamiento fuera de Claude.ai
 // -----------------------------------------------------------------------
@@ -76,47 +86,6 @@ if (typeof window !== "undefined" && !window.storage) {
 // ===========================================================================
 // Constantes / configuración
 // ===========================================================================
-const COLORS = {
-  principal: "#2E6B4F",
-  fondo: "#FAF8F5",
-  normal: "#2E6B4F",
-  bajo: "#E0A526",
-  agotado: "#C0392B",
-};
-
-const MOTIVOS_AJUSTE = ["Conteo físico", "Producto vencido/roto", "Error de carga", "Otro"];
-
-let idCounter = 1000;
-const nextId = () => idCounter++;
-
-const fmtMoney = (n) => `$${Math.round(n).toLocaleString("es-UY")}`;
-const fmtStock = (producto) =>
-  producto.unidad === "kg"
-    ? `${producto.stock.toLocaleString("es-UY")} kg`
-    : `${producto.stock} un.`;
-
-const estadoProducto = (p) => {
-  if (p.stock <= 0) return "agotado";
-  if (p.stock <= p.stockMinimo) return "bajo";
-  return "normal";
-};
-
-const estadoColor = (estado) =>
-  estado === "agotado" ? COLORS.agotado : estado === "bajo" ? COLORS.bajo : COLORS.normal;
-
-const fmtFecha = (date) =>
-  date.toLocaleDateString("es-UY", {
-    timeZone: "America/Montevideo",
-    day: "2-digit",
-    month: "2-digit",
-  }) +
-  " " +
-  date.toLocaleTimeString("es-UY", {
-    timeZone: "America/Montevideo",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  });
 
 const esHoy = (date) => date.toDateString() === new Date().toDateString();
 
@@ -130,7 +99,6 @@ const claveFechaHoy = () => {
 // ===========================================================================
 // Jornada de caja automática (America/Montevideo)
 // ===========================================================================
-const CAJA_STORAGE_KEY = "caja:jornada";
 
 function ahoraUY(override) {
   // `override` permite simular fecha/hora para pruebas (ver PruebasCaja) sin
@@ -164,17 +132,17 @@ function horaUYTexto() {
 async function sincronizarCaja(movimientos = [], opciones = {}) {
   // `opciones.override` simula la fecha/hora (para pruebas, ver PruebasCaja).
   // `opciones.storageKey` permite correr la sincronización sobre una caja
-  // "sandbox" sin tocar la caja real (CAJA_STORAGE_KEY) ni sus cierres.
-  const { override, storageKey = CAJA_STORAGE_KEY } = opciones;
+  // "sandbox" sin tocar la caja real (CASH_SHIFT_STORAGE_KEY) ni sus cierres.
+  const { override, storageKey = CASH_SHIFT_STORAGE_KEY } = opciones;
   const claveCierre = (fecha) =>
-    storageKey === CAJA_STORAGE_KEY ? `cierre:${fecha}` : `${storageKey}:cierre:${fecha}`;
+    storageKey === CASH_SHIFT_STORAGE_KEY ? `cierre:${fecha}` : `${storageKey}:cierre:${fecha}`;
 
   const ahora = ahoraUY(override);
   const abiertaPorHorario = ahora.horaNumero >= 8 && ahora.horaNumero < 22;
   let actual = null;
 
 try {
-  if (storageKey === CAJA_STORAGE_KEY) {
+  if (storageKey === CASH_SHIFT_STORAGE_KEY) {
     const { data, error } = await supabase
       .from("jornada")
       .select("*")
@@ -222,7 +190,7 @@ try {
       automatico: true,
     };
 try {
-  if (storageKey === CAJA_STORAGE_KEY) {
+  if (storageKey === CASH_SHIFT_STORAGE_KEY) {
     const { error } = await supabase
       .from("jornada")
       .update({
@@ -267,7 +235,7 @@ try {
       cerradoAutomaticamente: false,
     };
   try {
-  if (storageKey === CAJA_STORAGE_KEY) {
+  if (storageKey === CASH_SHIFT_STORAGE_KEY) {
     const { data, error } = await supabase
       .from("jornada")
       .insert({
@@ -303,13 +271,7 @@ try {
 // Datos iniciales (mock) — en estado local de React, listos para reemplazarse
 // por una fuente de datos real más adelante sin cambiar la interfaz.
 // ===========================================================================
-function productosIniciales() {
-  return [];
-}
 
-function movimientosIniciales() {
-  return [];
-}
 
 // ===========================================================================
 // Barra de navegación inferior
@@ -386,7 +348,7 @@ function EstadoDot({ estado }) {
   return (
     <span
       className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-      style={{ backgroundColor: estadoColor(estado) }}
+      style={{ backgroundColor: getStatusColor(estado) }}
     />
   );
 }
@@ -406,7 +368,7 @@ function SearchBar({ value, onChange, placeholder }) {
 }
 
 function ProductoListRow({ producto, onClick }) {
-  const estado = estadoProducto(producto);
+  const estado = getProductStatus(producto);
   return (
     <button
       type="button"
@@ -417,10 +379,10 @@ function ProductoListRow({ producto, onClick }) {
         <EstadoDot estado={estado} />
         <div>
           <p className="text-stone-800 font-medium text-sm">{producto.nombre}</p>
-          <p className="text-stone-400 text-xs">{fmtMoney(producto.precio)}{producto.unidad === "kg" ? " / kg" : ""}</p>
+          <p className="text-stone-400 text-xs">{formatMoney(producto.precio)}{producto.unidad === "kg" ? " / kg" : ""}</p>
         </div>
       </div>
-      <span className="text-stone-600 text-sm font-medium">{fmtStock(producto)}</span>
+      <span className="text-stone-600 text-sm font-medium">{formatStock(producto)}</span>
     </button>
   );
 }
@@ -612,7 +574,7 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
                   {it.producto.nombre} × {it.cantidad}
                   {it.producto.unidad === "kg" ? "kg" : ""}
                 </span>
-                <span className="shrink-0">{fmtMoney(it.subtotal)}</span>
+                <span className="shrink-0">{formatMoney(it.subtotal)}</span>
               </div>
             ))}
           </div>
@@ -622,7 +584,7 @@ function EscanerCodigoBarras({ onClose, onCodigoDetectado, mensaje, items, total
             style={{ color: "#FFFFFF", borderTop: "1px solid #FFFFFF33" }}
           >
             <span>Total</span>
-            <span>{fmtMoney(total || 0)}</span>
+            <span>{formatMoney(total || 0)}</span>
           </div>
 
           <div className="flex gap-2 pt-1">
@@ -684,7 +646,7 @@ function EstadoCajaCard({ caja, totalHoy }) {
         {abierta ? (
           <>
             <span>Apertura: <strong className="text-stone-700">{caja?.horaApertura || "—"}</strong></span>
-            <span>Vendido hoy: <strong className="text-stone-700">{fmtMoney(totalHoy || 0)}</strong></span>
+            <span>Vendido hoy: <strong className="text-stone-700">{formatMoney(totalHoy || 0)}</strong></span>
           </>
         ) : (
           <>
@@ -734,13 +696,13 @@ function PantallaInicio({
 
       <div className="bg-white rounded-2xl shadow-sm px-5 py-5">
         <p className="text-stone-500 text-sm mb-1">Ventas de hoy</p>
-        <p className="text-4xl font-bold mb-4" style={{ color: "#2E6B4F" }}>{fmtMoney(totalHoy)}</p>
+        <p className="text-4xl font-bold mb-4" style={{ color: "#2E6B4F" }}>{formatMoney(totalHoy)}</p>
         <div className="flex justify-between text-sm text-stone-600 border-t border-stone-100 pt-3">
           <span>
-            Efectivo: <strong className="text-stone-800">{fmtMoney(efectivoHoy)}</strong>
+            Efectivo: <strong className="text-stone-800">{formatMoney(efectivoHoy)}</strong>
           </span>
           <span>
-            Débito: <strong className="text-stone-800">{fmtMoney(debitoHoy)}</strong>
+            Débito: <strong className="text-stone-800">{formatMoney(debitoHoy)}</strong>
           </span>
         </div>
         <p className="text-sm text-stone-500 mt-2">{productosVendidosHoy} productos vendidos</p>
@@ -992,7 +954,7 @@ if (errorStock) {
       <ConfirmationScreen
         icon={<CheckCircle2 size={56} color={COLORS.principal} />}
         title="Venta registrada"
-        message={`Total ${fmtMoney(confirmada.total)} · ${confirmada.pago}`}
+        message={`Total ${formatMoney(confirmada.total)} · ${confirmada.pago}`}
         buttonLabel="Volver a Ventas"
         onDone={resetStack}
       />
@@ -1048,7 +1010,7 @@ if (errorStock) {
               <div key={it.id} className="flex items-center justify-between text-sm">
                 <div className="flex-1">
                   <p className="text-stone-800 font-medium">{it.producto.nombre}</p>
-                  <p className="text-stone-400 text-xs">{fmtMoney(it.subtotal)}</p>
+                  <p className="text-stone-400 text-xs">{formatMoney(it.subtotal)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => cambiarCantidad(it.id, -1)} className="p-1 bg-stone-100 rounded-full">
@@ -1073,7 +1035,7 @@ if (errorStock) {
           <div className="px-5 pt-2 pb-4 space-y-2 border-t border-stone-100 bg-white">
             <div className="flex justify-between items-center">
               <span className="text-stone-500 text-sm">Total</span>
-              <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>{fmtMoney(total)}</span>
+              <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>{formatMoney(total)}</span>
             </div>
 
             <div className="flex gap-2">
@@ -1207,15 +1169,15 @@ function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, act
       <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
         <div className="flex justify-between">
           <span className="text-stone-500 text-sm">Total del día</span>
-          <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>{fmtMoney(totalHoy)}</span>
+          <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>{formatMoney(totalHoy)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-stone-500">Efectivo</span>
-          <span className="text-stone-800 font-medium">{fmtMoney(efectivoHoy)}</span>
+          <span className="text-stone-800 font-medium">{formatMoney(efectivoHoy)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-stone-500">Débito</span>
-          <span className="text-stone-800 font-medium">{fmtMoney(debitoHoy)}</span>
+          <span className="text-stone-800 font-medium">{formatMoney(debitoHoy)}</span>
         </div>
         <div className="flex justify-between text-sm border-t border-stone-100 pt-3">
           <span className="text-stone-500">Cantidad de ventas</span>
@@ -1240,7 +1202,7 @@ function CierreDia({ totalHoy, efectivoHoy, debitoHoy, ventasHoy, pop, caja, act
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Total cerrado</span>
-            <span className="text-stone-800 font-medium">{fmtMoney(cierre.total)}</span>
+            <span className="text-stone-800 font-medium">{formatMoney(cierre.total)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Cantidad de ventas</span>
@@ -1341,7 +1303,7 @@ function HistorialCierres({ pop }) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-stone-500">Total</span>
-                <span className="text-stone-800 font-medium">{fmtMoney(c.total)}</span>
+                <span className="text-stone-800 font-medium">{formatMoney(c.total)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-stone-500">Cantidad de ventas</span>
@@ -1404,7 +1366,7 @@ function VerProductos({ productos, pop, onOpenDetalle }) {
 function DetalleProducto({ productos, productoId, pop, goTabScreen }) {
   const p = productos.find((pr) => pr.id === productoId);
   if (!p) return null;
-  const estado = estadoProducto(p);
+  const estado = getProductStatus(p);
   const etiqueta = estado === "agotado" ? "Agotado" : estado === "bajo" ? "Stock bajo" : "Normal";
 
   return (
@@ -1414,11 +1376,11 @@ function DetalleProducto({ productos, productoId, pop, goTabScreen }) {
         <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Precio</span>
-            <span className="text-stone-800 font-medium">{fmtMoney(p.precio)}</span>
+            <span className="text-stone-800 font-medium">{formatMoney(p.precio)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Stock actual</span>
-            <span className="text-stone-800 font-medium">{fmtStock(p)}</span>
+            <span className="text-stone-800 font-medium">{formatStock(p)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Stock mínimo</span>
@@ -1428,7 +1390,7 @@ function DetalleProducto({ productos, productoId, pop, goTabScreen }) {
           </div>
           <div className="flex justify-between items-center text-sm border-t border-stone-100 pt-3">
             <span className="text-stone-500">Estado</span>
-            <span className="flex items-center gap-2 font-medium" style={{ color: estadoColor(estado) }}>
+            <span className="flex items-center gap-2 font-medium" style={{ color: getStatusColor(estado) }}>
               <EstadoDot estado={estado} />
               {etiqueta}
             </span>
@@ -1467,7 +1429,7 @@ function StockBajo({ productosAgotados, productosBajo, pop, onOpenDetalle }) {
           <p className="text-stone-400 text-sm text-center py-6">No hay productos para revisar</p>
         )}
         {lista.map((p) => {
-          const estado = estadoProducto(p);
+          const estado = getProductStatus(p);
           return (
             <button
               type="button"
@@ -1480,7 +1442,7 @@ function StockBajo({ productosAgotados, productosBajo, pop, onOpenDetalle }) {
                 <div>
                   <p className="text-stone-800 font-medium text-sm">{p.nombre}</p>
                   <p className="text-stone-400 text-xs">
-                    Actual: {fmtStock(p)} · Mínimo: {p.stockMinimo} {p.unidad === "kg" ? "kg" : "un."}
+                    Actual: {formatStock(p)} · Mínimo: {p.stockMinimo} {p.unidad === "kg" ? "kg" : "un."}
                   </p>
                 </div>
               </div>
@@ -1547,7 +1509,7 @@ function AgregarEntrada({ productos, productoIdInicial, actualizarStock, registr
             <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
               <div>
                 <p className="text-stone-800 font-medium text-sm">{producto.nombre}</p>
-                <p className="text-stone-400 text-xs">Stock actual: {fmtStock(producto)}</p>
+                <p className="text-stone-400 text-xs">Stock actual: {formatStock(producto)}</p>
               </div>
               <button type="button" onClick={() => setProductoId(null)} className="text-sm font-medium" style={{ color: "#2E6B4F" }}>
                 Cambiar
@@ -1626,7 +1588,7 @@ function AjustarStock({ productos, productoIdInicial, actualizarStock, registrar
             <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
               <div>
                 <p className="text-stone-800 font-medium text-sm">{producto.nombre}</p>
-                <p className="text-stone-400 text-xs">Stock registrado: {fmtStock(producto)}</p>
+                <p className="text-stone-400 text-xs">Stock registrado: {formatStock(producto)}</p>
               </div>
               <button type="button" onClick={() => setProductoId(null)} className="text-sm font-medium" style={{ color: "#2E6B4F" }}>
                 Cambiar
@@ -1646,7 +1608,7 @@ function AjustarStock({ productos, productoIdInicial, actualizarStock, registrar
             <div>
               <label className="text-stone-500 text-sm mb-2 block">Motivo del ajuste</label>
               <div className="grid grid-cols-2 gap-2">
-                {MOTIVOS_AJUSTE.map((m) => (
+                {ADJUSTMENT_REASONS.map((m) => (
                   <button
                     type="button"
                     key={m}
@@ -1684,7 +1646,7 @@ function Movimientos({ movimientos, onOpenDetalle }) {
   const lista = movimientos.filter((m) => filtro === "Todos" || m.tipo === tipoDeFiltro[filtro]);
 
   const resumenMovimiento = (m) => {
-    if (m.tipo === "venta") return `Venta · ${fmtMoney(m.total)}`;
+    if (m.tipo === "venta") return `Venta · ${formatMoney(m.total)}`;
     if (m.tipo === "entrada") return `Entrada · ${m.producto}`;
     return `Ajuste · ${m.producto}`;
   };
@@ -1733,7 +1695,7 @@ function Movimientos({ movimientos, onOpenDetalle }) {
                 />
                 <div>
                   <p className="text-stone-800 font-medium text-sm">{resumenMovimiento(m)}</p>
-                  <p className="text-stone-400 text-xs">{fmtFecha(m.fecha)}</p>
+                  <p className="text-stone-400 text-xs">{formatDate(m.fecha)}</p>
                 </div>
               </div>
               <ChevronRight size={18} color="#B8B2A5" />
@@ -1756,7 +1718,7 @@ function DetalleMovimiento({ movimientos, movimientoId, pop }) {
         <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-stone-500">Fecha</span>
-            <span className="text-stone-800 font-medium">{fmtFecha(m.fecha)}</span>
+            <span className="text-stone-800 font-medium">{formatDate(m.fecha)}</span>
           </div>
 
           {m.tipo === "venta" && (
@@ -1773,7 +1735,7 @@ function DetalleMovimiento({ movimientos, movimientoId, pop }) {
               </div>
               <div className="flex justify-between text-sm border-t border-stone-100 pt-3">
                 <span className="text-stone-500">Total</span>
-                <span className="text-stone-800 font-bold">{fmtMoney(m.total)}</span>
+                <span className="text-stone-800 font-bold">{formatMoney(m.total)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-stone-500">Medio de pago</span>
@@ -2055,7 +2017,6 @@ function InfoNegocio({ infoNegocio, guardarInfoNegocio, pop }) {
 // sincronización sobre una caja "sandbox" (storageKey separado) para poder
 // simular horarios sin esperar al reloj real ni tocar la caja de producción.
 // ===========================================================================
-const TEST_STORAGE_KEY = "caja:jornada:test";
 const DIA_1 = "2026-09-14";
 const DIA_2 = "2026-09-15";
 
@@ -2081,7 +2042,7 @@ function PruebasCaja() {
     setCorriendo(true);
     const resultado = await sincronizarCaja([], {
       override: { fecha: escenario.fecha, horaNumero: escenario.horaNumero },
-      storageKey: TEST_STORAGE_KEY,
+      storageKey: TEST_CASH_SHIFT_STORAGE_KEY,
     });
     setTestCaja(resultado);
     const estadoObtenido = resultado?.estado || "SIN DATOS";
@@ -2100,7 +2061,7 @@ function PruebasCaja() {
     for (let i = 0; i < 3; i++) {
       const r = await sincronizarCaja([], {
         override: escenario,
-        storageKey: TEST_STORAGE_KEY,
+        storageKey: TEST_CASH_SHIFT_STORAGE_KEY,
       });
       resultados.push(JSON.stringify(r));
     }
@@ -2128,7 +2089,7 @@ function PruebasCaja() {
   const reiniciarSandbox = async () => {
     setCorriendo(true);
     try {
-      await window.storage.delete(TEST_STORAGE_KEY, false);
+      await window.storage.delete(TEST_CASH_SHIFT_STORAGE_KEY, false);
     } catch (e) {}
     setTestCaja(null);
     setLog([]);
@@ -2292,8 +2253,8 @@ function Configuracion({ pop }) {
 // módulo, y reciben lo que necesitan por props.
 // ===========================================================================
 export default function App() {
-  const [productos, setProductos] = useState(productosIniciales);
-  const [movimientos, setMovimientos] = useState(movimientosIniciales);
+  const [productos, setProductos] = useState(initialProducts);
+  const [movimientos, setMovimientos] = useState(initialStockMovements);
   const [infoNegocio, setInfoNegocio] = useState({
     nombre: "Almacén de la familia",
     contacto: "099 123 456",
@@ -2301,7 +2262,7 @@ export default function App() {
   const [cargado, setCargado] = useState(false);
 
   // Carga inicial: si hay datos guardados de una sesión anterior, los usamos
-  // en vez de los datos de ejemplo (productosIniciales/movimientosIniciales).
+  // en vez de los datos de ejemplo (initialProducts/initialStockMovements).
   useEffect(() => {
     let activo = true;
     (async () => {
@@ -2788,8 +2749,8 @@ const actualizarStock = async (id, nuevoStock) => {
     0
   );
 
-  const productosBajo = productos.filter((p) => estadoProducto(p) === "bajo");
-  const productosAgotados = productos.filter((p) => estadoProducto(p) === "agotado");
+  const productosBajo = productos.filter((p) => getProductStatus(p) === "bajo");
+  const productosAgotados = productos.filter((p) => getProductStatus(p) === "agotado");
 const ventasSemana = Array.from({ length: 7 }, (_, i) => {
   const fecha = new Date();
   fecha.setDate(fecha.getDate() - (6 - i));
