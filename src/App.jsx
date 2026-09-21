@@ -1,12 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Plus,
-  ArrowLeft,
-  AlertTriangle,
-  XCircle,
-  X,
-  Camera,
-} from "lucide-react";
 import { supabase } from "./data/supabaseClient";
 import {
   COLORS,
@@ -48,11 +40,8 @@ import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
 import { Header } from "./components/Header";
 import { PrimaryButton } from "./components/PrimaryButton";
-import { SearchBar } from "./components/SearchBar";
 import { BottomNav } from "./components/BottomNav";
 import { CashRegisterStatusCard as EstadoCajaCard } from "./components/CashRegisterStatusCard";
-import { ProductList as ListaProductos } from "./components/ProductList";
-import { BarcodeScanner } from "./components/BarcodeScanner";
 import { HomeView } from "./views/HomeView";
 import { SalesView } from "./views/SalesView";
 import { NewSaleView } from "./views/NewSaleView";
@@ -68,6 +57,8 @@ import { StockMovementsView } from "./views/StockMovementsView";
 import { StockMovementDetailView } from "./views/StockMovementDetailView";
 import { MoreView } from "./views/MoreView";
 import { BusinessInfoView } from "./views/BusinessInfoView";
+import { ProductsView } from "./views/ProductsView";
+import { ProductFormView } from "./views/ProductFormView";
 
 // ===========================================================================
 // Constantes / configuración
@@ -107,174 +98,6 @@ import { BusinessInfoView } from "./views/BusinessInfoView";
 // ===========================================================================
 // MÁS
 // ===========================================================================
-
-function ProductosMain({ productos, pop, onOpenDetalle, onNuevo }) {
-  const [busqueda, setBusqueda] = useState("");
-
-  return (
-    <div>
-      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={pop} className="p-1 -ml-1">
-            <ArrowLeft size={22} color="#57534E" />
-          </button>
-          <h1 className="text-2xl font-bold text-stone-800">Productos</h1>
-        </div>
-        <button type="button" onClick={onNuevo} className="rounded-full p-2" style={{ backgroundColor: "#2E6B4F" }}>
-          <Plus size={20} color="white" />
-        </button>
-      </div>
-      <div className="px-5 space-y-3">
-        <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-        <ListaProductos productos={productos} busqueda={busqueda} onProductoClick={onOpenDetalle} />
-      </div>
-    </div>
-  );
-}
-
-function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
-  const existente = productos.find((p) => p.id === productoId);
-  const esNuevo = !existente;
-  const [nombre, setNombre] = useState(existente?.nombre || "");
-  const [precio, setPrecio] = useState(existente ? String(existente.precio) : "");
-  const [unidad, setUnidad] = useState(existente?.unidad || "unidad");
-  const [stock, setStock] = useState(existente ? String(existente.stock) : "");
-  const [stockMinimo, setStockMinimo] = useState(existente ? String(existente.stockMinimo) : "");
-  const [codigoBarras, setCodigoBarras] = useState(existente?.codigoBarras || "");
-  const [escaneandoCodigo, setEscaneandoCodigo] = useState(false);
-
-  const puedeGuardar = nombre && precio && stock !== "" && stockMinimo !== "";
-
-  const guardar = () => {
-    if (!puedeGuardar) return;
-    guardarProducto({
-      id: existente ? existente.id : nextId(),
-      nombre,
-      precio: parseFloat(precio),
-      unidad,
-      stock: parseFloat(stock),
-      stockMinimo: parseFloat(stockMinimo),
-      codigoBarras: codigoBarras.trim() ? codigoBarras.trim() : null,
-    });
-    pop();
-  };
-
-  return (
-    <div>
-      <Header title={esNuevo ? "Nuevo producto" : "Editar producto"} onBack={pop} />
-      <div className="px-5 space-y-3 pb-6">
-        <div>
-          <label className="text-stone-500 text-sm">Nombre</label>
-          <input
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-          />
-        </div>
-
-        <div>
-          <label className="text-stone-500 text-sm">Código de barras (opcional)</label>
-          <div className="flex gap-2 mt-1">
-            <input
-              type="text"
-              value={codigoBarras}
-              onChange={(e) => setCodigoBarras(e.target.value)}
-              placeholder="7791234567890"
-              className="flex-1 bg-white rounded-2xl shadow-sm px-4 py-3 outline-none text-stone-800"
-            />
-            <button
-              type="button"
-              onClick={() => setEscaneandoCodigo(true)}
-              className="shrink-0 rounded-2xl shadow-sm w-12 flex items-center justify-center"
-              style={{ backgroundColor: "#FFFFFF", border: "1px solid #E7E5E4" }}
-            >
-              <Camera size={20} color="#2E6B4F" />
-            </button>
-          </div>
-          <p className="text-stone-400 text-xs mt-1">
-            Mejor escanealo con la cámara que tipearlo: así queda idéntico al código que la caja va a leer
-            después, sin errores de tipeo.
-          </p>
-        </div>
-
-        <div>
-          <label className="text-stone-500 text-sm">Precio de venta</label>
-          <input
-            type="number"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-            className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-          />
-        </div>
-
-        <div>
-          <label className="text-stone-500 text-sm mb-2 block">Unidad de medida</label>
-          <div className="flex gap-2">
-            {["unidad", "kg"].map((u) => (
-              <button
-                type="button"
-                key={u}
-                disabled={!esNuevo}
-                onClick={() => setUnidad(u)}
-                className={"flex-1 rounded-xl py-2.5 text-sm font-medium border" + (!esNuevo ? " opacity-50" : "")}
-                style={
-                  unidad === u
-                    ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                    : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
-                }
-              >
-                {u === "unidad" ? "Por unidad" : "Por peso (kg)"}
-              </button>
-            ))}
-          </div>
-          {!esNuevo && (
-            <p className="text-stone-400 text-xs mt-1">La unidad de medida no se puede cambiar luego de creado.</p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-stone-500 text-sm">Stock {esNuevo ? "inicial" : "actual"}</label>
-            <input
-              type="number"
-              step={unidad === "kg" ? "0.001" : "1"}
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-            />
-          </div>
-          <div>
-            <label className="text-stone-500 text-sm">Stock mínimo</label>
-            <input
-              type="number"
-              step={unidad === "kg" ? "0.001" : "1"}
-              value={stockMinimo}
-              onChange={(e) => setStockMinimo(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800"
-            />
-          </div>
-        </div>
-
-        <div className="pt-2">
-          <PrimaryButton onClick={guardar} disabled={!puedeGuardar}>
-            Guardar producto
-          </PrimaryButton>
-        </div>
-      </div>
-
-      {escaneandoCodigo && (
-        <BarcodeScanner
-          onClose={() => setEscaneandoCodigo(false)}
-          onCodigoDetectado={(codigo) => {
-            setCodigoBarras((codigo || "").trim());
-            setEscaneandoCodigo(false);
-          }}
-          mensaje="Código capturado, revisalo abajo y guardá el producto"
-        />
-      )}
-    </div>
-  );
-}
 
 
 
@@ -1046,19 +869,19 @@ const actualizarStock = async (id, nuevoStock) => {
     if (tab === "more") {
       if (current.screen === "products")
         return (
-          <ProductosMain
-            productos={productos}
+          <ProductsView
+            products={productos}
             pop={pop}
-            onOpenDetalle={(id) => push("productForm", { productId: id })}
-            onNuevo={() => push("productForm", { productId: null })}
+            onOpenDetail={(id) => push("productForm", { productId: id })}
+            onNew={() => push("productForm", { productId: null })}
           />
         );
       if (current.screen === "productForm")
         return (
-          <FormularioProducto
-            productos={productos}
-            productoId={current.params.productId}
-            guardarProducto={guardarProducto}
+          <ProductFormView
+            products={productos}
+            productId={current.params.productId}
+            saveProduct={guardarProducto}
             pop={pop}
           />
         );
