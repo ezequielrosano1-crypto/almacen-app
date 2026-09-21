@@ -5,7 +5,7 @@ import {
   CASH_SHIFT_STORAGE_KEY,
 } from "./lib/constants";
 import { nextId } from "./lib/ids";
-import { initialProducts, initialStockMovements } from "./lib/initialData";
+import { initialStockMovements } from "./lib/initialData";
 import {
   isToday,
   todayDateKey,
@@ -24,12 +24,7 @@ import {
   getWeekSales,
 } from "./lib/metrics";
 import { readJson, writeJson, removeKey } from "./lib/storage/storage";
-import { toProductUpsert } from "./data/mappers";
-import {
-  listProducts,
-  updateProductStock,
-  upsertProduct,
-} from "./data/productsRepository";
+import { listProducts } from "./data/productsRepository";
 import {
   listSalesWithItems,
   listSaleItems,
@@ -37,6 +32,8 @@ import {
 import { insertStockEntry } from "./data/stockMovementsRepository";
 import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
+import { useProducts } from "./hooks/useProducts";
+import { useBusinessInfo } from "./hooks/useBusinessInfo";
 import { Header } from "./components/Header";
 import { PrimaryButton } from "./components/PrimaryButton";
 import { BottomNav } from "./components/BottomNav";
@@ -111,12 +108,18 @@ import { SettingsView } from "./views/SettingsView";
 // módulo, y reciben lo que necesitan por props.
 // ===========================================================================
 export default function App() {
-  const [productos, setProductos] = useState(initialProducts);
+  const {
+    products: productos,
+    setProducts: setProductos,
+    updateStock: actualizarStock,
+    saveProduct: guardarProducto,
+  } = useProducts();
   const [movimientos, setMovimientos] = useState(initialStockMovements);
-  const [infoNegocio, setInfoNegocio] = useState({
-    nombre: "Almacén de la familia",
-    contacto: "099 123 456",
-  });
+  const {
+    businessInfo: infoNegocio,
+    setBusinessInfo: setInfoNegocio,
+    saveBusinessInfo: guardarInfoNegocio,
+  } = useBusinessInfo();
   const [cargado, setCargado] = useState(false);
 
   // Carga inicial: si hay datos guardados de una sesión anterior, los usamos
@@ -457,53 +460,7 @@ const registrarMovimiento = async (mov) => {
   return true;
 };
 
-const actualizarStock = async (id, nuevoStock) => {
-  try {
-    await updateProductStock(id, nuevoStock);
-  } catch (error) {
-    console.error("Error actualizando stock en Supabase:", error);
-    alert("No se pudo actualizar el stock.");
-    return false;
-  }
 
-  setProductos((prev) =>
-    prev.map((p) => (p.id === id ? { ...p, stock: nuevoStock } : p))
-  );
-
-  return true;
-};
-
- const guardarProducto = async (producto) => {
-  const productoSupabase = toProductUpsert({
-    id: producto.id,
-    name: producto.nombre,
-    price: producto.precio,
-    unit: producto.unidad,
-    stock: producto.stock,
-    minimumStock: producto.stockMinimo,
-    barcode: producto.codigoBarras,
-  });
-
-  try {
-    await upsertProduct(productoSupabase);
-  } catch (error) {
-    console.error("Error guardando producto en Supabase:", error);
-    alert("No se pudo guardar el producto.");
-    return;
-  }
-
-  setProductos((prev) => {
-    const existe = prev.some((p) => p.id === producto.id);
-
-    return existe
-      ? prev.map((p) => (p.id === producto.id ? producto : p))
-      : [...prev, producto];
-  });
-};
-
-  const guardarInfoNegocio = (datos) => {
-    setInfoNegocio(datos);
-  };
 
   const ventasHoy = getTodaySales(movimientos);
   const totalHoy = getTodayTotal(ventasHoy);
