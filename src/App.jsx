@@ -1913,7 +1913,9 @@ function FormularioProducto({ productos, productoId, guardarProducto, pop }) {
   const guardar = () => {
     if (!puedeGuardar) return;
     guardarProducto({
-      id: existente ? existente.id : nextId(),
+  id: existente
+  ? existente.id
+  : Math.max(0, ...productos.map((p) => Number(p.id) || 0)) + 1,
       nombre,
       precio: parseFloat(precio),
       unidad,
