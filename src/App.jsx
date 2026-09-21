@@ -256,11 +256,11 @@ try {
 // Barra de navegación inferior
 // ===========================================================================
 const NAV_ITEMS = [
-  { key: "inicio", label: "Inicio", icon: Home },
-  { key: "ventas", label: "Ventas", icon: ShoppingCart },
+  { key: "home", label: "Inicio", icon: Home },
+  { key: "sales", label: "Ventas", icon: ShoppingCart },
   { key: "stock", label: "Stock", icon: Package },
-  { key: "movimientos", label: "Movimientos", icon: ListOrdered },
-  { key: "mas", label: "Más", icon: Menu },
+  { key: "movements", label: "Movimientos", icon: ListOrdered },
+  { key: "more", label: "Más", icon: Menu },
 ];
 
 function BottomNav({ active, onChange }) {
@@ -692,7 +692,7 @@ function PantallaInicio({
           {productosAgotados.length > 0 && (
             <button
               type="button"
-              onClick={() => goTabScreen("stock", "stockBajo")}
+              onClick={() => goTabScreen("stock", "lowStock")}
               className="w-full flex items-center gap-3 bg-white rounded-2xl shadow-sm px-4 py-3 text-left"
             >
               <XCircle size={22} color={COLORS.agotado} />
@@ -704,7 +704,7 @@ function PantallaInicio({
           {productosBajo.length > 0 && (
             <button
               type="button"
-              onClick={() => goTabScreen("stock", "stockBajo")}
+              onClick={() => goTabScreen("stock", "lowStock")}
               className="w-full flex items-center gap-3 bg-white rounded-2xl shadow-sm px-4 py-3 text-left"
             >
               <AlertTriangle size={22} color={COLORS.bajo} />
@@ -719,7 +719,7 @@ function PantallaInicio({
       <div className="space-y-3 pt-1">
         <button
           type="button"
-          onClick={() => goTabScreen("ventas", "nuevaVenta")}
+          onClick={() => goTabScreen("sales", "newSale")}
           className="w-full font-semibold rounded-2xl py-4 text-lg shadow-sm flex items-center justify-center gap-2"
           style={{ backgroundColor: "#2E6B4F", color: "#FFFFFF" }}
         >
@@ -728,7 +728,7 @@ function PantallaInicio({
         </button>
         <button
           type="button"
-          onClick={() => goTabScreen("stock", "agregarEntrada")}
+          onClick={() => goTabScreen("stock", "addStockEntry")}
           className="w-full font-semibold rounded-2xl py-3.5 text-base shadow-sm border flex items-center justify-center gap-2"
           style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
         >
@@ -780,9 +780,9 @@ function VentasMain({ push, caja, totalHoy, abrirCajaManual }) {
             )}
           </div>
         )}
-        <Row label="Nueva venta" onClick={() => push("nuevaVenta")} />
-        <Row label="Cierre del día" onClick={() => push("cierreDia")} />
-        <Row label="Historial de cierres" onClick={() => push("historialCierres")} />
+        <Row label="Nueva venta" onClick={() => push("newSale")} />
+        <Row label="Cierre del día" onClick={() => push("dayClosing")} />
+        <Row label="Historial de cierres" onClick={() => push("closingHistory")} />
       </div>
     </div>
   );
@@ -1301,10 +1301,10 @@ function StockMain({ push }) {
     <div>
       <Header title="Stock" />
       <div className="px-5 space-y-3">
-        <Row label="Ver productos" onClick={() => push("verProductos")} />
-        <Row label="Stock bajo" onClick={() => push("stockBajo")} />
-        <Row label="Agregar entrada" onClick={() => push("agregarEntrada")} />
-        <Row label="Ajustar stock" onClick={() => push("ajustarStock")} />
+        <Row label="Ver productos" onClick={() => push("productCatalog")} />
+        <Row label="Stock bajo" onClick={() => push("lowStock")} />
+        <Row label="Agregar entrada" onClick={() => push("addStockEntry")} />
+        <Row label="Ajustar stock" onClick={() => push("adjustStock")} />
       </div>
     </div>
   );
@@ -1378,7 +1378,7 @@ function DetalleProducto({ productos, productoId, pop, goTabScreen }) {
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => goTabScreen("stock", "agregarEntrada", { productoId: p.id })}
+            onClick={() => goTabScreen("stock", "addStockEntry", { productId: p.id })}
             className="font-semibold rounded-2xl py-3 text-sm shadow-sm border"
             style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
           >
@@ -1386,7 +1386,7 @@ function DetalleProducto({ productos, productoId, pop, goTabScreen }) {
           </button>
           <button
             type="button"
-            onClick={() => goTabScreen("stock", "ajustarStock", { productoId: p.id })}
+            onClick={() => goTabScreen("stock", "adjustStock", { productId: p.id })}
             className="font-semibold rounded-2xl py-3 text-sm shadow-sm border"
             style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
           >
@@ -1775,9 +1775,9 @@ function MasMain({ push }) {
     <div>
       <Header title="Más" />
       <div className="px-5 space-y-3">
-        <Row label="Productos" onClick={() => push("productos")} />
-        <Row label="Información del negocio" onClick={() => push("infoNegocio")} />
-        <Row label="Configuración" onClick={() => push("configuracion")} />
+        <Row label="Productos" onClick={() => push("products")} />
+        <Row label="Información del negocio" onClick={() => push("businessInfo")} />
+        <Row label="Configuración" onClick={() => push("settings")} />
       </div>
     </div>
   );
@@ -2539,7 +2539,7 @@ useEffect(() => {
     window.storage.set("datos:infoNegocio", JSON.stringify(infoNegocio), false).catch(() => {});
   }, [cargado, infoNegocio]);
 
-  const [tab, setTab] = useState("inicio");
+  const [tab, setTab] = useState("home");
   const [stack, setStack] = useState([]); // [{screen, params}]
   const [caja, setCaja] = useState(null);
 
@@ -2729,7 +2729,7 @@ const actualizarStock = async (id, nuevoStock) => {
   const productosAgotados = getOutOfStockProducts(productos);
   const ventasSemana = getWeekSales(movimientos);
   function renderTab() {
-    if (tab === "inicio") {
+    if (tab === "home") {
       return (
         <PantallaInicio
           totalHoy={totalHoy}
@@ -2744,8 +2744,8 @@ const actualizarStock = async (id, nuevoStock) => {
       );
     }
 
-    if (tab === "ventas") {
-      if (current.screen === "nuevaVenta")
+    if (tab === "sales") {
+      if (current.screen === "newSale")
         return (
        <NuevaVenta
   productos={productos}
@@ -2757,7 +2757,7 @@ const actualizarStock = async (id, nuevoStock) => {
   caja={caja}
 />
         );
-      if (current.screen === "cierreDia")
+      if (current.screen === "dayClosing")
         return (
           <CierreDia
             totalHoy={totalHoy}
@@ -2769,53 +2769,53 @@ const actualizarStock = async (id, nuevoStock) => {
             actualizarCaja={setCaja}
           />
         );
-      if (current.screen === "historialCierres") return <HistorialCierres pop={pop} />;
+      if (current.screen === "closingHistory") return <HistorialCierres pop={pop} />;
       return <VentasMain push={push} caja={caja} totalHoy={totalHoy} abrirCajaManual={abrirCajaManual} />;
     }
 
     if (tab === "stock") {
-      if (current.screen === "verProductos")
+      if (current.screen === "productCatalog")
         return (
           <VerProductos
             productos={productos}
             pop={pop}
-            onOpenDetalle={(id) => push("detalleProducto", { productoId: id })}
+            onOpenDetalle={(id) => push("productDetail", { productId: id })}
           />
         );
-      if (current.screen === "detalleProducto")
+      if (current.screen === "productDetail")
         return (
           <DetalleProducto
             productos={productos}
-            productoId={current.params.productoId}
+            productoId={current.params.productId}
             pop={pop}
             goTabScreen={goTabScreen}
           />
         );
-      if (current.screen === "stockBajo")
+      if (current.screen === "lowStock")
         return (
           <StockBajo
             productosAgotados={productosAgotados}
             productosBajo={productosBajo}
             pop={pop}
-            onOpenDetalle={(id) => push("detalleProducto", { productoId: id })}
+            onOpenDetalle={(id) => push("productDetail", { productId: id })}
           />
         );
-      if (current.screen === "agregarEntrada")
+      if (current.screen === "addStockEntry")
         return (
           <AgregarEntrada
             productos={productos}
-            productoIdInicial={current.params.productoId}
+            productoIdInicial={current.params.productId}
             actualizarStock={actualizarStock}
             registrarMovimiento={registrarMovimiento}
             pop={pop}
             resetStack={resetStack}
           />
         );
-      if (current.screen === "ajustarStock")
+      if (current.screen === "adjustStock")
         return (
           <AjustarStock
             productos={productos}
-            productoIdInicial={current.params.productoId}
+            productoIdInicial={current.params.productId}
             actualizarStock={actualizarStock}
             registrarMovimiento={registrarMovimiento}
             pop={pop}
@@ -2825,39 +2825,39 @@ const actualizarStock = async (id, nuevoStock) => {
       return <StockMain push={push} />;
     }
 
-    if (tab === "movimientos") {
-      if (current.screen === "detalleMovimiento")
-        return <DetalleMovimiento movimientos={movimientos} movimientoId={current.params.movimientoId} pop={pop} />;
+    if (tab === "movements") {
+      if (current.screen === "stockMovementDetail")
+        return <DetalleMovimiento movimientos={movimientos} movimientoId={current.params.movementId} pop={pop} />;
       return (
         <Movimientos
           movimientos={movimientos}
-          onOpenDetalle={(id) => push("detalleMovimiento", { movimientoId: id })}
+          onOpenDetalle={(id) => push("stockMovementDetail", { movementId: id })}
         />
       );
     }
 
-    if (tab === "mas") {
-      if (current.screen === "productos")
+    if (tab === "more") {
+      if (current.screen === "products")
         return (
           <ProductosMain
             productos={productos}
             pop={pop}
-            onOpenDetalle={(id) => push("formularioProducto", { productoId: id })}
-            onNuevo={() => push("formularioProducto", { productoId: null })}
+            onOpenDetalle={(id) => push("productForm", { productId: id })}
+            onNuevo={() => push("productForm", { productId: null })}
           />
         );
-      if (current.screen === "formularioProducto")
+      if (current.screen === "productForm")
         return (
           <FormularioProducto
             productos={productos}
-            productoId={current.params.productoId}
+            productoId={current.params.productId}
             guardarProducto={guardarProducto}
             pop={pop}
           />
         );
-      if (current.screen === "infoNegocio")
+      if (current.screen === "businessInfo")
         return <InfoNegocio infoNegocio={infoNegocio} guardarInfoNegocio={guardarInfoNegocio} pop={pop} />;
-      if (current.screen === "configuracion") return <Configuracion pop={pop} />;
+      if (current.screen === "settings") return <Configuracion pop={pop} />;
       return <MasMain push={push} />;
     }
 
