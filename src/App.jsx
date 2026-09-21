@@ -4,8 +4,6 @@ import {
   COLORS,
   CASH_SHIFT_STORAGE_KEY,
 } from "./lib/constants";
-import { nextId } from "./lib/ids";
-import { initialStockMovements } from "./lib/initialData";
 import {
   isToday,
   todayDateKey,
@@ -23,17 +21,14 @@ import {
   getOutOfStockProducts,
   getWeekSales,
 } from "./lib/metrics";
-import { readJson, writeJson, removeKey } from "./lib/storage/storage";
-import { listProducts } from "./data/productsRepository";
-import {
-  listSalesWithItems,
-  listSaleItems,
-} from "./data/salesRepository";
-import { insertStockEntry } from "./data/stockMovementsRepository";
+import { writeJson } from "./lib/storage/storage";
+import { listSaleItems } from "./data/salesRepository";
 import { syncCashShift } from "./data/cashShiftSync";
 import { useCashRegister } from "./hooks/useCashRegister";
 import { useProducts } from "./hooks/useProducts";
+import { useStockMovements } from "./hooks/useStockMovements";
 import { useBusinessInfo } from "./hooks/useBusinessInfo";
+import { useInitialLoad } from "./hooks/useInitialLoad";
 import { Header } from "./components/Header";
 import { PrimaryButton } from "./components/PrimaryButton";
 import { BottomNav } from "./components/BottomNav";
@@ -114,84 +109,21 @@ export default function App() {
     updateStock: actualizarStock,
     saveProduct: guardarProducto,
   } = useProducts();
-  const [movimientos, setMovimientos] = useState(initialStockMovements);
+  const {
+    movements: movimientos,
+    setMovements: setMovimientos,
+    recordStockMovement: registrarMovimiento,
+  } = useStockMovements();
   const {
     businessInfo: infoNegocio,
     setBusinessInfo: setInfoNegocio,
     saveBusinessInfo: guardarInfoNegocio,
   } = useBusinessInfo();
-  const [cargado, setCargado] = useState(false);
-
-  // Carga inicial: si hay datos guardados de una sesión anterior, los usamos
-  // en vez de los datos de ejemplo (initialProducts/initialStockMovements).
-  useEffect(() => {
-    let activo = true;
-    (async () => {
-      try {
-       const data = await listProducts();
-
-// Si Supabase ya tiene productos, los cargamos normalmente.
-if (data && data.length > 0) {
-  if (activo) {
-    setProductos(
-      data.map((p) => ({
-        id: p.id,
-        nombre: p.nombre,
-        precio: Number(p.precio),
-        unidad: p.unidad,
-        stock: Number(p.stock),
-        stockMinimo: Number(p.stock_minimo),
-        codigoBarras: p.codigo_barras,
-      }))
-    );
-  }
-}
-} catch (e) {
-  console.error("Error cargando productos:", e);
-}
-      try {
-        const movs = await readJson("datos:movimientos");
-        if (activo && movs) {
-          const lista = movs.map((m) => ({ ...m, fecha: new Date(m.fecha) }));
-          setMovimientos(lista);
-        }
-      } catch (e) {}
-      try {
-  const data = await listSalesWithItems();
-
-  if (activo && data) {
-    const ventasFormateadas = data.map((v) => ({
-      id: v.id,
-      fecha: new Date(v.fecha),
-      tipo: "venta",
-      total: Number(v.total),
-      pago: v.pago,
-      items: (v.venta_items || []).map((it) => ({
-        productoId: it.producto_id,
-        nombre: it.nombre,
-        cantidad: Number(it.cantidad),
-        unidad: it.unidad,
-        precio: Number(it.precio_unitario),
-        subtotal: Number(it.subtotal),
-      })),
-    }));
-
-    setMovimientos((prev) => {
-      const otros = prev.filter((m) => m.tipo !== "venta");
-      return [...ventasFormateadas, ...otros];
-    });
-  }
-} catch (e) {
-  console.error("Error cargando ventas:", e);
-}
-      try {
-        const info = await readJson("datos:infoNegocio");
-        if (activo && info) setInfoNegocio(info);
-      } catch (e) {}
-      if (activo) setCargado(true);
-    })();
-    return () => { activo = false; };
-  }, []);
+  const { loaded: cargado } = useInitialLoad({
+    setProducts: setProductos,
+    setStockMovements: setMovimientos,
+    setBusinessInfo: setInfoNegocio,
+  });
 useEffect(() => {
   const canal = supabase
     .channel("productos-realtime")
@@ -426,39 +358,7 @@ useEffect(() => {
   const pop = () => setStack((s) => s.slice(0, -1));
   const resetStack = () => setStack([]);
 
-const registrarMovimiento = async (mov) => {
-  const movimiento = {
-    id: nextId(),
-    fecha: new Date(),
-    ...mov,
-  };
 
-  if (mov.tipo === "entrada") {
-    console.log("REGISTRANDO MOVIMIENTO:", mov);
-    
-    try {
-      await insertStockEntry({
-        negocio_id: 1,
-        producto_id: mov.productoId,
-        jornada_id: null,
-        fecha: movimiento.fecha.toISOString(),
-        tipo: "entrada",
-        cantidad: Number(mov.cantidad),
-        unidad: mov.unidad,
-        diferencia: Number(mov.cantidad),
-        motivo: "Entrada de stock",
-      });
-    } catch (error) {
-      console.error("Error guardando movimiento de entrada:", error);
-      alert("No se pudo guardar el movimiento de stock.");
-      return false;
-    }
-  }
-
-  setMovimientos((m) => [movimiento, ...m]);
-
-  return true;
-};
 
 
 
