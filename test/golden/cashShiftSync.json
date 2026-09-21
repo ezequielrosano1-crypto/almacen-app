@@ -1,0 +1,108 @@
+{
+  "sandboxSequence": [
+    {
+      "scenario": "07:59 · antes de apertura",
+      "result": null
+    },
+    {
+      "scenario": "08:00 · apertura",
+      "result": {
+        "id": "caja-2026-09-14",
+        "fecha": "2026-09-14",
+        "estado": "ABIERTA",
+        "horaApertura": "08:00",
+        "horaCierre": null,
+        "cerradoAutomaticamente": false
+      }
+    },
+    {
+      "scenario": "12:00 · mediodía",
+      "result": {
+        "id": "caja-2026-09-14",
+        "fecha": "2026-09-14",
+        "estado": "ABIERTA",
+        "horaApertura": "08:00",
+        "horaCierre": null,
+        "cerradoAutomaticamente": false
+      }
+    },
+    {
+      "scenario": "21:59 · antes del cierre",
+      "result": {
+        "id": "caja-2026-09-14",
+        "fecha": "2026-09-14",
+        "estado": "ABIERTA",
+        "horaApertura": "08:00",
+        "horaCierre": null,
+        "cerradoAutomaticamente": false
+      }
+    },
+    {
+      "scenario": "22:00 · cierre automático",
+      "result": {
+        "id": "caja-2026-09-14",
+        "fecha": "2026-09-14",
+        "estado": "CERRADA",
+        "horaApertura": "08:00",
+        "horaCierre": "22:00",
+        "cerradoAutomaticamente": true
+      }
+    },
+    {
+      "scenario": "23:00 · después del cierre",
+      "result": {
+        "id": "caja-2026-09-14",
+        "fecha": "2026-09-14",
+        "estado": "CERRADA",
+        "horaApertura": "08:00",
+        "horaCierre": "22:00",
+        "cerradoAutomaticamente": true
+      }
+    },
+    {
+      "scenario": "08:00 día siguiente · nueva jornada",
+      "result": {
+        "id": "caja-2026-09-15",
+        "fecha": "2026-09-15",
+        "estado": "ABIERTA",
+        "horaApertura": "08:00",
+        "horaCierre": null,
+        "cerradoAutomaticamente": false
+      }
+    }
+  ],
+  "productionFlow": {
+    "open": {
+      "id": "caja-2026-09-14",
+      "fecha": "2026-09-14",
+      "estado": "ABIERTA",
+      "horaApertura": "10:00",
+      "horaCierre": null,
+      "cerradoAutomaticamente": false
+    },
+    "close": {
+      "id": "caja-2026-09-14",
+      "fecha": "2026-09-14",
+      "estado": "CERRADA",
+      "horaApertura": "10:00",
+      "horaCierre": "22:00",
+      "cerradoAutomaticamente": true,
+      "total": 0,
+      "cantidadVentas": 0
+    },
+    "dbState": {
+      "caja-2026-09-14": {
+        "id": "caja-2026-09-14",
+        "negocio_id": 1,
+        "fecha": "2026-09-14",
+        "estado": "CERRADA",
+        "hora_apertura": "10:00",
+        "hora_cierre": "22:00",
+        "cerrado_automatico": true,
+        "total": 200,
+        "cantidad_ventas": 2,
+        "updated_at": "2026-09-21T12:00:00.000Z"
+      }
+    }
+  }
+}
