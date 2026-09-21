@@ -329,7 +329,7 @@ describe("sincronizarCaja legacy characterization & goldens", () => {
       dbState: Object.fromEntries(supabaseShifts),
     };
 
-    writeFileSync(goldenPath, JSON.stringify(goldenData, null, 2), "utf-8");
+    writeFileSync(goldenPath, `${JSON.stringify(goldenData, null, 2)}\n`, "utf-8");
 
     const frozen = JSON.parse(readFileSync(goldenPath, "utf-8"));
     expect(goldenData).toEqual(frozen);
