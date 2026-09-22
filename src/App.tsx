@@ -45,7 +45,7 @@ import { StockView } from "./views/StockView";
 // reciben lo que necesitan por props.
 // ===========================================================================
 export default function App() {
-  const { products, setProducts, updateStock, saveProduct } = useProducts();
+  const { products, setProducts, updateStock, saveProduct, deleteProduct } = useProducts();
   const { movements, setMovements, recordStockMovement } = useStockMovements();
 
   // Entradas and ajustes: the server updates the stock and records the movement in one
@@ -223,6 +223,7 @@ export default function App() {
             products={products}
             productId={current.params.productId}
             saveProduct={saveProduct}
+            deleteProduct={deleteProduct}
             pop={pop}
           />
         );

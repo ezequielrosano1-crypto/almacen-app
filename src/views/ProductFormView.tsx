@@ -1,4 +1,4 @@
-import { Camera } from "lucide-react";
+import { Camera, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { BarcodeScanner } from "../components/BarcodeScanner";
 import { Header } from "../components/Header";
@@ -25,6 +25,7 @@ export interface ProductFormViewProps {
   products?: ProductFormData[];
   productId?: ProductId | null;
   saveProduct?: (product: ProductDraft) => unknown;
+  deleteProduct?: (id: ProductId) => unknown;
   pop: () => void;
 }
 
@@ -33,6 +34,7 @@ export function ProductFormView(props: ProductFormViewProps) {
   const products = props.products ?? [];
   const productId = props.productId ?? null;
   const saveProduct = props.saveProduct ?? (() => {});
+  const deleteProduct = props.deleteProduct ?? (() => {});
 
   const existente = products.find((p) => p.id === productId);
   const esNuevo = !existente;
@@ -73,6 +75,15 @@ export function ProductFormView(props: ProductFormViewProps) {
       codigoBarras: finalBarcode,
     };
     saveProduct(nuevoProducto);
+    pop();
+  };
+
+  const eliminar = () => {
+    if (!existente) return;
+    const confirmado =
+      typeof confirm === "undefined" || confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`);
+    if (!confirmado) return;
+    deleteProduct(existente.id);
     pop();
   };
 
@@ -192,6 +203,18 @@ export function ProductFormView(props: ProductFormViewProps) {
             Guardar producto
           </PrimaryButton>
         </div>
+
+        {!esNuevo && (
+          <button
+            type="button"
+            onClick={eliminar}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium"
+            style={{ color: "#B91C1C" }}
+          >
+            <Trash2 size={16} />
+            Eliminar producto
+          </button>
+        )}
       </div>
 
       {escaneandoCodigo && (

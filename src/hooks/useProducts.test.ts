@@ -7,6 +7,7 @@ vi.mock("../data/supabaseClient", () => ({
 import {
   applyProductSave,
   applyStockUpdate,
+  deleteProductFromRepository,
   type ProductDraft,
   type ProductItem,
   saveProductToRepository,
@@ -160,5 +161,30 @@ describe("useProducts pure functions and repository interactions", () => {
     expect(saved).toBeNull();
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
+  });
+
+  it("deleteProductFromRepository calls deleteProduct and returns true on success", async () => {
+    const mockDelete = vi.fn().mockResolvedValue(undefined);
+
+    const ok = await deleteProductFromRepository(2, { deleteProduct: mockDelete });
+
+    expect(ok).toBe(true);
+    expect(mockDelete).toHaveBeenCalledWith(2);
+  });
+
+  it("deleteProductFromRepository returns false and alerts a specific message on FK violation", async () => {
+    const mockDelete = vi.fn().mockRejectedValue({ code: "23503" });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const alertSpy = vi.fn();
+    vi.stubGlobal("alert", alertSpy);
+
+    const ok = await deleteProductFromRepository(2, { deleteProduct: mockDelete });
+
+    expect(ok).toBe(false);
+    expect(alertSpy).toHaveBeenCalledWith(
+      "No se puede eliminar: el producto tiene ventas o movimientos registrados.",
+    );
+    consoleSpy.mockRestore();
+    vi.unstubAllGlobals();
   });
 });

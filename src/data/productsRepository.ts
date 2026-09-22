@@ -32,6 +32,14 @@ export async function upsertProduct(row: ProductUpsert): Promise<void> {
   }
 }
 
+export async function deleteProduct(id: ProductId): Promise<void> {
+  const { error } = await supabase.from("productos").delete().eq("id", id).eq("negocio_id", 1);
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function insertProduct(row: ProductInsert): Promise<ProductRow> {
   const { data, error } = await supabase.from("productos").insert(row).select().single();
 

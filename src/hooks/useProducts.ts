@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toProductInsert, toProductUpsert } from "../data/mappers";
 import {
+  deleteProduct as defaultDeleteProduct,
   insertProduct as defaultInsertProduct,
   updateProductStock as defaultUpdateProductStock,
   upsertProduct as defaultUpsertProduct,
@@ -57,6 +58,27 @@ export async function updateStockInRepository(
   }
 }
 
+export async function deleteProductFromRepository(
+  id: ProductId,
+  deps = { deleteProduct: defaultDeleteProduct },
+): Promise<boolean> {
+  try {
+    await deps.deleteProduct(id);
+    return true;
+  } catch (error) {
+    console.error("Error eliminando producto en Supabase:", error);
+    if (typeof alert !== "undefined") {
+      const code = (error as { code?: string } | null)?.code;
+      alert(
+        code === "23503"
+          ? "No se puede eliminar: el producto tiene ventas o movimientos registrados."
+          : "No se pudo eliminar el producto.",
+      );
+    }
+    return false;
+  }
+}
+
 export async function saveProductToRepository(
   producto: ProductDraft,
   deps = { upsertProduct: defaultUpsertProduct, insertProduct: defaultInsertProduct },
@@ -92,6 +114,7 @@ export function useProducts(
     updateProductStock: defaultUpdateProductStock,
     upsertProduct: defaultUpsertProduct,
     insertProduct: defaultInsertProduct,
+    deleteProduct: defaultDeleteProduct,
   },
 ) {
   const [products, setProducts] = useState<ProductItem[]>(initial);
@@ -112,16 +135,26 @@ export function useProducts(
     return true;
   };
 
+  const deleteProduct = async (id: ProductId): Promise<boolean> => {
+    const ok = await deleteProductFromRepository(id, deps);
+    if (!ok) return false;
+
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    return true;
+  };
+
   return {
     products,
     setProducts,
     updateStock,
     saveProduct,
+    deleteProduct,
     // Alias en español para App.jsx
     productos: products,
     setProductos: setProducts,
     actualizarStock: updateStock,
     guardarProducto: saveProduct,
+    eliminarProducto: deleteProduct,
   };
 }
 
