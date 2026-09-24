@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card } from "../components/ui/Card";
+import { Card } from "../components/common/Card";
 import { removeKey } from "../lib/storage/storage";
 
 export function ClearDataView() {

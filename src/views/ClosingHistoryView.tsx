@@ -1,9 +1,9 @@
 import { History } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Card } from "../components/ui/Card";
-import { EmptyState } from "../components/ui/EmptyState";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { Card } from "../components/common/Card";
+import { EmptyState } from "../components/common/EmptyState";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 import { listClosings } from "../data/closingsRepository";
 import { formatMoney } from "../lib/format";
 import type { ClosingSummary } from "../types/domain";

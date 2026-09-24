@@ -1,7 +1,7 @@
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 import { formatMoney } from "../lib/format";
 import { formatStock, getProductStatus, getStatusTone } from "../lib/stock";
 import type { ProductId } from "../types/domain";

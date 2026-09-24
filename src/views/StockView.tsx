@@ -9,13 +9,13 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { SearchBar } from "../components/SearchBar";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { EmptyState } from "../components/ui/EmptyState";
-import { FilterChips } from "../components/ui/FilterChips";
-import { KpiCard } from "../components/ui/KpiCard";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { EmptyState } from "../components/common/EmptyState";
+import { FilterChips } from "../components/common/FilterChips";
+import { KpiCard } from "../components/common/KpiCard";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 import { formatMoney } from "../lib/format";
 import { type InventoryFilter, filterProducts } from "../lib/productFilters";
 import { formatStock, getProductStatus, getStatusTone } from "../lib/stock";
@@ -193,7 +193,7 @@ export function StockView({ products, push, goTabScreen }: StockViewProps) {
                   type="button"
                   key={p.id}
                   onClick={() => push("productDetail", { productId: p.id })}
-                  className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
+                  className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-xs text-left"
                 >
                   <div className="min-w-0">
                     <p className="text-ink font-medium text-sm truncate">{nombre}</p>

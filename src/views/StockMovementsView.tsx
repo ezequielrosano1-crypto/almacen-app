@@ -1,9 +1,9 @@
 import { ArrowRightLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { EmptyState } from "../components/ui/EmptyState";
-import { FilterChips } from "../components/ui/FilterChips";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { EmptyState } from "../components/common/EmptyState";
+import { FilterChips } from "../components/common/FilterChips";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 import { formatDate, formatMoney } from "../lib/format";
 import type { MovementId, MovementRecordItem } from "../types/domain";
 
@@ -71,7 +71,7 @@ export function StockMovementsView(props: StockMovementsViewProps) {
                 type="button"
                 key={m.id}
                 onClick={() => onOpenDetalle(m.id)}
-                className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
+                className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-xs text-left"
               >
                 <div>
                   <p className="text-ink font-medium text-sm">{resumenMovimiento(m)}</p>

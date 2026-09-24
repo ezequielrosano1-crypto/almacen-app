@@ -1,8 +1,8 @@
 import { BarChart3, ShoppingBag, Truck, type LucideIcon } from "lucide-react";
 import type { ReactElement } from "react";
-import { EmptyState } from "../components/ui/EmptyState";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { EmptyState } from "../components/common/EmptyState";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 
 export type ComingSoonSection = "purchases" | "suppliers" | "reports";
 

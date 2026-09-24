@@ -14,10 +14,10 @@ import {
 import type { ReactElement } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
 import { StatusDot } from "../components/StatusDot";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { KpiCard } from "../components/ui/KpiCard";
-import { PageHeader } from "../components/ui/PageHeader";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { KpiCard } from "../components/common/KpiCard";
+import { PageHeader } from "../components/common/PageHeader";
 import { buildLineChartGeometry } from "../lib/chart";
 import { formatMoney } from "../lib/format";
 import type { TopProductItem } from "../lib/metrics";

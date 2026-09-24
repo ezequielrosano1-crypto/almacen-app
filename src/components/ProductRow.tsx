@@ -38,7 +38,7 @@ export function ProductRow({ producto, onClick }: ProductRowProps): ReactElement
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
+      className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-xs text-left"
     >
       <div className="flex items-center gap-3">
         <StatusDot estado={estado} />

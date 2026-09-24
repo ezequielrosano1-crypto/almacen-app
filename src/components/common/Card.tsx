@@ -14,7 +14,7 @@ export function Card({
   return (
     <div
       className={[
-        "rounded-2xl border border-line bg-white shadow-sm",
+        "rounded-2xl border border-line bg-white shadow-xs",
         padded ? "p-4" : "",
         className ?? "",
       ]

@@ -3,9 +3,9 @@ import { useState } from "react";
 import { ConfirmationScreen } from "../components/ConfirmationScreen";
 import { ProductRow } from "../components/ProductRow";
 import { SearchBar } from "../components/SearchBar";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { PageHeader } from "../components/ui/PageHeader";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { PageHeader } from "../components/common/PageHeader";
 import type { StockMovementInput } from "../hooks/useStockMovements";
 import { ADJUSTMENT_REASONS, COLORS } from "../lib/constants";
 import { formatStock } from "../lib/stock";
@@ -134,7 +134,7 @@ export function AdjustStockView(props: AdjustStockViewProps) {
               min="0"
               value={stockReal}
               onChange={(e) => setStockReal(e.target.value)}
-              className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+              className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand"
             />
           </div>
           <div>

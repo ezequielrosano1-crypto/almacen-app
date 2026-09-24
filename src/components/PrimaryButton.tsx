@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactElement, ReactNode } from "react";
-import { Button } from "./ui/Button";
+import { Button } from "./common/Button";
 
 export interface PrimaryButtonProps {
   children: ReactNode;
@@ -17,7 +17,7 @@ export function PrimaryButton({ children, onClick, disabled }: PrimaryButtonProp
       fullWidth
       onClick={onClick}
       disabled={disabled}
-      className="rounded-2xl shadow-sm"
+      className="rounded-2xl shadow-xs"
     >
       {children}
     </Button>

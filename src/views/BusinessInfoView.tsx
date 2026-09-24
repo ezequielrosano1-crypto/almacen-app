@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { PageHeader } from "../components/ui/PageHeader";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { PageHeader } from "../components/common/PageHeader";
 
 export interface BusinessInfoData {
   nombre?: string;
@@ -42,7 +42,7 @@ export function BusinessInfoView(props: BusinessInfoViewProps) {
             id="business-name"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+            className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand"
           />
         </div>
         <div>
@@ -53,7 +53,7 @@ export function BusinessInfoView(props: BusinessInfoViewProps) {
             id="business-contact"
             value={contacto}
             onChange={(e) => setContacto(e.target.value)}
-            className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+            className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand"
           />
         </div>
         <Button fullWidth onClick={guardar} disabled={!nombre}>

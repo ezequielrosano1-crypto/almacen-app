@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
-import { Card } from "../components/ui/Card";
+import { Card } from "../components/common/Card";
 import { syncCashShift } from "../data/cashShiftSync";
 import { isScenarioPassing } from "../lib/cashShiftScenarios";
 import { TEST_CASH_SHIFT_STORAGE_KEY } from "../lib/constants";

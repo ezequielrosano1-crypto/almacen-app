@@ -1,7 +1,7 @@
 import { ChevronRight, PackageX } from "lucide-react";
-import { EmptyState } from "../components/ui/EmptyState";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { EmptyState } from "../components/common/EmptyState";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 import { formatStock, getProductStatus, getStatusTone } from "../lib/stock";
 import type { ProductId } from "../types/domain";
 
@@ -56,7 +56,7 @@ export function LowStockView(props: LowStockViewProps) {
               type="button"
               key={p.id}
               onClick={() => onOpenDetalle(p.id)}
-              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
+              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-xs text-left"
             >
               <div>
                 <p className="text-ink font-medium text-sm">{nombre}</p>

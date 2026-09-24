@@ -1,9 +1,9 @@
 import { Camera, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { BarcodeScanner } from "../components/BarcodeScanner";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { PageHeader } from "../components/ui/PageHeader";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { PageHeader } from "../components/common/PageHeader";
 import type { ProductDraft } from "../hooks/useProducts";
 import type { ProductId } from "../types/domain";
 
@@ -31,7 +31,7 @@ export interface ProductFormViewProps {
 }
 
 const INPUT_CLASS =
-  "w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand";
+  "w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand";
 
 export function ProductFormView(props: ProductFormViewProps) {
   const { pop } = props;
@@ -119,7 +119,7 @@ export function ProductFormView(props: ProductFormViewProps) {
               value={codigoBarras}
               onChange={(e) => setCodigoBarras(e.target.value)}
               placeholder="7791234567890"
-              className="flex-1 rounded-xl border border-line px-4 py-3 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+              className="flex-1 rounded-xl border border-line px-4 py-3 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand"
             />
             <button
               type="button"

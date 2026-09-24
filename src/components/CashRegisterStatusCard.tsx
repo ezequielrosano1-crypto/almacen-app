@@ -2,8 +2,8 @@ import { Lock, LockOpen } from "lucide-react";
 import type { ReactElement } from "react";
 import { formatMoney } from "../lib/format";
 import type { StoredCashShift } from "../types/storage";
-import { Card } from "./ui/Card";
-import { StatusBadge } from "./ui/StatusBadge";
+import { Card } from "./common/Card";
+import { StatusBadge } from "./common/StatusBadge";
 
 export interface CashRegisterStatusCardProps {
   caja: StoredCashShift | null;

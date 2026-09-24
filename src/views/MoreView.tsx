@@ -1,8 +1,8 @@
 import { BarChart3, ChevronRight, Settings, Store, Truck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Card } from "../components/ui/Card";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { Card } from "../components/common/Card";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 import type { ScreenId, ScreenParams, TabId } from "../types/navigation";
 
 export interface MoreViewProps {
@@ -95,7 +95,7 @@ export function MoreView({ push, goTab }: MoreViewProps) {
             key={e.key}
             onClick={e.comingSoon ? undefined : e.onClick}
             disabled={e.comingSoon}
-            className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
+            className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-xs text-left"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50">
               <e.icon size={16} color="#0066FF" />

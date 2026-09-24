@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { PageHeader } from "../components/ui/PageHeader";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { PageHeader } from "../components/common/PageHeader";
 import { closeShiftManually } from "../data/cashShiftRepository";
 import { storedShiftToClosingSummary } from "../data/mappers";
 import { formatUruguayTime, todayDateKey } from "../lib/dates";

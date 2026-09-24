@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { Button } from "./ui/Button";
+import { Button } from "./common/Button";
 
 export interface ConfirmationScreenProps {
   icon: ReactNode;

@@ -3,9 +3,9 @@ import { useState } from "react";
 import { ConfirmationScreen } from "../components/ConfirmationScreen";
 import { ProductRow } from "../components/ProductRow";
 import { SearchBar } from "../components/SearchBar";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { PageHeader } from "../components/ui/PageHeader";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { PageHeader } from "../components/common/PageHeader";
 import type { StockMovementInput } from "../hooks/useStockMovements";
 import { COLORS } from "../lib/constants";
 import { formatStock } from "../lib/stock";
@@ -130,7 +130,7 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
               placeholder={productoUnidad === "kg" ? "0,500" : "0"}
-              className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+              className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand"
             />
           </div>
           <Button

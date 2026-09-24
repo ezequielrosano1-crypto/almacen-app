@@ -1,10 +1,10 @@
 import { ArrowRight, History, Lock, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 import { COLORS } from "../lib/constants";
 import { formatDate, formatMoney } from "../lib/format";
 import type { MovementRecordItem } from "../types/domain";
@@ -51,7 +51,7 @@ export function SalesView(props: SalesViewProps) {
       <button
         type="button"
         onClick={() => push("newSale")}
-        className="w-full rounded-2xl bg-brand text-white p-5 text-left flex items-center justify-between shadow-sm"
+        className="w-full rounded-2xl bg-brand text-white p-5 text-left flex items-center justify-between shadow-xs"
       >
         <div>
           <p className="font-display text-lg font-bold">Nueva venta</p>
@@ -66,7 +66,7 @@ export function SalesView(props: SalesViewProps) {
         <button
           type="button"
           onClick={() => push("dayClosing")}
-          className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 text-left shadow-sm"
+          className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 text-left shadow-xs"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50">
             <Lock size={18} color="#0066FF" />
@@ -80,7 +80,7 @@ export function SalesView(props: SalesViewProps) {
         <button
           type="button"
           onClick={() => push("closingHistory")}
-          className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 text-left shadow-sm"
+          className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 text-left shadow-xs"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50">
             <History size={18} color="#0066FF" />
