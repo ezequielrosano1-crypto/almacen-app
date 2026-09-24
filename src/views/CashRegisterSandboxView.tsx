@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
+import { Card } from "../components/ui/Card";
 import { syncCashShift } from "../data/cashShiftSync";
 import { isScenarioPassing } from "../lib/cashShiftScenarios";
 import { TEST_CASH_SHIFT_STORAGE_KEY } from "../lib/constants";
@@ -150,16 +151,16 @@ export function CashRegisterSandboxView() {
 
   return (
     <div className="space-y-3">
-      <div className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-1">
+      <Card className="space-y-1">
         <p className="text-sm font-semibold text-ink">Estado sandbox actual</p>
         {testCaja ? (
           <CashRegisterStatusCard caja={testCaja} totalHoy={0} />
         ) : (
           <p className="text-xs text-ink-subtle">Todavía no corriste ningún escenario.</p>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
+      <Card className="space-y-2">
         <p className="text-xs font-semibold text-ink-muted px-1">Escenarios de horario</p>
         {TEST_SCENARIOS.map((e) => (
           <button
@@ -167,22 +168,20 @@ export function CashRegisterSandboxView() {
             type="button"
             disabled={corriendo}
             onClick={() => correr(e)}
-            className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-            style={{ backgroundColor: "#FFFFFF", color: "#1F2937", borderColor: "#E2E8F0" }}
+            className="w-full text-left text-sm rounded-xl px-3 py-2.5 border border-line text-ink bg-white disabled:opacity-60"
           >
             {e.label}
           </button>
         ))}
-      </div>
+      </Card>
 
-      <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
+      <Card className="space-y-2">
         <p className="text-xs font-semibold text-ink-muted px-1">Otras verificaciones</p>
         <button
           type="button"
           disabled={corriendo}
           onClick={correrIdempotencia}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#1F2937", borderColor: "#E2E8F0" }}
+          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border border-line text-ink bg-white disabled:opacity-60"
         >
           Ejecutar 3 veces seguidas a las 12:00 (idempotencia)
         </button>
@@ -190,8 +189,7 @@ export function CashRegisterSandboxView() {
           type="button"
           disabled={corriendo}
           onClick={intentarVentaConCajaCerrada}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#1F2937", borderColor: "#E2E8F0" }}
+          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border border-line text-ink bg-white disabled:opacity-60"
         >
           Simular intento de venta con la caja del sandbox cerrada
         </button>
@@ -199,15 +197,14 @@ export function CashRegisterSandboxView() {
           type="button"
           disabled={corriendo}
           onClick={reiniciarSandbox}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#F5F7FB", color: "#DC2626", borderColor: "#E2E8F0" }}
+          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border border-line text-danger bg-canvas disabled:opacity-60"
         >
           Reiniciar sandbox de pruebas
         </button>
-      </div>
+      </Card>
 
       {log.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
+        <Card className="space-y-2">
           <p className="text-xs font-semibold text-ink-muted px-1">Resultados</p>
           {log.map((l) => (
             <div key={l.id} className="flex items-start gap-2 text-xs px-1">
@@ -215,7 +212,7 @@ export function CashRegisterSandboxView() {
               <span className="text-ink-soft flex-1">{l.texto}</span>
             </div>
           ))}
-        </div>
+        </Card>
       )}
     </div>
   );

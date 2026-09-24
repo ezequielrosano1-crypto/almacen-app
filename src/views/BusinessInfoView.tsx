@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Header } from "../components/Header";
-import { PrimaryButton } from "../components/PrimaryButton";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { PageHeader } from "../components/ui/PageHeader";
 
 export interface BusinessInfoData {
   nombre?: string;
@@ -30,35 +31,35 @@ export function BusinessInfoView(props: BusinessInfoViewProps) {
   };
 
   return (
-    <div>
-      <Header title="Información del negocio" onBack={pop} />
-      <div className="px-5 space-y-3">
+    <div className="pb-4 lg:max-w-2xl">
+      <PageHeader title="Información del negocio" onBack={pop} />
+      <Card className="space-y-4">
         <div>
-          <label className="text-ink-muted text-sm block">
+          <label className="text-ink-soft text-sm font-medium block" htmlFor="business-name">
             Nombre del almacén
-            <input
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
-            />
           </label>
+          <input
+            id="business-name"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+          />
         </div>
         <div>
-          <label className="text-ink-muted text-sm block">
+          <label className="text-ink-soft text-sm font-medium block" htmlFor="business-contact">
             Teléfono / WhatsApp de contacto
-            <input
-              value={contacto}
-              onChange={(e) => setContacto(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
-            />
           </label>
+          <input
+            id="business-contact"
+            value={contacto}
+            onChange={(e) => setContacto(e.target.value)}
+            className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+          />
         </div>
-        <div className="pt-1">
-          <PrimaryButton onClick={guardar} disabled={!nombre}>
-            Guardar cambios
-          </PrimaryButton>
-        </div>
-      </div>
+        <Button fullWidth onClick={guardar} disabled={!nombre}>
+          Guardar cambios
+        </Button>
+      </Card>
     </div>
   );
 }

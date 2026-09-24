@@ -1,10 +1,11 @@
 import { CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { ConfirmationScreen } from "../components/ConfirmationScreen";
-import { Header } from "../components/Header";
-import { PrimaryButton } from "../components/PrimaryButton";
 import { ProductRow } from "../components/ProductRow";
 import { SearchBar } from "../components/SearchBar";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { PageHeader } from "../components/ui/PageHeader";
 import type { StockMovementInput } from "../hooks/useStockMovements";
 import { COLORS } from "../lib/constants";
 import { formatStock } from "../lib/stock";
@@ -91,57 +92,56 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
   const productoUnidad = producto ? (producto.unidad ?? producto.unit ?? "unidad") : "unidad";
 
   return (
-    <div>
-      <Header title="Agregar entrada" onBack={pop} />
-      <div className="px-5 space-y-3">
-        {!producto ? (
-          <>
-            <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-            <div className="space-y-2">
-              {disponibles.map((p) => (
-                <ProductRow key={p.id} producto={p} onClick={() => setProductoId(p.id)} />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-ink font-medium text-sm">{productoNombre}</p>
-                <p className="text-ink-subtle text-xs">Stock actual: {formatStock(producto)}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setProductoId(null)}
-                className="text-sm font-medium"
-                style={{ color: "#0066FF" }}
-              >
-                Cambiar
-              </button>
-            </div>
+    <div className="pb-4 space-y-3 lg:max-w-2xl">
+      <PageHeader title="Agregar entrada" onBack={pop} />
+      {!producto ? (
+        <>
+          <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
+          <div className="space-y-2">
+            {disponibles.map((p) => (
+              <ProductRow key={p.id} producto={p} onClick={() => setProductoId(p.id)} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
             <div>
-              <label className="text-ink-muted text-sm block">
-                Cantidad a ingresar {productoUnidad === "kg" ? "(kg)" : "(unidades)"}
-                <input
-                  type="number"
-                  step={productoUnidad === "kg" ? "0.001" : "1"}
-                  min="0"
-                  value={cantidad}
-                  onChange={(e) => setCantidad(e.target.value)}
-                  placeholder={productoUnidad === "kg" ? "0,500" : "0"}
-                  className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
-                />
-              </label>
+              <p className="text-ink font-medium text-sm">{productoNombre}</p>
+              <p className="text-ink-subtle text-xs">Stock actual: {formatStock(producto)}</p>
             </div>
-            <PrimaryButton
-              onClick={confirmar}
-              disabled={guardando || !cantidad || parseFloat(cantidad) <= 0}
+            <button
+              type="button"
+              onClick={() => setProductoId(null)}
+              className="text-sm font-medium text-brand"
             >
-              Registrar entrada
-            </PrimaryButton>
-          </>
-        )}
-      </div>
+              Cambiar
+            </button>
+          </div>
+          <div>
+            <label className="text-ink-soft text-sm font-medium block" htmlFor="entry-qty">
+              Cantidad a ingresar {productoUnidad === "kg" ? "(kg)" : "(unidades)"}
+            </label>
+            <input
+              id="entry-qty"
+              type="number"
+              step={productoUnidad === "kg" ? "0.001" : "1"}
+              min="0"
+              value={cantidad}
+              onChange={(e) => setCantidad(e.target.value)}
+              placeholder={productoUnidad === "kg" ? "0,500" : "0"}
+              className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+            />
+          </div>
+          <Button
+            fullWidth
+            onClick={confirmar}
+            disabled={guardando || !cantidad || parseFloat(cantidad) <= 0}
+          >
+            Registrar entrada
+          </Button>
+        </Card>
+      )}
     </div>
   );
 }

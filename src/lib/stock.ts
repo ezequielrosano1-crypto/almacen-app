@@ -21,3 +21,13 @@ export function getStatusColor(status: string): string {
   if (status === "bajo") return COLORS.bajo;
   return COLORS.normal;
 }
+
+export type StatusTone = "success" | "warning" | "danger" | "neutral";
+
+// Maps a product status to the StatusBadge tone that renders it.
+export function getStatusTone(status: string): StatusTone {
+  if (status === "agotado") return "danger";
+  if (status === "bajo") return "warning";
+  if (status === "normal") return "success";
+  return "neutral";
+}

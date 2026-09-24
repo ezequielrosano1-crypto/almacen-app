@@ -1,20 +1,131 @@
-import { Header } from "../components/Header";
-import { Row } from "../components/Row";
-import type { ScreenId, ScreenParams } from "../types/navigation";
+import { BarChart3, ChevronRight, Settings, Store, Truck } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Card } from "../components/ui/Card";
+import { PageHeader } from "../components/ui/PageHeader";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import type { ScreenId, ScreenParams, TabId } from "../types/navigation";
 
 export interface MoreViewProps {
   push: (screen: ScreenId, params?: ScreenParams) => void;
+  goTab: (tab: TabId) => void;
 }
 
-export function MoreView({ push }: MoreViewProps) {
+interface HubEntry {
+  key: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  onClick: () => void;
+  comingSoon?: boolean;
+}
+
+// Hub screen for the "more" tab. On mobile it's what the bottom bar's "Más"
+// button opens; on desktop it's the "Configuración" section (same tab). It
+// gathers everything that doesn't have its own top-level slot: the
+// not-yet-built Proveedores/Reportes sections plus the existing settings rows.
+export function MoreView({ push, goTab }: MoreViewProps) {
+  const entries: HubEntry[] = [
+    {
+      key: "business",
+      label: "Negocio",
+      description: "Nombre y contacto de tu almacén.",
+      icon: Store,
+      onClick: () => push("businessInfo"),
+    },
+    {
+      key: "settings",
+      label: "Preferencias",
+      description: "Ajustes y herramientas de la app.",
+      icon: Settings,
+      onClick: () => push("settings"),
+    },
+    {
+      key: "suppliers",
+      label: "Proveedores",
+      description: "Gestioná tus proveedores.",
+      icon: Truck,
+      onClick: () => goTab("suppliers"),
+      comingSoon: true,
+    },
+    {
+      key: "reports",
+      label: "Reportes",
+      description: "Analizá el rendimiento de tu negocio.",
+      icon: BarChart3,
+      onClick: () => goTab("reports"),
+      comingSoon: true,
+    },
+  ];
+
   return (
-    <div>
-      <Header title="Más" />
-      <div className="px-5 space-y-3">
-        <Row label="Productos" onClick={() => push("products")} />
-        <Row label="Información del negocio" onClick={() => push("businessInfo")} />
-        <Row label="Configuración" onClick={() => push("settings")} />
+    <div className="pb-4 space-y-5">
+      <PageHeader
+        title="Configuración"
+        subtitle="Personalizá tu negocio, usuarios y preferencias del sistema."
+      />
+
+      {/* Desktop card grid */}
+      <div className="hidden lg:grid lg:grid-cols-4 gap-3">
+        {entries.map((e) => (
+          <button
+            type="button"
+            key={e.key}
+            onClick={e.comingSoon ? undefined : e.onClick}
+            disabled={e.comingSoon}
+            className={[
+              "flex flex-col items-start gap-2 rounded-2xl border border-line bg-white p-4 text-left transition-colors",
+              e.comingSoon ? "opacity-70 cursor-not-allowed" : "hover:border-brand",
+            ].join(" ")}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50">
+              <e.icon size={18} color="#0066FF" />
+            </div>
+            <p className="font-medium text-ink">{e.label}</p>
+            <p className="text-xs text-ink-muted">{e.description}</p>
+            {e.comingSoon && <StatusBadge tone="info">Próximamente</StatusBadge>}
+          </button>
+        ))}
       </div>
+
+      {/* Mobile row list */}
+      <div className="lg:hidden space-y-2">
+        {entries.map((e) => (
+          <button
+            type="button"
+            key={e.key}
+            onClick={e.comingSoon ? undefined : e.onClick}
+            disabled={e.comingSoon}
+            className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50">
+              <e.icon size={16} color="#0066FF" />
+            </div>
+            <span className="flex-1 text-ink-soft font-medium">{e.label}</span>
+            {e.comingSoon ? (
+              <StatusBadge tone="info">Próximamente</StatusBadge>
+            ) : (
+              <ChevronRight size={20} color="#94A3B8" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop business info summary */}
+      <Card className="hidden lg:block">
+        <div className="flex items-center justify-between">
+          <p className="font-display font-semibold text-ink">Información del negocio</p>
+          <button
+            type="button"
+            onClick={() => push("businessInfo")}
+            className="text-sm font-semibold text-brand"
+          >
+            Editar
+          </button>
+        </div>
+        <p className="text-ink-muted text-sm mt-2">
+          Gestioná el nombre y el contacto que ven tus clientes y comprobantes.
+        </p>
+      </Card>
     </div>
   );
 }

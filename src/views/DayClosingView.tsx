@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
-import { Header } from "../components/Header";
-import { PrimaryButton } from "../components/PrimaryButton";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { PageHeader } from "../components/ui/PageHeader";
 import { closeShiftManually } from "../data/cashShiftRepository";
 import { storedShiftToClosingSummary } from "../data/mappers";
 import { formatUruguayTime, todayDateKey } from "../lib/dates";
@@ -85,15 +86,13 @@ export function DayClosingView(props: DayClosingViewProps) {
   };
 
   return (
-    <div className="px-5 space-y-3">
-      <Header title="Cierre del día" onBack={pop} />
+    <div className="pb-4 space-y-3 lg:max-w-2xl">
+      <PageHeader title="Cierre del día" onBack={pop} />
       <CashRegisterStatusCard caja={caja} totalHoy={totalHoy} />
-      <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
+      <Card className="space-y-3">
         <div className="flex justify-between">
           <span className="text-ink-muted text-sm">Total del día</span>
-          <span className="text-xl font-display font-bold" style={{ color: "#0066FF" }}>
-            {formatMoney(totalHoy)}
-          </span>
+          <span className="text-xl font-display font-bold text-brand">{formatMoney(totalHoy)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-ink-muted">Efectivo</span>
@@ -107,13 +106,11 @@ export function DayClosingView(props: DayClosingViewProps) {
           <span className="text-ink-muted">Cantidad de ventas</span>
           <span className="text-ink font-medium">{ventasHoy.length}</span>
         </div>
-      </div>
+      </Card>
 
       {cierre ? (
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-2">
-          <p className="text-sm font-semibold" style={{ color: "#0066FF" }}>
-            Día cerrado
-          </p>
+        <Card className="space-y-2">
+          <p className="text-sm font-semibold text-brand">Día cerrado</p>
           <div className="flex justify-between text-sm">
             <span className="text-ink-muted">Fecha</span>
             <span className="text-ink font-medium">{cierre.date}</span>
@@ -130,31 +127,28 @@ export function DayClosingView(props: DayClosingViewProps) {
             <span className="text-ink-muted">Cantidad de ventas</span>
             <span className="text-ink font-medium">{cierre.salesCount}</span>
           </div>
-        </div>
+        </Card>
       ) : confirmando ? (
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
+        <Card className="space-y-3">
           <p className="text-ink-soft text-sm text-center">
             ¿Confirmás el cierre del día? Esta acción no se puede deshacer.
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setConfirmando(false)}
-              className="rounded-2xl py-3 text-sm font-semibold border"
-              style={{ backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }}
-            >
+            <Button variant="secondary" onClick={() => setConfirmando(false)}>
               Cancelar
-            </button>
-            <PrimaryButton onClick={confirmarCierre} disabled={guardando}>
+            </Button>
+            <Button onClick={confirmarCierre} disabled={guardando}>
               Confirmar cierre
-            </PrimaryButton>
+            </Button>
           </div>
-        </div>
+        </Card>
       ) : (
         <div>
-          <PrimaryButton onClick={() => setConfirmando(true)}>Cerrar día</PrimaryButton>
+          <Button fullWidth onClick={() => setConfirmando(true)}>
+            Cerrar día
+          </Button>
           {errorGuardado && (
-            <p className="text-xs text-center mt-2" style={{ color: "#DC2626" }}>
+            <p className="text-xs text-center mt-2 text-danger">
               No se pudo guardar el cierre. Intentá nuevamente.
             </p>
           )}

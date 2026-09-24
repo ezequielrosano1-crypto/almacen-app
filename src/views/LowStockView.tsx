@@ -1,7 +1,8 @@
-import { ChevronRight } from "lucide-react";
-import { Header } from "../components/Header";
-import { StatusDot } from "../components/StatusDot";
-import { formatStock, getProductStatus } from "../lib/stock";
+import { ChevronRight, PackageX } from "lucide-react";
+import { EmptyState } from "../components/ui/EmptyState";
+import { PageHeader } from "../components/ui/PageHeader";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import { formatStock, getProductStatus, getStatusTone } from "../lib/stock";
 import type { ProductId } from "../types/domain";
 
 export interface LowStockProductItem {
@@ -22,6 +23,12 @@ export interface LowStockViewProps {
   onOpenDetail?: (id: ProductId) => void;
 }
 
+const STATUS_LABEL: Record<string, string> = {
+  normal: "Normal",
+  bajo: "Stock bajo",
+  agotado: "Agotado",
+};
+
 export function LowStockView(props: LowStockViewProps) {
   const { pop } = props;
   const productosAgotados = props.outOfStockProducts ?? [];
@@ -29,18 +36,20 @@ export function LowStockView(props: LowStockViewProps) {
   const onOpenDetalle = props.onOpenDetail ?? (() => {});
 
   const lista = [...productosAgotados, ...productosBajo];
+
   return (
-    <div>
-      <Header title="Stock bajo" onBack={pop} />
-      <div className="px-5 space-y-2">
-        {lista.length === 0 && (
-          <p className="text-ink-subtle text-sm text-center py-6">No hay productos para revisar</p>
-        )}
-        {lista.map((p) => {
+    <div className="pb-4 space-y-2">
+      <PageHeader title="Stock bajo" onBack={pop} />
+      {lista.length === 0 ? (
+        <EmptyState
+          icon={PackageX}
+          title="No hay productos para revisar"
+          description="Cuando un producto quede con stock bajo o se agote, va a aparecer acá."
+        />
+      ) : (
+        lista.map((p) => {
           const estado = getProductStatus(p);
           const nombre = p.nombre ?? p.name ?? "";
-          const stockMinimo = p.stockMinimo ?? p.minimumStock ?? 0;
-          const unidad = p.unidad ?? p.unit ?? "unidad";
 
           return (
             <button
@@ -49,21 +58,18 @@ export function LowStockView(props: LowStockViewProps) {
               onClick={() => onOpenDetalle(p.id)}
               className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-sm text-left"
             >
-              <div className="flex items-center gap-3">
-                <StatusDot estado={estado} />
-                <div>
-                  <p className="text-ink font-medium text-sm">{nombre}</p>
-                  <p className="text-ink-subtle text-xs">
-                    Actual: {formatStock(p)} · Mínimo: {stockMinimo}{" "}
-                    {unidad === "kg" ? "kg" : "un."}
-                  </p>
+              <div>
+                <p className="text-ink font-medium text-sm">{nombre}</p>
+                <p className="text-ink-subtle text-xs mt-0.5">Actual: {formatStock(p)}</p>
+                <div className="mt-1.5">
+                  <StatusBadge tone={getStatusTone(estado)}>{STATUS_LABEL[estado]}</StatusBadge>
                 </div>
               </div>
               <ChevronRight size={18} color="#94A3B8" />
             </button>
           );
-        })}
-      </div>
+        })
+      )}
     </div>
   );
 }

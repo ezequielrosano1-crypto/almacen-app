@@ -1,4 +1,5 @@
-import { Header } from "../components/Header";
+import { Card } from "../components/ui/Card";
+import { PageHeader } from "../components/ui/PageHeader";
 import { formatDate, formatMoney } from "../lib/format";
 import type { MovementId, MovementRecordItem } from "../types/domain";
 
@@ -27,83 +28,81 @@ export function StockMovementDetailView(props: StockMovementDetailViewProps) {
   const items = m.items ?? [];
 
   return (
-    <div>
-      <Header title="Detalle del movimiento" onBack={pop} />
-      <div className="px-5">
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-ink-muted">Fecha</span>
-            <span className="text-ink font-medium">{formatDate(m.fecha)}</span>
-          </div>
-
-          {tipo === "venta" && (
-            <>
-              <div className="border-t border-line-soft pt-3 space-y-1">
-                {items.map((it) => {
-                  const itNombre = it.nombre ?? it.name ?? "";
-                  const itUnidad = it.unidad ?? it.unit ?? "unidad";
-                  const itKey = `${it.productId ?? itNombre}-${it.cantidad}-${it.precio ?? ""}`;
-                  return (
-                    <div key={itKey} className="flex justify-between text-sm">
-                      <span className="text-ink-soft">
-                        {itNombre} × {it.cantidad}
-                        {itUnidad === "kg" ? "kg" : ""}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex justify-between text-sm border-t border-line-soft pt-3">
-                <span className="text-ink-muted">Total</span>
-                <span className="text-ink font-bold">{formatMoney(total)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-ink-muted">Medio de pago</span>
-                <span className="text-ink font-medium">{pago}</span>
-              </div>
-            </>
-          )}
-
-          {tipo === "entrada" && (
-            <>
-              <div className="flex justify-between text-sm border-t border-line-soft pt-3">
-                <span className="text-ink-muted">Producto</span>
-                <span className="text-ink font-medium">{producto}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-ink-muted">Cantidad</span>
-                <span className="text-ink font-medium">
-                  +{cantidad}
-                  {unidad === "kg" ? "kg" : " un."}
-                </span>
-              </div>
-            </>
-          )}
-
-          {tipo === "ajuste" && (
-            <>
-              <div className="flex justify-between text-sm border-t border-line-soft pt-3">
-                <span className="text-ink-muted">Producto</span>
-                <span className="text-ink font-medium">{producto}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-ink-muted">Diferencia</span>
-                <span className="text-ink font-medium">
-                  {diferencia > 0 ? "+" : ""}
-                  {diferencia}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-ink-muted">Motivo</span>
-                <span className="text-ink font-medium">{motivo}</span>
-              </div>
-            </>
-          )}
+    <div className="pb-4 lg:max-w-2xl">
+      <PageHeader title="Detalle del movimiento" onBack={pop} />
+      <Card className="space-y-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-ink-muted">Fecha</span>
+          <span className="text-ink font-medium">{formatDate(m.fecha)}</span>
         </div>
-        <p className="text-ink-subtle text-xs text-center mt-4">
-          Los movimientos son de solo lectura y no pueden editarse ni borrarse.
-        </p>
-      </div>
+
+        {tipo === "venta" && (
+          <>
+            <div className="border-t border-line-soft pt-3 space-y-1">
+              {items.map((it) => {
+                const itNombre = it.nombre ?? it.name ?? "";
+                const itUnidad = it.unidad ?? it.unit ?? "unidad";
+                const itKey = `${it.productId ?? itNombre}-${it.cantidad}-${it.precio ?? ""}`;
+                return (
+                  <div key={itKey} className="flex justify-between text-sm">
+                    <span className="text-ink-soft">
+                      {itNombre} × {it.cantidad}
+                      {itUnidad === "kg" ? "kg" : ""}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-between text-sm border-t border-line-soft pt-3">
+              <span className="text-ink-muted">Total</span>
+              <span className="font-display font-bold text-ink">{formatMoney(total)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-muted">Medio de pago</span>
+              <span className="text-ink font-medium">{pago}</span>
+            </div>
+          </>
+        )}
+
+        {tipo === "entrada" && (
+          <>
+            <div className="flex justify-between text-sm border-t border-line-soft pt-3">
+              <span className="text-ink-muted">Producto</span>
+              <span className="text-ink font-medium">{producto}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-muted">Cantidad</span>
+              <span className="text-ink font-medium">
+                +{cantidad}
+                {unidad === "kg" ? "kg" : " un."}
+              </span>
+            </div>
+          </>
+        )}
+
+        {tipo === "ajuste" && (
+          <>
+            <div className="flex justify-between text-sm border-t border-line-soft pt-3">
+              <span className="text-ink-muted">Producto</span>
+              <span className="text-ink font-medium">{producto}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-muted">Diferencia</span>
+              <span className="text-ink font-medium">
+                {diferencia > 0 ? "+" : ""}
+                {diferencia}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-muted">Motivo</span>
+              <span className="text-ink font-medium">{motivo}</span>
+            </div>
+          </>
+        )}
+      </Card>
+      <p className="text-ink-subtle text-xs text-center mt-4">
+        Los movimientos son de solo lectura y no pueden editarse ni borrarse.
+      </p>
     </div>
   );
 }

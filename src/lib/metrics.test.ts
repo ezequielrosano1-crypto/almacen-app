@@ -3,11 +3,13 @@ import golden from "../../test/golden/metrics.json";
 import {
   getLowStockProducts,
   getOutOfStockProducts,
+  getSalesDelta,
   getTodayCashTotal,
   getTodayDebitTotal,
   getTodayProductsSold,
   getTodaySales,
   getTodayTotal,
+  getTopProducts,
   getWeekSales,
 } from "./metrics";
 
@@ -107,5 +109,58 @@ describe("metrics calculations", () => {
     expect(week.map((w) => ({ fecha: w.date, dia: w.day, total: w.total }))).toEqual(
       golden.ventasSemana,
     );
+  });
+
+  it("calculates the % delta of today's sales vs yesterday", () => {
+    // today (2026-09-21) totals 420, yesterday (2026-09-20) totals 500 -> -16%
+    const delta = getSalesDelta(movimientos, refDate);
+    expect(delta).toEqual({ percent: -16, trend: "down" });
+  });
+
+  it("returns null when yesterday has no sales (percent would be undefined)", () => {
+    const soloHoy = movimientos.filter((m) => m.id !== 3);
+    expect(getSalesDelta(soloHoy, refDate)).toBeNull();
+  });
+
+  it("ranks products sold over the last 7 days by quantity", () => {
+    const ventasConItems = [
+      {
+        id: 1,
+        tipo: "venta" as const,
+        fecha: new Date("2026-09-21T10:00:00.000Z"),
+        items: [
+          { productId: 1, name: "Yerba", cantidad: 2 },
+          { productId: 2, name: "Azúcar", cantidad: 1 },
+        ],
+      },
+      {
+        id: 2,
+        tipo: "venta" as const,
+        fecha: new Date("2026-09-20T14:00:00.000Z"),
+        items: [{ productId: 1, name: "Yerba", cantidad: 5 }],
+      },
+      {
+        id: 3,
+        tipo: "entrada" as const,
+        fecha: new Date("2026-09-21T09:00:00.000Z"),
+        cantidad: 10,
+      },
+      {
+        id: 4,
+        tipo: "venta" as const,
+        fecha: new Date("2026-09-01T09:00:00.000Z"),
+        items: [{ productId: 3, name: "Pan", cantidad: 99 }],
+      },
+    ];
+
+    const top = getTopProducts(ventasConItems, 2, refDate);
+    expect(top).toEqual([
+      { productId: 1, name: "Yerba", quantity: 7 },
+      { productId: 2, name: "Azúcar", quantity: 1 },
+    ]);
+  });
+
+  it("returns an empty ranking when there are no sales in range", () => {
+    expect(getTopProducts([], 5, refDate)).toEqual([]);
   });
 });

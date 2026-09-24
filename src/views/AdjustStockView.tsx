@@ -1,10 +1,11 @@
 import { CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { ConfirmationScreen } from "../components/ConfirmationScreen";
-import { Header } from "../components/Header";
-import { PrimaryButton } from "../components/PrimaryButton";
 import { ProductRow } from "../components/ProductRow";
 import { SearchBar } from "../components/SearchBar";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { PageHeader } from "../components/ui/PageHeader";
 import type { StockMovementInput } from "../hooks/useStockMovements";
 import { ADJUSTMENT_REASONS, COLORS } from "../lib/constants";
 import { formatStock } from "../lib/stock";
@@ -96,73 +97,71 @@ export function AdjustStockView(props: AdjustStockViewProps) {
   const productoUnidad = producto ? (producto.unidad ?? producto.unit ?? "unidad") : "unidad";
 
   return (
-    <div>
-      <Header title="Ajustar stock" onBack={pop} />
-      <div className="px-5 space-y-3">
-        {!producto ? (
-          <>
-            <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
-            <div className="space-y-2">
-              {disponibles.map((p) => (
-                <ProductRow key={p.id} producto={p} onClick={() => setProductoId(p.id)} />
+    <div className="pb-4 space-y-3 lg:max-w-2xl">
+      <PageHeader title="Ajustar stock" onBack={pop} />
+      {!producto ? (
+        <>
+          <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar producto..." />
+          <div className="space-y-2">
+            {disponibles.map((p) => (
+              <ProductRow key={p.id} producto={p} onClick={() => setProductoId(p.id)} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-ink font-medium text-sm">{productoNombre}</p>
+              <p className="text-ink-subtle text-xs">Stock registrado: {formatStock(producto)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setProductoId(null)}
+              className="text-sm font-medium text-brand"
+            >
+              Cambiar
+            </button>
+          </div>
+          <div>
+            <label className="text-ink-soft text-sm font-medium block" htmlFor="adjust-stock">
+              Stock real contado
+            </label>
+            <input
+              id="adjust-stock"
+              type="number"
+              step={productoUnidad === "kg" ? "0.001" : "1"}
+              min="0"
+              value={stockReal}
+              onChange={(e) => setStockReal(e.target.value)}
+              className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+            />
+          </div>
+          <div>
+            <p className="text-ink-soft text-sm font-medium mb-2">Motivo del ajuste</p>
+            <div className="grid grid-cols-2 gap-2">
+              {ADJUSTMENT_REASONS.map((m) => (
+                <button
+                  type="button"
+                  key={m}
+                  onClick={() => setMotivo(m)}
+                  className={[
+                    "rounded-xl py-2.5 text-sm font-medium border transition-colors",
+                    motivo === m
+                      ? "bg-brand text-white border-brand"
+                      : "bg-white text-ink-soft border-line",
+                  ].join(" ")}
+                >
+                  {m}
+                </button>
               ))}
             </div>
-          </>
-        ) : (
-          <>
-            <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-ink font-medium text-sm">{productoNombre}</p>
-                <p className="text-ink-subtle text-xs">Stock registrado: {formatStock(producto)}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setProductoId(null)}
-                className="text-sm font-medium"
-                style={{ color: "#0066FF" }}
-              >
-                Cambiar
-              </button>
-            </div>
-            <div>
-              <label className="text-ink-muted text-sm block">
-                Stock real contado
-                <input
-                  type="number"
-                  step={productoUnidad === "kg" ? "0.001" : "1"}
-                  min="0"
-                  value={stockReal}
-                  onChange={(e) => setStockReal(e.target.value)}
-                  className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
-                />
-              </label>
-            </div>
-            <div>
-              <p className="text-ink-muted text-sm mb-2 block">Motivo del ajuste</p>
-              <div className="grid grid-cols-2 gap-2">
-                {ADJUSTMENT_REASONS.map((m) => (
-                  <button
-                    type="button"
-                    key={m}
-                    onClick={() => setMotivo(m)}
-                    className="rounded-xl py-2.5 text-sm font-medium border"
-                    style={
-                      motivo === m
-                        ? { backgroundColor: "#0066FF", color: "#FFFFFF", borderColor: "#0066FF" }
-                        : { backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }
-                    }
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <PrimaryButton onClick={confirmar} disabled={guardando || stockReal === "" || !motivo}>
-              Confirmar ajuste
-            </PrimaryButton>
-          </>
-        )}
-      </div>
+          </div>
+          <Button fullWidth onClick={confirmar} disabled={guardando || stockReal === "" || !motivo}>
+            Confirmar ajuste
+          </Button>
+        </Card>
+      )}
     </div>
   );
 }

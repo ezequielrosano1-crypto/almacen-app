@@ -1,8 +1,9 @@
 import { Camera, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { BarcodeScanner } from "../components/BarcodeScanner";
-import { Header } from "../components/Header";
-import { PrimaryButton } from "../components/PrimaryButton";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { PageHeader } from "../components/ui/PageHeader";
 import type { ProductDraft } from "../hooks/useProducts";
 import type { ProductId } from "../types/domain";
 
@@ -28,6 +29,9 @@ export interface ProductFormViewProps {
   deleteProduct?: (id: ProductId) => unknown;
   pop: () => void;
 }
+
+const INPUT_CLASS =
+  "w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand";
 
 export function ProductFormView(props: ProductFormViewProps) {
   const { pop } = props;
@@ -81,68 +85,71 @@ export function ProductFormView(props: ProductFormViewProps) {
   const eliminar = () => {
     if (!existente) return;
     const confirmado =
-      typeof confirm === "undefined" || confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`);
+      typeof confirm === "undefined" ||
+      confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`);
     if (!confirmado) return;
     deleteProduct(existente.id);
     pop();
   };
 
   return (
-    <div>
-      <Header title={esNuevo ? "Nuevo producto" : "Editar producto"} onBack={pop} />
-      <div className="px-5 space-y-3 pb-6">
+    <div className="pb-6 lg:max-w-2xl">
+      <PageHeader title={esNuevo ? "Nuevo producto" : "Editar producto"} onBack={pop} />
+      <Card className="space-y-4">
         <div>
-          <label className="text-ink-muted text-sm block">
+          <label className="text-ink-soft text-sm font-medium block" htmlFor="product-name">
             Nombre
-            <input
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
-            />
           </label>
+          <input
+            id="product-name"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            className={INPUT_CLASS}
+          />
         </div>
 
         <div>
-          <label className="text-ink-muted text-sm block">
+          <label className="text-ink-soft text-sm font-medium block" htmlFor="product-barcode">
             Código de barras (opcional)
-            <div className="flex gap-2 mt-1">
-              <input
-                type="text"
-                value={codigoBarras}
-                onChange={(e) => setCodigoBarras(e.target.value)}
-                placeholder="7791234567890"
-                className="flex-1 bg-white rounded-2xl shadow-sm px-4 py-3 outline-none text-ink font-normal"
-              />
-              <button
-                type="button"
-                onClick={() => setEscaneandoCodigo(true)}
-                className="shrink-0 rounded-2xl shadow-sm w-12 flex items-center justify-center"
-                style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E8F0" }}
-              >
-                <Camera size={20} color="#0066FF" />
-              </button>
-            </div>
           </label>
-          <p className="text-ink-subtle text-xs mt-1">
+          <div className="flex gap-2 mt-1.5">
+            <input
+              id="product-barcode"
+              type="text"
+              value={codigoBarras}
+              onChange={(e) => setCodigoBarras(e.target.value)}
+              placeholder="7791234567890"
+              className="flex-1 rounded-xl border border-line px-4 py-3 outline-none text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+            />
+            <button
+              type="button"
+              onClick={() => setEscaneandoCodigo(true)}
+              className="shrink-0 rounded-xl border border-line bg-white w-12 flex items-center justify-center"
+            >
+              <Camera size={20} color="#0066FF" />
+            </button>
+          </div>
+          <p className="text-ink-subtle text-xs mt-1.5">
             Mejor escanealo con la cámara que tipearlo: así queda idéntico al código que la caja va
             a leer después, sin errores de tipeo.
           </p>
         </div>
 
         <div>
-          <label className="text-ink-muted text-sm block">
+          <label className="text-ink-soft text-sm font-medium block" htmlFor="product-price">
             Precio de venta
-            <input
-              type="number"
-              value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
-            />
           </label>
+          <input
+            id="product-price"
+            type="number"
+            value={precio}
+            onChange={(e) => setPrecio(e.target.value)}
+            className={INPUT_CLASS}
+          />
         </div>
 
         <div>
-          <p className="text-ink-muted text-sm mb-2 block">Unidad de medida</p>
+          <p className="text-ink-soft text-sm font-medium mb-2">Unidad de medida</p>
           <div className="flex gap-2">
             {["unidad", "kg"].map((u) => (
               <button
@@ -150,22 +157,20 @@ export function ProductFormView(props: ProductFormViewProps) {
                 key={u}
                 disabled={!esNuevo}
                 onClick={() => setUnidad(u)}
-                className={
-                  "flex-1 rounded-xl py-2.5 text-sm font-medium border" +
-                  (!esNuevo ? " opacity-50" : "")
-                }
-                style={
+                className={[
+                  "flex-1 rounded-xl py-2.5 text-sm font-medium border transition-colors",
+                  !esNuevo ? "opacity-50" : "",
                   unidad === u
-                    ? { backgroundColor: "#0066FF", color: "#FFFFFF", borderColor: "#0066FF" }
-                    : { backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }
-                }
+                    ? "bg-brand text-white border-brand"
+                    : "bg-white text-ink-soft border-line",
+                ].join(" ")}
               >
                 {u === "unidad" ? "Por unidad" : "Por peso (kg)"}
               </button>
             ))}
           </div>
           {!esNuevo && (
-            <p className="text-ink-subtle text-xs mt-1">
+            <p className="text-ink-subtle text-xs mt-1.5">
               La unidad de medida no se puede cambiar luego de creado.
             </p>
           )}
@@ -173,49 +178,48 @@ export function ProductFormView(props: ProductFormViewProps) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-ink-muted text-sm block">
+            <label className="text-ink-soft text-sm font-medium block" htmlFor="product-stock">
               Stock {esNuevo ? "inicial" : "actual"}
-              <input
-                type="number"
-                step={unidad === "kg" ? "0.001" : "1"}
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-                className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
-              />
             </label>
+            <input
+              id="product-stock"
+              type="number"
+              step={unidad === "kg" ? "0.001" : "1"}
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              className={INPUT_CLASS}
+            />
           </div>
           <div>
-            <label className="text-ink-muted text-sm block">
+            <label className="text-ink-soft text-sm font-medium block" htmlFor="product-min-stock">
               Stock mínimo
-              <input
-                type="number"
-                step={unidad === "kg" ? "0.001" : "1"}
-                value={stockMinimo}
-                onChange={(e) => setStockMinimo(e.target.value)}
-                className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
-              />
             </label>
+            <input
+              id="product-min-stock"
+              type="number"
+              step={unidad === "kg" ? "0.001" : "1"}
+              value={stockMinimo}
+              onChange={(e) => setStockMinimo(e.target.value)}
+              className={INPUT_CLASS}
+            />
           </div>
         </div>
 
-        <div className="pt-2">
-          <PrimaryButton onClick={guardar} disabled={!puedeGuardar}>
-            Guardar producto
-          </PrimaryButton>
-        </div>
+        <Button fullWidth onClick={guardar} disabled={!puedeGuardar}>
+          Guardar producto
+        </Button>
 
         {!esNuevo && (
           <button
             type="button"
             onClick={eliminar}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium"
-            style={{ color: "#DC2626" }}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium text-danger"
           >
             <Trash2 size={16} />
             Eliminar producto
           </button>
         )}
-      </div>
+      </Card>
 
       {escaneandoCodigo && (
         <BarcodeScanner
