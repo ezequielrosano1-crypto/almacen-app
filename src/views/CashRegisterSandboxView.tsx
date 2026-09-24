@@ -151,16 +151,16 @@ export function CashRegisterSandboxView() {
   return (
     <div className="space-y-3">
       <div className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-1">
-        <p className="text-sm font-semibold text-stone-800">Estado sandbox actual</p>
+        <p className="text-sm font-semibold text-ink">Estado sandbox actual</p>
         {testCaja ? (
           <CashRegisterStatusCard caja={testCaja} totalHoy={0} />
         ) : (
-          <p className="text-xs text-stone-400">Todavía no corriste ningún escenario.</p>
+          <p className="text-xs text-ink-subtle">Todavía no corriste ningún escenario.</p>
         )}
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-        <p className="text-xs font-semibold text-stone-500 px-1">Escenarios de horario</p>
+        <p className="text-xs font-semibold text-ink-muted px-1">Escenarios de horario</p>
         {TEST_SCENARIOS.map((e) => (
           <button
             key={e.id}
@@ -168,7 +168,7 @@ export function CashRegisterSandboxView() {
             disabled={corriendo}
             onClick={() => correr(e)}
             className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-            style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
+            style={{ backgroundColor: "#FFFFFF", color: "#1F2937", borderColor: "#E2E8F0" }}
           >
             {e.label}
           </button>
@@ -176,13 +176,13 @@ export function CashRegisterSandboxView() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-        <p className="text-xs font-semibold text-stone-500 px-1">Otras verificaciones</p>
+        <p className="text-xs font-semibold text-ink-muted px-1">Otras verificaciones</p>
         <button
           type="button"
           disabled={corriendo}
           onClick={correrIdempotencia}
           className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
+          style={{ backgroundColor: "#FFFFFF", color: "#1F2937", borderColor: "#E2E8F0" }}
         >
           Ejecutar 3 veces seguidas a las 12:00 (idempotencia)
         </button>
@@ -191,7 +191,7 @@ export function CashRegisterSandboxView() {
           disabled={corriendo}
           onClick={intentarVentaConCajaCerrada}
           className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
+          style={{ backgroundColor: "#FFFFFF", color: "#1F2937", borderColor: "#E2E8F0" }}
         >
           Simular intento de venta con la caja del sandbox cerrada
         </button>
@@ -200,7 +200,7 @@ export function CashRegisterSandboxView() {
           disabled={corriendo}
           onClick={reiniciarSandbox}
           className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FAF8F5", color: "#C0392B", borderColor: "#E7E5E4" }}
+          style={{ backgroundColor: "#F5F7FB", color: "#DC2626", borderColor: "#E2E8F0" }}
         >
           Reiniciar sandbox de pruebas
         </button>
@@ -208,11 +208,11 @@ export function CashRegisterSandboxView() {
 
       {log.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-          <p className="text-xs font-semibold text-stone-500 px-1">Resultados</p>
+          <p className="text-xs font-semibold text-ink-muted px-1">Resultados</p>
           {log.map((l) => (
             <div key={l.id} className="flex items-start gap-2 text-xs px-1">
               <span>{l.ok ? "✅" : "⚠️"}</span>
-              <span className="text-stone-600 flex-1">{l.texto}</span>
+              <span className="text-ink-soft flex-1">{l.texto}</span>
             </div>
           ))}
         </div>

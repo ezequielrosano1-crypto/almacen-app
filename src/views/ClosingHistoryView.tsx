@@ -36,11 +36,11 @@ export function ClosingHistoryView({ pop }: ClosingHistoryViewProps) {
     <div className="px-5 space-y-3 pb-6">
       <Header title="Historial de cierres" onBack={pop} />
       {cargando ? (
-        <p className="text-stone-400 text-sm text-center py-6">Cargando historial...</p>
+        <p className="text-ink-subtle text-sm text-center py-6">Cargando historial...</p>
       ) : error ? (
-        <p className="text-stone-400 text-sm text-center py-6">No se pudo cargar el historial.</p>
+        <p className="text-ink-subtle text-sm text-center py-6">No se pudo cargar el historial.</p>
       ) : cierres.length === 0 ? (
-        <p className="text-stone-400 text-sm text-center py-6">
+        <p className="text-ink-subtle text-sm text-center py-6">
           Todavía no hay ningún día cerrado.
         </p>
       ) : (
@@ -51,7 +51,7 @@ export function ClosingHistoryView({ pop }: ClosingHistoryViewProps) {
               className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-2"
             >
               <div className="flex items-center justify-between">
-                <p className="font-semibold text-stone-800">{c.date}</p>
+                <p className="font-semibold text-ink">{c.date}</p>
                 <span
                   className="text-xs font-medium"
                   style={{ color: c.isAutoClosed ? COLORS.bajo : COLORS.principal }}
@@ -60,16 +60,16 @@ export function ClosingHistoryView({ pop }: ClosingHistoryViewProps) {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Hora de cierre</span>
-                <span className="text-stone-800 font-medium">{c.time}</span>
+                <span className="text-ink-muted">Hora de cierre</span>
+                <span className="text-ink font-medium">{c.time}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Total</span>
-                <span className="text-stone-800 font-medium">{formatMoney(c.total)}</span>
+                <span className="text-ink-muted">Total</span>
+                <span className="text-ink font-medium">{formatMoney(c.total)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Cantidad de ventas</span>
-                <span className="text-stone-800 font-medium">{c.salesCount}</span>
+                <span className="text-ink-muted">Cantidad de ventas</span>
+                <span className="text-ink font-medium">{c.salesCount}</span>
               </div>
             </div>
           ))}

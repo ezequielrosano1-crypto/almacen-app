@@ -1,5 +1,6 @@
 import { AlertTriangle, Plus, XCircle } from "lucide-react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
+import { Logo } from "../components/Logo";
 import { COLORS } from "../lib/constants";
 import { formatMoney } from "../lib/format";
 import type { ScreenId, TabId } from "../types/navigation";
@@ -28,27 +29,28 @@ export function HomeView(props: HomeViewProps) {
 
   return (
     <div className="px-5 pt-6 pb-4 space-y-5">
+      <Logo className="h-7" />
       <div>
-        <p className="text-stone-500 text-sm">Hoy</p>
-        <h1 className="text-2xl font-bold text-stone-800">Resumen del día</h1>
+        <p className="text-ink-muted text-sm">Hoy</p>
+        <h1 className="text-2xl font-bold text-ink">Resumen del día</h1>
       </div>
 
       <CashRegisterStatusCard caja={cashShift} totalHoy={total} />
 
       <div className="bg-white rounded-2xl shadow-sm px-5 py-5">
-        <p className="text-stone-500 text-sm mb-1">Ventas de hoy</p>
-        <p className="text-4xl font-bold mb-4" style={{ color: "#2E6B4F" }}>
+        <p className="text-ink-muted text-sm mb-1">Ventas de hoy</p>
+        <p className="text-4xl font-display font-bold mb-4" style={{ color: "#0066FF" }}>
           {formatMoney(total)}
         </p>
-        <div className="flex justify-between text-sm text-stone-600 border-t border-stone-100 pt-3">
+        <div className="flex justify-between text-sm text-ink-soft border-t border-line-soft pt-3">
           <span>
-            Efectivo: <strong className="text-stone-800">{formatMoney(cashTotal)}</strong>
+            Efectivo: <strong className="text-ink">{formatMoney(cashTotal)}</strong>
           </span>
           <span>
-            Débito: <strong className="text-stone-800">{formatMoney(debitTotal)}</strong>
+            Débito: <strong className="text-ink">{formatMoney(debitTotal)}</strong>
           </span>
         </div>
-        <p className="text-sm text-stone-500 mt-2">{productsSold} productos vendidos</p>
+        <p className="text-sm text-ink-muted mt-2">{productsSold} productos vendidos</p>
       </div>
 
       {(lowStock.length > 0 || outOfStock.length > 0) && (
@@ -60,7 +62,7 @@ export function HomeView(props: HomeViewProps) {
               className="w-full flex items-center gap-3 bg-white rounded-2xl shadow-sm px-4 py-3 text-left"
             >
               <XCircle size={22} color={COLORS.agotado} />
-              <span className="text-stone-700 text-sm">
+              <span className="text-ink-soft text-sm">
                 <strong style={{ color: COLORS.agotado }}>{outOfStock.length}</strong> productos
                 agotados
               </span>
@@ -73,7 +75,7 @@ export function HomeView(props: HomeViewProps) {
               className="w-full flex items-center gap-3 bg-white rounded-2xl shadow-sm px-4 py-3 text-left"
             >
               <AlertTriangle size={22} color={COLORS.bajo} />
-              <span className="text-stone-700 text-sm">
+              <span className="text-ink-soft text-sm">
                 <strong style={{ color: COLORS.bajo }}>{lowStock.length}</strong> productos con
                 stock bajo
               </span>
@@ -87,7 +89,7 @@ export function HomeView(props: HomeViewProps) {
           type="button"
           onClick={() => goTabScreen("sales", "newSale")}
           className="w-full font-semibold rounded-2xl py-4 text-lg shadow-sm flex items-center justify-center gap-2"
-          style={{ backgroundColor: "#2E6B4F", color: "#FFFFFF" }}
+          style={{ backgroundColor: "#0066FF", color: "#FFFFFF" }}
         >
           <Plus size={22} />
           Nueva venta
@@ -96,7 +98,7 @@ export function HomeView(props: HomeViewProps) {
           type="button"
           onClick={() => goTabScreen("stock", "addStockEntry")}
           className="w-full font-semibold rounded-2xl py-3.5 text-base shadow-sm border flex items-center justify-center gap-2"
-          style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
+          style={{ backgroundColor: "#FFFFFF", color: "#0066FF", borderColor: "#0066FF33" }}
         >
           <Plus size={20} />
           Agregar entrada

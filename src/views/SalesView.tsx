@@ -45,7 +45,7 @@ export function SalesView(props: SalesViewProps) {
               onClick={tocarAbrir}
               disabled={abriendo}
               className="w-full font-semibold rounded-2xl py-3 text-sm shadow-sm border flex items-center justify-center gap-2"
-              style={{ backgroundColor: "#FFFFFF", color: "#2E6B4F", borderColor: "#2E6B4F33" }}
+              style={{ backgroundColor: "#FFFFFF", color: "#0066FF", borderColor: "#0066FF33" }}
             >
               Abrir caja ahora (manual)
             </button>

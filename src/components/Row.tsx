@@ -14,8 +14,8 @@ export function Row({ label, onClick }: RowProps): ReactElement {
       onClick={onClick}
       className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-4 shadow-sm text-left"
     >
-      <span className="text-stone-700 font-medium">{label}</span>
-      <ChevronRight size={20} color="#B8B2A5" />
+      <span className="text-ink-soft font-medium">{label}</span>
+      <ChevronRight size={20} color="#94A3B8" />
     </button>
   );
 }

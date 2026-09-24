@@ -19,11 +19,11 @@ export function CashRegisterStatusCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-base leading-none">{abierta ? "🟢" : "🔴"}</span>
-          <span className="text-sm font-semibold text-stone-800">
+          <span className="text-sm font-semibold text-ink">
             {abierta ? "Caja abierta" : "Caja cerrada"}
           </span>
           {caja?.cerradoAutomaticamente && (
-            <span className="text-[10px] text-stone-400">(cierre automático)</span>
+            <span className="text-[10px] text-ink-subtle">(cierre automático)</span>
           )}
         </div>
         <span
@@ -33,23 +33,23 @@ export function CashRegisterStatusCard({
           {abierta ? "Jornada actual" : "Jornada cerrada"}
         </span>
       </div>
-      <div className="flex justify-between text-xs text-stone-500 border-t border-stone-100 pt-2">
+      <div className="flex justify-between text-xs text-ink-muted border-t border-line-soft pt-2">
         {abierta ? (
           <>
             <span>
-              Apertura: <strong className="text-stone-700">{caja?.horaApertura || "—"}</strong>
+              Apertura: <strong className="text-ink-soft">{caja?.horaApertura || "—"}</strong>
             </span>
             <span>
-              Vendido hoy: <strong className="text-stone-700">{formatMoney(totalHoy || 0)}</strong>
+              Vendido hoy: <strong className="text-ink-soft">{formatMoney(totalHoy || 0)}</strong>
             </span>
           </>
         ) : (
           <>
             <span>
-              Cierre: <strong className="text-stone-700">{caja?.horaCierre || "—"}</strong>
+              Cierre: <strong className="text-ink-soft">{caja?.horaCierre || "—"}</strong>
             </span>
             <span>
-              Próxima apertura: <strong className="text-stone-700">08:00</strong>
+              Próxima apertura: <strong className="text-ink-soft">08:00</strong>
             </span>
           </>
         )}

@@ -112,20 +112,20 @@ export function AdjustStockView(props: AdjustStockViewProps) {
           <>
             <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-stone-800 font-medium text-sm">{productoNombre}</p>
-                <p className="text-stone-400 text-xs">Stock registrado: {formatStock(producto)}</p>
+                <p className="text-ink font-medium text-sm">{productoNombre}</p>
+                <p className="text-ink-subtle text-xs">Stock registrado: {formatStock(producto)}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setProductoId(null)}
                 className="text-sm font-medium"
-                style={{ color: "#2E6B4F" }}
+                style={{ color: "#0066FF" }}
               >
                 Cambiar
               </button>
             </div>
             <div>
-              <label className="text-stone-500 text-sm block">
+              <label className="text-ink-muted text-sm block">
                 Stock real contado
                 <input
                   type="number"
@@ -133,12 +133,12 @@ export function AdjustStockView(props: AdjustStockViewProps) {
                   min="0"
                   value={stockReal}
                   onChange={(e) => setStockReal(e.target.value)}
-                  className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800 font-normal"
+                  className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
                 />
               </label>
             </div>
             <div>
-              <p className="text-stone-500 text-sm mb-2 block">Motivo del ajuste</p>
+              <p className="text-ink-muted text-sm mb-2 block">Motivo del ajuste</p>
               <div className="grid grid-cols-2 gap-2">
                 {ADJUSTMENT_REASONS.map((m) => (
                   <button
@@ -148,8 +148,8 @@ export function AdjustStockView(props: AdjustStockViewProps) {
                     className="rounded-xl py-2.5 text-sm font-medium border"
                     style={
                       motivo === m
-                        ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                        : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
+                        ? { backgroundColor: "#0066FF", color: "#FFFFFF", borderColor: "#0066FF" }
+                        : { backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }
                     }
                   >
                     {m}

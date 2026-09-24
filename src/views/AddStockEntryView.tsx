@@ -107,20 +107,20 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
           <>
             <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-stone-800 font-medium text-sm">{productoNombre}</p>
-                <p className="text-stone-400 text-xs">Stock actual: {formatStock(producto)}</p>
+                <p className="text-ink font-medium text-sm">{productoNombre}</p>
+                <p className="text-ink-subtle text-xs">Stock actual: {formatStock(producto)}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setProductoId(null)}
                 className="text-sm font-medium"
-                style={{ color: "#2E6B4F" }}
+                style={{ color: "#0066FF" }}
               >
                 Cambiar
               </button>
             </div>
             <div>
-              <label className="text-stone-500 text-sm block">
+              <label className="text-ink-muted text-sm block">
                 Cantidad a ingresar {productoUnidad === "kg" ? "(kg)" : "(unidades)"}
                 <input
                   type="number"
@@ -129,7 +129,7 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
                   value={cantidad}
                   onChange={(e) => setCantidad(e.target.value)}
                   placeholder={productoUnidad === "kg" ? "0,500" : "0"}
-                  className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800 font-normal"
+                  className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
                 />
               </label>
             </div>

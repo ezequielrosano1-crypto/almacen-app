@@ -92,18 +92,18 @@ export function ProductFormView(props: ProductFormViewProps) {
       <Header title={esNuevo ? "Nuevo producto" : "Editar producto"} onBack={pop} />
       <div className="px-5 space-y-3 pb-6">
         <div>
-          <label className="text-stone-500 text-sm block">
+          <label className="text-ink-muted text-sm block">
             Nombre
             <input
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800 font-normal"
+              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
             />
           </label>
         </div>
 
         <div>
-          <label className="text-stone-500 text-sm block">
+          <label className="text-ink-muted text-sm block">
             Código de barras (opcional)
             <div className="flex gap-2 mt-1">
               <input
@@ -111,38 +111,38 @@ export function ProductFormView(props: ProductFormViewProps) {
                 value={codigoBarras}
                 onChange={(e) => setCodigoBarras(e.target.value)}
                 placeholder="7791234567890"
-                className="flex-1 bg-white rounded-2xl shadow-sm px-4 py-3 outline-none text-stone-800 font-normal"
+                className="flex-1 bg-white rounded-2xl shadow-sm px-4 py-3 outline-none text-ink font-normal"
               />
               <button
                 type="button"
                 onClick={() => setEscaneandoCodigo(true)}
                 className="shrink-0 rounded-2xl shadow-sm w-12 flex items-center justify-center"
-                style={{ backgroundColor: "#FFFFFF", border: "1px solid #E7E5E4" }}
+                style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E8F0" }}
               >
-                <Camera size={20} color="#2E6B4F" />
+                <Camera size={20} color="#0066FF" />
               </button>
             </div>
           </label>
-          <p className="text-stone-400 text-xs mt-1">
+          <p className="text-ink-subtle text-xs mt-1">
             Mejor escanealo con la cámara que tipearlo: así queda idéntico al código que la caja va
             a leer después, sin errores de tipeo.
           </p>
         </div>
 
         <div>
-          <label className="text-stone-500 text-sm block">
+          <label className="text-ink-muted text-sm block">
             Precio de venta
             <input
               type="number"
               value={precio}
               onChange={(e) => setPrecio(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800 font-normal"
+              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
             />
           </label>
         </div>
 
         <div>
-          <p className="text-stone-500 text-sm mb-2 block">Unidad de medida</p>
+          <p className="text-ink-muted text-sm mb-2 block">Unidad de medida</p>
           <div className="flex gap-2">
             {["unidad", "kg"].map((u) => (
               <button
@@ -156,8 +156,8 @@ export function ProductFormView(props: ProductFormViewProps) {
                 }
                 style={
                   unidad === u
-                    ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                    : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
+                    ? { backgroundColor: "#0066FF", color: "#FFFFFF", borderColor: "#0066FF" }
+                    : { backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }
                 }
               >
                 {u === "unidad" ? "Por unidad" : "Por peso (kg)"}
@@ -165,7 +165,7 @@ export function ProductFormView(props: ProductFormViewProps) {
             ))}
           </div>
           {!esNuevo && (
-            <p className="text-stone-400 text-xs mt-1">
+            <p className="text-ink-subtle text-xs mt-1">
               La unidad de medida no se puede cambiar luego de creado.
             </p>
           )}
@@ -173,26 +173,26 @@ export function ProductFormView(props: ProductFormViewProps) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-stone-500 text-sm block">
+            <label className="text-ink-muted text-sm block">
               Stock {esNuevo ? "inicial" : "actual"}
               <input
                 type="number"
                 step={unidad === "kg" ? "0.001" : "1"}
                 value={stock}
                 onChange={(e) => setStock(e.target.value)}
-                className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800 font-normal"
+                className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
               />
             </label>
           </div>
           <div>
-            <label className="text-stone-500 text-sm block">
+            <label className="text-ink-muted text-sm block">
               Stock mínimo
               <input
                 type="number"
                 step={unidad === "kg" ? "0.001" : "1"}
                 value={stockMinimo}
                 onChange={(e) => setStockMinimo(e.target.value)}
-                className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800 font-normal"
+                className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
               />
             </label>
           </div>
@@ -209,7 +209,7 @@ export function ProductFormView(props: ProductFormViewProps) {
             type="button"
             onClick={eliminar}
             className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium"
-            style={{ color: "#B91C1C" }}
+            style={{ color: "#DC2626" }}
           >
             <Trash2 size={16} />
             Eliminar producto

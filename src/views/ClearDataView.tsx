@@ -23,8 +23,8 @@ export function ClearDataView() {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-      <p className="text-xs font-semibold text-stone-500 px-1">Empezar de cero</p>
-      <p className="text-xs text-stone-500 px-1">
+      <p className="text-xs font-semibold text-ink-muted px-1">Empezar de cero</p>
+      <p className="text-xs text-ink-muted px-1">
         Borra todos los productos y todo el historial de ventas de este dispositivo. La caja
         (abierta/cerrada) no se toca. No se puede deshacer.
       </p>
@@ -33,7 +33,7 @@ export function ClearDataView() {
           type="button"
           onClick={() => setConfirmando(true)}
           className="w-full text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#C0392B", borderColor: "#E7E5E4" }}
+          style={{ backgroundColor: "#FFFFFF", color: "#DC2626", borderColor: "#E2E8F0" }}
         >
           Borrar todos los productos y ventas
         </button>
@@ -47,7 +47,7 @@ export function ClearDataView() {
               type="button"
               onClick={() => setConfirmando(false)}
               className="flex-1 text-sm rounded-xl px-3 py-2.5 border"
-              style={{ backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }}
+              style={{ backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }}
             >
               Cancelar
             </button>
@@ -56,7 +56,7 @@ export function ClearDataView() {
               onClick={borrarTodo}
               disabled={borrando}
               className="flex-1 text-sm rounded-xl px-3 py-2.5"
-              style={{ backgroundColor: "#C0392B", color: "#FFFFFF" }}
+              style={{ backgroundColor: "#DC2626", color: "#FFFFFF" }}
             >
               {borrando ? "Borrando..." : "Sí, borrar todo"}
             </button>

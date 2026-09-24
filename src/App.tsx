@@ -243,15 +243,15 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center" style={{ backgroundColor: "#FAF8F5" }}>
+    <div className="min-h-screen flex flex-col items-center" style={{ backgroundColor: "#F5F7FB" }}>
       <style>{`
         button { -webkit-tap-highlight-color: transparent; }
         button:focus { outline: none; }
-        button:focus-visible { outline: 2px solid #2E6B4F; outline-offset: 2px; }
+        button:focus-visible { outline: 2px solid #0066FF; outline-offset: 2px; }
       `}</style>
       <div
         className="w-full max-w-sm min-h-screen relative pb-24"
-        style={{ backgroundColor: "#FAF8F5" }}
+        style={{ backgroundColor: "#F5F7FB" }}
       >
         {renderTab()}
         <BottomNav active={tab} onChange={goTab} />

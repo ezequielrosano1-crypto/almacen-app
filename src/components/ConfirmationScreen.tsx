@@ -20,8 +20,8 @@ export function ConfirmationScreen({
   return (
     <div className="px-5 pt-16 pb-4 flex flex-col items-center text-center">
       {icon}
-      <h2 className="text-xl font-bold text-stone-800 mt-4">{title}</h2>
-      <p className="text-stone-500 text-sm mt-2">{message}</p>
+      <h2 className="text-xl font-bold text-ink mt-4">{title}</h2>
+      <p className="text-ink-muted text-sm mt-2">{message}</p>
       <div className="w-full mt-8">
         <PrimaryButton onClick={onDone}>{buttonLabel}</PrimaryButton>
       </div>

@@ -34,22 +34,22 @@ export function BusinessInfoView(props: BusinessInfoViewProps) {
       <Header title="Información del negocio" onBack={pop} />
       <div className="px-5 space-y-3">
         <div>
-          <label className="text-stone-500 text-sm block">
+          <label className="text-ink-muted text-sm block">
             Nombre del almacén
             <input
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800 font-normal"
+              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
             />
           </label>
         </div>
         <div>
-          <label className="text-stone-500 text-sm block">
+          <label className="text-ink-muted text-sm block">
             Teléfono / WhatsApp de contacto
             <input
               value={contacto}
               onChange={(e) => setContacto(e.target.value)}
-              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-stone-800 font-normal"
+              className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 mt-1 outline-none text-ink font-normal"
             />
           </label>
         </div>

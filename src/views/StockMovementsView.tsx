@@ -35,7 +35,7 @@ export function StockMovementsView(props: StockMovementsViewProps) {
   };
 
   const colorTipo = (tipo?: string) =>
-    tipo === "venta" ? COLORS.principal : tipo === "entrada" ? "#5B7DB1" : COLORS.bajo;
+    tipo === "venta" ? COLORS.principal : tipo === "entrada" ? "#4DA3FF" : COLORS.bajo;
 
   return (
     <div>
@@ -50,8 +50,8 @@ export function StockMovementsView(props: StockMovementsViewProps) {
               className="whitespace-nowrap text-sm rounded-full px-3.5 py-1.5 border"
               style={
                 filtro === f
-                  ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                  : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
+                  ? { backgroundColor: "#0066FF", color: "#FFFFFF", borderColor: "#0066FF" }
+                  : { backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }
               }
             >
               {f}
@@ -61,7 +61,7 @@ export function StockMovementsView(props: StockMovementsViewProps) {
 
         <div className="space-y-2">
           {lista.length === 0 && (
-            <div className="bg-white rounded-2xl shadow-sm px-4 py-6 text-center text-stone-400 text-sm">
+            <div className="bg-white rounded-2xl shadow-sm px-4 py-6 text-center text-ink-subtle text-sm">
               Todavía no hay movimientos registrados
             </div>
           )}
@@ -78,11 +78,11 @@ export function StockMovementsView(props: StockMovementsViewProps) {
                   style={{ backgroundColor: colorTipo(m.tipo ?? m.type) }}
                 />
                 <div>
-                  <p className="text-stone-800 font-medium text-sm">{resumenMovimiento(m)}</p>
-                  <p className="text-stone-400 text-xs">{formatDate(m.fecha)}</p>
+                  <p className="text-ink font-medium text-sm">{resumenMovimiento(m)}</p>
+                  <p className="text-ink-subtle text-xs">{formatDate(m.fecha)}</p>
                 </div>
               </div>
-              <ChevronRight size={18} color="#B8B2A5" />
+              <ChevronRight size={18} color="#94A3B8" />
             </button>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../test/golden/helpers.json";
+import { COLORS } from "./constants";
 import { formatStock, getProductStatus, getStatusColor } from "./stock";
 
 describe("formatStock", () => {
@@ -29,9 +30,14 @@ describe("getProductStatus", () => {
 });
 
 describe("getStatusColor", () => {
-  it("maps status to color matching golden outputs", () => {
-    for (const { input, output } of golden.statusColor) {
-      expect(getStatusColor(input)).toBe(output);
+  // Golden fixtures cover status inputs (normal/bajo/agotado/desconocido); the
+  // expected colors follow the current STOCKIA brand tokens, not the frozen
+  // legacy golden `output` values (those belong to the old green palette).
+  it("maps status to the current brand color tokens", () => {
+    for (const { input } of golden.statusColor) {
+      const expected =
+        input === "agotado" ? COLORS.agotado : input === "bajo" ? COLORS.bajo : COLORS.normal;
+      expect(getStatusColor(input)).toBe(expected);
     }
   });
 });

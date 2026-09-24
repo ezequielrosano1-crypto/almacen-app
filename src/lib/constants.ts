@@ -1,9 +1,9 @@
 export const COLORS = {
-  principal: "#2E6B4F",
-  fondo: "#FAF8F5",
-  normal: "#2E6B4F",
-  bajo: "#E0A526",
-  agotado: "#C0392B",
+  principal: "#0066FF",
+  fondo: "#F5F7FB",
+  normal: "#0066FF",
+  bajo: "#F59E0B",
+  agotado: "#DC2626",
 } as const;
 
 export const ADJUSTMENT_REASONS = [

@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-carbon: #0f172a;
+  --color-brand: #0066ff;
+  --color-brand-light: #4da3ff;
+  --color-brand-50: #ebf3ff;
+  --color-brand-100: #cce0ff;
+  --color-ink: #1f2937;
+  --color-ink-soft: #374151;
+  --color-ink-muted: #64748b;
+  --color-ink-subtle: #94a3b8;
+  --color-line: #e2e8f0;
+  --color-line-soft: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-canvas: #f5f7fb;
+  --color-success: #16a34a;
+  --color-success-50: #dcfce7;
+  --color-warning: #f59e0b;
+  --color-warning-50: #fef3c7;
+  --color-danger: #dc2626;
+  --color-danger-50: #fee2e2;
+}
+
 html,
 body,
 #root {
@@ -10,7 +32,17 @@ body,
 
 body {
   margin: 0;
-  background-color: #faf8f5;
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: "Inter Variable", Inter, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: "Montserrat Variable", Montserrat, system-ui, sans-serif;
+  }
 }

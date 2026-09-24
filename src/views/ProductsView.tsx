@@ -25,15 +25,15 @@ export function ProductsView(props: ProductsViewProps) {
       <div className="px-5 pt-6 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button type="button" onClick={pop} className="p-1 -ml-1">
-            <ArrowLeft size={22} color="#57534E" />
+            <ArrowLeft size={22} color="#374151" />
           </button>
-          <h1 className="text-2xl font-bold text-stone-800">Productos</h1>
+          <h1 className="text-2xl font-bold text-ink">Productos</h1>
         </div>
         <button
           type="button"
           onClick={onNew}
           className="rounded-full p-2"
-          style={{ backgroundColor: "#2E6B4F" }}
+          style={{ backgroundColor: "#0066FF" }}
         >
           <Plus size={20} color="white" />
         </button>

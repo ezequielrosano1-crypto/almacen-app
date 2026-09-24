@@ -12,10 +12,10 @@ export function Header({ title, onBack }: HeaderProps): ReactElement {
     <div className="px-5 pt-6 pb-4 flex items-center gap-3">
       {onBack && (
         <button type="button" onClick={onBack} className="p-1 -ml-1">
-          <ArrowLeft size={22} color="#57534E" />
+          <ArrowLeft size={22} color="#374151" />
         </button>
       )}
-      <h1 className="text-2xl font-bold text-stone-800">{title}</h1>
+      <h1 className="text-2xl font-bold text-ink">{title}</h1>
     </div>
   );
 }

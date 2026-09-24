@@ -73,7 +73,7 @@ export function SaleCartFooter({
   };
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-stone-200 max-w-sm mx-auto flex flex-col">
+    <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-line max-w-sm mx-auto flex flex-col">
       {/* Zona con scroll propio: SOLO la lista de productos del carrito */}
       <div className="px-5 pt-3 space-y-2 max-h-40 overflow-y-auto">
         {items.map((it) => {
@@ -87,32 +87,32 @@ export function SaleCartFooter({
           return (
             <div key={it.id} className="flex items-center justify-between text-sm">
               <div className="flex-1">
-                <p className="text-stone-800 font-medium">{name}</p>
-                <p className="text-stone-400 text-xs">{formatMoney(it.subtotal)}</p>
+                <p className="text-ink font-medium">{name}</p>
+                <p className="text-ink-subtle text-xs">{formatMoney(it.subtotal)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleChangeQty?.(it.id, -1)}
-                  className="p-1 bg-stone-100 rounded-full"
+                  className="p-1 bg-line-soft rounded-full"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="w-10 text-center text-stone-700">
+                <span className="w-10 text-center text-ink-soft">
                   {qty}
                   {unit === "kg" ? "kg" : ""}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleChangeQty?.(it.id, 1)}
-                  className="p-1 bg-stone-100 rounded-full"
+                  className="p-1 bg-line-soft rounded-full"
                 >
                   <Plus size={14} />
                 </button>
                 <button
                   type="button"
                   onClick={() => handleRemove?.(it.id)}
-                  className="p-1 text-stone-400"
+                  className="p-1 text-ink-subtle"
                 >
                   <X size={16} />
                 </button>
@@ -123,10 +123,10 @@ export function SaleCartFooter({
       </div>
 
       {/* Zona fija: Total, medio de pago y Confirmar venta — nunca dentro del scroll */}
-      <div className="px-5 pt-2 pb-4 space-y-2 border-t border-stone-100 bg-white">
+      <div className="px-5 pt-2 pb-4 space-y-2 border-t border-line-soft bg-white">
         <div className="flex justify-between items-center">
-          <span className="text-stone-500 text-sm">Total</span>
-          <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>
+          <span className="text-ink-muted text-sm">Total</span>
+          <span className="text-xl font-display font-bold" style={{ color: "#0066FF" }}>
             {formatMoney(total)}
           </span>
         </div>
@@ -140,8 +140,8 @@ export function SaleCartFooter({
               className="flex-1 rounded-xl py-2.5 text-sm font-semibold border"
               style={
                 selectedPayment === m
-                  ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                  : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
+                  ? { backgroundColor: "#0066FF", color: "#FFFFFF", borderColor: "#0066FF" }
+                  : { backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }
               }
             >
               {m}

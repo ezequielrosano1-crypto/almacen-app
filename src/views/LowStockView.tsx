@@ -34,7 +34,7 @@ export function LowStockView(props: LowStockViewProps) {
       <Header title="Stock bajo" onBack={pop} />
       <div className="px-5 space-y-2">
         {lista.length === 0 && (
-          <p className="text-stone-400 text-sm text-center py-6">No hay productos para revisar</p>
+          <p className="text-ink-subtle text-sm text-center py-6">No hay productos para revisar</p>
         )}
         {lista.map((p) => {
           const estado = getProductStatus(p);
@@ -52,14 +52,14 @@ export function LowStockView(props: LowStockViewProps) {
               <div className="flex items-center gap-3">
                 <StatusDot estado={estado} />
                 <div>
-                  <p className="text-stone-800 font-medium text-sm">{nombre}</p>
-                  <p className="text-stone-400 text-xs">
+                  <p className="text-ink font-medium text-sm">{nombre}</p>
+                  <p className="text-ink-subtle text-xs">
                     Actual: {formatStock(p)} · Mínimo: {stockMinimo}{" "}
                     {unidad === "kg" ? "kg" : "un."}
                   </p>
                 </div>
               </div>
-              <ChevronRight size={18} color="#B8B2A5" />
+              <ChevronRight size={18} color="#94A3B8" />
             </button>
           );
         })}

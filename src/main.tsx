@@ -2,6 +2,8 @@ import { createElement, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./lib/storage/localStorageShim";
 import App from "./App";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/montserrat";
 import "./index.css";
 
 const rootElement = document.getElementById("root");

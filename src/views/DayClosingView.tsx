@@ -90,50 +90,50 @@ export function DayClosingView(props: DayClosingViewProps) {
       <CashRegisterStatusCard caja={caja} totalHoy={totalHoy} />
       <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
         <div className="flex justify-between">
-          <span className="text-stone-500 text-sm">Total del día</span>
-          <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>
+          <span className="text-ink-muted text-sm">Total del día</span>
+          <span className="text-xl font-display font-bold" style={{ color: "#0066FF" }}>
             {formatMoney(totalHoy)}
           </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-stone-500">Efectivo</span>
-          <span className="text-stone-800 font-medium">{formatMoney(efectivoHoy)}</span>
+          <span className="text-ink-muted">Efectivo</span>
+          <span className="text-ink font-medium">{formatMoney(efectivoHoy)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-stone-500">Débito</span>
-          <span className="text-stone-800 font-medium">{formatMoney(debitoHoy)}</span>
+          <span className="text-ink-muted">Débito</span>
+          <span className="text-ink font-medium">{formatMoney(debitoHoy)}</span>
         </div>
-        <div className="flex justify-between text-sm border-t border-stone-100 pt-3">
-          <span className="text-stone-500">Cantidad de ventas</span>
-          <span className="text-stone-800 font-medium">{ventasHoy.length}</span>
+        <div className="flex justify-between text-sm border-t border-line-soft pt-3">
+          <span className="text-ink-muted">Cantidad de ventas</span>
+          <span className="text-ink font-medium">{ventasHoy.length}</span>
         </div>
       </div>
 
       {cierre ? (
         <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-2">
-          <p className="text-sm font-semibold" style={{ color: "#2E6B4F" }}>
+          <p className="text-sm font-semibold" style={{ color: "#0066FF" }}>
             Día cerrado
           </p>
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Fecha</span>
-            <span className="text-stone-800 font-medium">{cierre.date}</span>
+            <span className="text-ink-muted">Fecha</span>
+            <span className="text-ink font-medium">{cierre.date}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Hora de cierre</span>
-            <span className="text-stone-800 font-medium">{cierre.time}</span>
+            <span className="text-ink-muted">Hora de cierre</span>
+            <span className="text-ink font-medium">{cierre.time}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Total cerrado</span>
-            <span className="text-stone-800 font-medium">{formatMoney(cierre.total)}</span>
+            <span className="text-ink-muted">Total cerrado</span>
+            <span className="text-ink font-medium">{formatMoney(cierre.total)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Cantidad de ventas</span>
-            <span className="text-stone-800 font-medium">{cierre.salesCount}</span>
+            <span className="text-ink-muted">Cantidad de ventas</span>
+            <span className="text-ink font-medium">{cierre.salesCount}</span>
           </div>
         </div>
       ) : confirmando ? (
         <div className="bg-white rounded-2xl shadow-sm px-5 py-5 space-y-3">
-          <p className="text-stone-700 text-sm text-center">
+          <p className="text-ink-soft text-sm text-center">
             ¿Confirmás el cierre del día? Esta acción no se puede deshacer.
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -141,7 +141,7 @@ export function DayClosingView(props: DayClosingViewProps) {
               type="button"
               onClick={() => setConfirmando(false)}
               className="rounded-2xl py-3 text-sm font-semibold border"
-              style={{ backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }}
+              style={{ backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }}
             >
               Cancelar
             </button>
@@ -154,7 +154,7 @@ export function DayClosingView(props: DayClosingViewProps) {
         <div>
           <PrimaryButton onClick={() => setConfirmando(true)}>Cerrar día</PrimaryButton>
           {errorGuardado && (
-            <p className="text-xs text-center mt-2" style={{ color: "#C0392B" }}>
+            <p className="text-xs text-center mt-2" style={{ color: "#DC2626" }}>
               No se pudo guardar el cierre. Intentá nuevamente.
             </p>
           )}

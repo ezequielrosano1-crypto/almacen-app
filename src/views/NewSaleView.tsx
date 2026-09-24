@@ -114,8 +114,8 @@ export function NewSaleView(props: NewSaleViewProps) {
       <div className="px-5 pt-6">
         <Header title="Nueva venta" onBack={pop} />
         <div className="bg-white rounded-2xl shadow-sm px-5 py-6 text-center space-y-2">
-          <p className="text-lg font-bold text-stone-800">Caja cerrada</p>
-          <p className="text-sm text-stone-500">
+          <p className="text-lg font-bold text-ink">Caja cerrada</p>
+          <p className="text-sm text-ink-muted">
             No se pueden registrar ventas fuera del horario de caja.
           </p>
           <p className="text-sm font-medium" style={{ color: COLORS.principal }}>
@@ -138,9 +138,9 @@ export function NewSaleView(props: NewSaleViewProps) {
             type="button"
             onClick={() => setEscaneando(true)}
             className="shrink-0 rounded-2xl shadow-sm w-12 flex items-center justify-center"
-            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E7E5E4" }}
+            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E8F0" }}
           >
-            <Camera size={20} color="#2E6B4F" />
+            <Camera size={20} color="#0066FF" />
           </button>
         </div>
         <div className="space-y-2">
@@ -149,7 +149,7 @@ export function NewSaleView(props: NewSaleViewProps) {
               <ProductRow key={p.id} producto={p} onClick={() => agregarProducto(p)} />
             ))
           ) : (
-            <p className="text-stone-400 text-xs text-center py-6">
+            <p className="text-ink-subtle text-xs text-center py-6">
               Ningún producto coincide con la búsqueda
             </p>
           )}

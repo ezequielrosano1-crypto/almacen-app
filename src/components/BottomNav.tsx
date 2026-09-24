@@ -24,7 +24,7 @@ export interface BottomNavProps {
 // Barra de navegación inferior fija para cambiar entre las 5 pestañas principales.
 export function BottomNav({ active, onChange }: BottomNavProps): ReactElement {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 flex justify-around items-center py-2 px-1 max-w-sm mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-line flex justify-around items-center py-2 px-1 max-w-sm mx-auto">
       {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
         const isActive = active === key;
         return (
@@ -36,13 +36,13 @@ export function BottomNav({ active, onChange }: BottomNavProps): ReactElement {
           >
             <div
               className="flex items-center justify-center rounded-full px-3 py-1 transition-colors"
-              style={{ backgroundColor: isActive ? "#2E6B4F" : "transparent" }}
+              style={{ backgroundColor: isActive ? "#0066FF" : "transparent" }}
             >
-              <Icon size={22} strokeWidth={2} color={isActive ? "#FFFFFF" : "#8A8478"} />
+              <Icon size={22} strokeWidth={2} color={isActive ? "#FFFFFF" : "#64748B"} />
             </div>
             <span
               className={`text-xs mt-1 ${isActive ? "font-semibold" : ""}`}
-              style={{ color: isActive ? "#2E6B4F" : "#A8A29E" }}
+              style={{ color: isActive ? "#0066FF" : "#94A3B8" }}
             >
               {label}
             </span>

@@ -32,7 +32,7 @@ export function ProductList({
           <ProductRow key={p.id} producto={p} onClick={() => onProductoClick(p.id)} />
         ))
       ) : (
-        <p className="text-stone-400 text-xs text-center py-6">
+        <p className="text-ink-subtle text-xs text-center py-6">
           Ningún producto coincide con la búsqueda
         </p>
       )}

@@ -43,14 +43,14 @@ export function ProductRow({ producto, onClick }: ProductRowProps): ReactElement
       <div className="flex items-center gap-3">
         <StatusDot estado={estado} />
         <div>
-          <p className="text-stone-800 font-medium text-sm">{nombre}</p>
-          <p className="text-stone-400 text-xs">
+          <p className="text-ink font-medium text-sm">{nombre}</p>
+          <p className="text-ink-subtle text-xs">
             {formatMoney(precio)}
             {unidad === "kg" ? " / kg" : ""}
           </p>
         </div>
       </div>
-      <span className="text-stone-600 text-sm font-medium">
+      <span className="text-ink-soft text-sm font-medium">
         {formatStock({ stock: producto.stock, unit: unidad })}
       </span>
     </button>

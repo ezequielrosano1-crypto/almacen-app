@@ -140,11 +140,11 @@ export function BarcodeScanner({
     >
       <div
         className="flex items-center justify-between px-5 py-4"
-        style={{ backgroundColor: "#FAF8F5" }}
+        style={{ backgroundColor: "#F5F7FB" }}
       >
-        <h2 className="text-lg font-bold text-stone-800">Escanear código</h2>
+        <h2 className="text-lg font-bold text-ink">Escanear código</h2>
         <button type="button" onClick={onClose} className="p-1">
-          <X size={22} color="#57534E" />
+          <X size={22} color="#374151" />
         </button>
       </div>
 
@@ -155,12 +155,12 @@ export function BarcodeScanner({
 
         {estado === "error" && (
           <div className="text-center px-8 space-y-3">
-            <Camera size={40} color="#A8A29E" className="mx-auto" />
+            <Camera size={40} color="#94A3B8" className="mx-auto" />
             <p className="text-white text-sm">
               No se pudo activar el escáner de código de barras en este entorno.
             </p>
-            <p className="text-stone-400 text-xs">{mensajeError}</p>
-            <p className="text-stone-400 text-xs">
+            <p className="text-ink-subtle text-xs">{mensajeError}</p>
+            <p className="text-ink-subtle text-xs">
               Esto puede deberse a que el Artifact no tiene permiso de cámara habilitado en este
               dispositivo o navegador. La interfaz queda preparada para cuando el acceso a la cámara
               esté disponible.
@@ -178,7 +178,7 @@ export function BarcodeScanner({
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-64 h-40 border-2 rounded-2xl" style={{ borderColor: "#2E6B4F" }} />
+              <div className="w-64 h-40 border-2 rounded-2xl" style={{ borderColor: "#0066FF" }} />
             </div>
             {!deteccionSoportada && (
               <div className="absolute bottom-5 left-5 right-5 bg-black/60 rounded-2xl px-4 py-3">
@@ -193,15 +193,15 @@ export function BarcodeScanner({
       </div>
 
       {codigoDetectado && (
-        <div className="px-5 py-3 space-y-1" style={{ backgroundColor: "#FAF8F5" }}>
-          <p className="text-stone-500 text-xs">Código detectado</p>
-          <p className="text-stone-800 font-bold text-base break-all">{codigoDetectado}</p>
+        <div className="px-5 py-3 space-y-1" style={{ backgroundColor: "#F5F7FB" }}>
+          <p className="text-ink-muted text-xs">Código detectado</p>
+          <p className="text-ink font-bold text-base break-all">{codigoDetectado}</p>
           {displayMessage ? (
-            <p className="text-sm font-medium" style={{ color: "#2E6B4F" }}>
+            <p className="text-sm font-medium" style={{ color: "#0066FF" }}>
               {displayMessage}
             </p>
           ) : (
-            <p className="text-stone-400 text-xs">
+            <p className="text-ink-subtle text-xs">
               Este código todavía no está asociado a ningún producto.
             </p>
           )}
