@@ -1,5 +1,6 @@
 import { Store } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "../../lib/format";
 import { DESKTOP_NAV_ITEMS } from "../../lib/navigation";
 import type { TabId } from "../../types/navigation";
@@ -20,12 +21,6 @@ export function AppShell({ tab, onTabChange, businessName, children }: AppShellP
 
   return (
     <div className="min-h-screen bg-canvas">
-      <style>{`
-        button { -webkit-tap-highlight-color: transparent; }
-        button:focus { outline: none; }
-        button:focus-visible { outline: 2px solid #0066FF; outline-offset: 2px; }
-      `}</style>
-
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:flex-col bg-carbon">
         <div className="px-6 pt-6 pb-8">
@@ -41,10 +36,11 @@ export function AppShell({ tab, onTabChange, businessName, children }: AppShellP
                 onClick={() => onTabChange(key)}
                 className={[
                   "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-carbon",
                   isActive ? "bg-brand text-white" : "text-white/80 hover:bg-white/5",
                 ].join(" ")}
               >
-                <Icon size={20} strokeWidth={2} />
+                <Icon size={20} strokeWidth={1.5} />
                 {label}
               </button>
             );
@@ -72,9 +68,9 @@ export function AppShell({ tab, onTabChange, businessName, children }: AppShellP
       <div className="lg:pl-64">
         {/* Desktop topbar */}
         <div className="hidden lg:flex items-center justify-end border-b border-line bg-white px-8 py-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-carbon text-xs font-semibold text-white">
-            {initials}
-          </div>
+          <Avatar size="lg" className="bg-carbon">
+            <AvatarFallback className="bg-carbon text-xs font-semibold text-white">{initials}</AvatarFallback>
+          </Avatar>
         </div>
 
         <main className="px-4 py-4 lg:max-w-7xl lg:mx-auto lg:px-8 lg:py-6 pb-24 lg:pb-6">

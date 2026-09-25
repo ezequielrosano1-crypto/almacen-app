@@ -1,5 +1,6 @@
 import { ArrowRightLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { Card } from "../components/common/Card";
 import { EmptyState } from "../components/common/EmptyState";
 import { FilterChips } from "../components/common/FilterChips";
 import { PageHeader } from "../components/common/PageHeader";
@@ -67,11 +68,18 @@ export function StockMovementsView(props: StockMovementsViewProps) {
           {lista.map((m) => {
             const tipo = m.tipo ?? m.type;
             return (
-              <button
-                type="button"
+              <Card
                 key={m.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => onOpenDetalle(m.id)}
-                className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-xs text-left"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onOpenDetalle(m.id);
+                  }
+                }}
+                className="w-full flex items-center justify-between px-4 py-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <div>
                   <p className="text-ink font-medium text-sm">{resumenMovimiento(m)}</p>
@@ -82,8 +90,8 @@ export function StockMovementsView(props: StockMovementsViewProps) {
                     </StatusBadge>
                   </div>
                 </div>
-                <ChevronRight size={18} color="#94A3B8" />
-              </button>
+                <ChevronRight size={18} className="text-ink-subtle" aria-hidden="true" />
+              </Card>
             );
           })}
         </div>

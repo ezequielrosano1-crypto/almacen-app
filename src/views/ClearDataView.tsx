@@ -1,4 +1,6 @@
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
 import { removeKey } from "../lib/storage/storage";
 
@@ -29,34 +31,26 @@ export function ClearDataView() {
         (abierta/cerrada) no se toca. No se puede deshacer.
       </p>
       {!confirmando ? (
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={() => setConfirmando(true)}
-          className="w-full text-sm font-medium rounded-xl px-3 py-2.5 border border-line text-danger bg-white"
+          className="w-full text-danger border-danger-50 hover:bg-danger-50"
         >
           Borrar todos los productos y ventas
-        </button>
+        </Button>
       ) : (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-danger px-1">
             ¿Seguro? Esto borra todo y no se puede deshacer.
           </p>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setConfirmando(false)}
-              className="flex-1 text-sm font-medium rounded-xl px-3 py-2.5 border border-line text-ink-soft bg-white"
-            >
+            <Button variant="secondary" onClick={() => setConfirmando(false)} className="flex-1">
               Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={borrarTodo}
-              disabled={borrando}
-              className="flex-1 text-sm font-semibold rounded-xl px-3 py-2.5 bg-danger text-white disabled:opacity-60"
-            >
+            </Button>
+            <Button variant="destructive" onClick={borrarTodo} disabled={borrando} className="flex-1">
+              {borrando && <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" />}
               {borrando ? "Borrando..." : "Sí, borrar todo"}
-            </button>
+            </Button>
           </div>
         </div>
       )}

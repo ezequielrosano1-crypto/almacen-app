@@ -1,5 +1,6 @@
 import { Camera, X } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Button } from "./common/Button";
 
 export interface BarcodeScannerProps {
   onClose: () => void;
@@ -143,9 +144,16 @@ export function BarcodeScanner({
         style={{ backgroundColor: "#F5F7FB" }}
       >
         <h2 className="text-lg font-bold text-ink">Escanear código</h2>
-        <button type="button" onClick={onClose} className="p-1">
-          <X size={22} color="#374151" />
-        </button>
+        <Button
+          variant="ghost"
+          size="sm"
+          static
+          onClick={onClose}
+          aria-label="Cerrar escáner"
+          className="h-9 w-9 p-0"
+        >
+          <X size={22} strokeWidth={2} aria-hidden="true" />
+        </Button>
       </div>
 
       <div className="flex-1 relative flex items-center justify-center">

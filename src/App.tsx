@@ -1,3 +1,4 @@
+import { Toaster } from "./components/ui/sonner";
 import { AppShell } from "./components/layout/AppShell";
 import { useBusinessInfo } from "./hooks/useBusinessInfo";
 import { useCashRegister } from "./hooks/useCashRegister";
@@ -150,6 +151,16 @@ export default function App() {
     }
 
     if (tab === "stock") {
+      if (current.screen === "productForm")
+        return (
+          <ProductFormView
+            products={products}
+            productId={current.params.productId}
+            saveProduct={saveProduct}
+            deleteProduct={deleteProduct}
+            pop={pop}
+          />
+        );
       if (current.screen === "productDetail")
         return (
           <ProductDetailView
@@ -211,16 +222,6 @@ export default function App() {
     }
 
     if (tab === "more") {
-      if (current.screen === "productForm")
-        return (
-          <ProductFormView
-            products={products}
-            productId={current.params.productId}
-            saveProduct={saveProduct}
-            deleteProduct={deleteProduct}
-            pop={pop}
-          />
-        );
       if (current.screen === "businessInfo")
         return (
           <BusinessInfoView
@@ -237,8 +238,12 @@ export default function App() {
   }
 
   return (
-    <AppShell tab={tab} onTabChange={goTab} businessName={businessInfo.nombre}>
-      {renderTab()}
-    </AppShell>
+    <>
+      <AppShell tab={tab} onTabChange={goTab} businessName={businessInfo.nombre}>
+        {renderTab()}
+      </AppShell>
+      {/* Toasts replace window alerts; offset clears the fixed mobile bottom nav. */}
+      <Toaster theme="light" mobileOffset={{ bottom: "88px" }} />
+    </>
   );
 }

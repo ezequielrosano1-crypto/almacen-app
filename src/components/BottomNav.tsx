@@ -21,7 +21,7 @@ export function BottomNav({ active, onChange }: BottomNavProps): ReactElement {
             type="button"
             key={key}
             onClick={() => onChange(key)}
-            className="flex flex-col items-center justify-center flex-1 py-1"
+            className="flex flex-col items-center justify-center flex-1 py-1 pointer-coarse:min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
           >
             <div
               className="flex items-center justify-center rounded-full px-3 py-1 transition-colors"

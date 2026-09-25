@@ -1,5 +1,6 @@
 import { Camera, CheckCircle2, Minus, Package, Plus, Trash2 } from "lucide-react";
 import { type Dispatch, type SetStateAction, useRef, useState } from "react";
+import { toast } from "sonner";
 import { BarcodeScanner } from "../components/BarcodeScanner";
 import { BarcodeScannerCartPanel } from "../components/BarcodeScannerCartPanel";
 import { ConfirmationScreen } from "../components/ConfirmationScreen";
@@ -9,6 +10,8 @@ import { SearchBar } from "../components/SearchBar";
 import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
 import { PageHeader } from "../components/common/PageHeader";
+import { Table, TableBody, TableCell, TableRow } from "../components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 import { type SubmitSaleCartItem, submitSale } from "../data/submitSale";
 import type { ProductItem } from "../hooks/useProducts";
 import { useSaleCart } from "../hooks/useSaleCart";
@@ -96,7 +99,7 @@ export function NewSaleView(props: NewSaleViewProps) {
       setConfirmada({ total, pago: String(pago) });
     } catch (error) {
       console.error("Error registrando venta:", error);
-      alert("No se pudo registrar la venta.");
+      toast.error("No se pudo registrar la venta.", { duration: Infinity });
     } finally {
       setEnviando(false);
     }
@@ -114,7 +117,7 @@ export function NewSaleView(props: NewSaleViewProps) {
     );
   }
 
-  if (!cashShift || cashShift.estado !== "ABIERTA") {
+  if (cashShift?.estado !== "ABIERTA") {
     return (
       <div className="pb-4">
         <PageHeader title="Nueva venta" onBack={pop} />
@@ -203,13 +206,14 @@ export function NewSaleView(props: NewSaleViewProps) {
                 Productos en venta ({items.length})
               </p>
               {items.length > 0 && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={limpiarCarrito}
-                  className="text-sm font-medium text-danger"
+                  className="text-danger hover:text-danger hover:bg-danger-50"
                 >
                   Limpiar
-                </button>
+                </Button>
               )}
             </div>
             {items.length === 0 ? (
@@ -217,8 +221,8 @@ export function NewSaleView(props: NewSaleViewProps) {
                 Todavía no agregaste productos a la venta.
               </p>
             ) : (
-              <table className="w-full text-sm">
-                <tbody>
+              <Table>
+                <TableBody>
                   {items.map((it) => {
                     const prod = it.producto as
                       | { nombre?: string; name?: string; unidad?: string; unit?: string }
@@ -226,48 +230,58 @@ export function NewSaleView(props: NewSaleViewProps) {
                     const name = prod?.nombre ?? prod?.name ?? "";
                     const unit = prod?.unidad ?? prod?.unit;
                     return (
-                      <tr key={it.id} className="border-b border-line-soft last:border-0">
-                        <td className="py-2.5 pr-3 font-medium text-ink">{name}</td>
-                        <td className="py-2.5 pr-3 text-ink-soft whitespace-nowrap">
+                      <TableRow key={it.id} className="border-line-soft">
+                        <TableCell className="py-2.5 pr-3 font-medium text-ink whitespace-normal">
+                          {name}
+                        </TableCell>
+                        <TableCell className="py-2.5 pr-3 text-ink-soft">
                           <div className="flex items-center gap-2">
-                            <button
-                              type="button"
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              static
                               onClick={() => cambiarCantidad(it.id, -1)}
-                              className="p-1 bg-line-soft rounded-full"
+                              aria-label={`Restar unidad de ${name}`}
+                              className="h-8 w-8 p-0 rounded-full bg-line-soft"
                             >
-                              <Minus size={14} />
-                            </button>
-                            <span className="w-10 text-center">
+                              <Minus size={14} strokeWidth={2} aria-hidden="true" />
+                            </Button>
+                            <span className="w-10 text-center tabular-nums">
                               {it.cantidad}
                               {unit === "kg" ? "kg" : ""}
                             </span>
-                            <button
-                              type="button"
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              static
                               onClick={() => cambiarCantidad(it.id, 1)}
-                              className="p-1 bg-line-soft rounded-full"
+                              aria-label={`Sumar unidad de ${name}`}
+                              className="h-8 w-8 p-0 rounded-full bg-line-soft"
                             >
-                              <Plus size={14} />
-                            </button>
+                              <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                            </Button>
                           </div>
-                        </td>
-                        <td className="py-2.5 pr-3 text-right font-semibold text-ink">
+                        </TableCell>
+                        <TableCell className="py-2.5 pr-3 text-right font-semibold text-ink tabular-nums">
                           {formatMoney(it.subtotal)}
-                        </td>
-                        <td className="py-2.5 text-right">
-                          <button
-                            type="button"
+                        </TableCell>
+                        <TableCell className="py-2.5 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            static
                             onClick={() => quitarProducto(it.id)}
-                            className="p-1 text-ink-subtle"
-                            aria-label="Quitar producto"
+                            className="h-8 w-8 p-0 text-ink-subtle"
+                            aria-label={`Quitar ${name} de la venta`}
                           >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
+                            <Trash2 size={16} strokeWidth={2} aria-hidden="true" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </Card>
         </div>
@@ -280,24 +294,29 @@ export function NewSaleView(props: NewSaleViewProps) {
               <p className="font-display text-3xl font-bold text-ink mt-1">{formatMoney(total)}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-ink-soft mb-2">Método de pago</p>
-              <div className="grid grid-cols-2 gap-2">
+              <p id="payment-method-label" className="text-sm font-medium text-ink-soft mb-2">
+                Método de pago
+              </p>
+              <ToggleGroup
+                type="single"
+                spacing={2}
+                value={pago ?? ""}
+                onValueChange={(next) => {
+                  if (next) setPago(next);
+                }}
+                aria-labelledby="payment-method-label"
+                className="grid grid-cols-2 gap-2 w-full"
+              >
                 {PAYMENT_METHODS.map((m) => (
-                  <button
-                    type="button"
+                  <ToggleGroupItem
                     key={m}
-                    onClick={() => setPago(m)}
-                    className={[
-                      "rounded-xl py-2.5 text-sm font-semibold border transition-colors",
-                      pago === m
-                        ? "bg-brand text-white border-brand"
-                        : "bg-white text-ink-soft border-line",
-                    ].join(" ")}
+                    value={m}
+                    className="h-10 pointer-coarse:h-11 rounded-xl text-sm font-semibold border border-line data-[state=on]:bg-brand data-[state=on]:text-white data-[state=on]:border-brand data-[state=off]:bg-white data-[state=off]:text-ink-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {m}
-                  </button>
+                  </ToggleGroupItem>
                 ))}
-              </div>
+              </ToggleGroup>
             </div>
             <Button
               fullWidth

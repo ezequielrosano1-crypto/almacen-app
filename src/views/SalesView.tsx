@@ -48,49 +48,70 @@ export function SalesView(props: SalesViewProps) {
     <div className="pb-4 space-y-5">
       <PageHeader title="Ventas" subtitle="Registrá una nueva venta o consultá el historial." />
 
-      <button
-        type="button"
+      <Card
+        role="button"
+        tabIndex={0}
         onClick={() => push("newSale")}
-        className="w-full rounded-2xl bg-brand text-white p-5 text-left flex items-center justify-between shadow-xs"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            push("newSale");
+          }
+        }}
+        className="w-full bg-brand text-white p-5 text-left flex items-center justify-between shadow-none hover:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <div>
           <p className="font-display text-lg font-bold">Nueva venta</p>
           <p className="text-white/80 text-sm">Punto de venta</p>
         </div>
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15">
-          <ShoppingCart size={22} />
+          <ShoppingCart size={22} strokeWidth={2} aria-hidden="true" />
         </span>
-      </button>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <button
-          type="button"
+        <Card
+          role="button"
+          tabIndex={0}
           onClick={() => push("dayClosing")}
-          className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 text-left shadow-xs"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              push("dayClosing");
+            }
+          }}
+          className="flex items-center gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50">
-            <Lock size={18} color="#0066FF" />
+            <Lock size={18} className="text-brand" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="flex-1">
             <p className="font-medium text-ink">Cierre de caja</p>
             <p className="text-ink-muted text-xs">Cerrá la jornada y revisá el total.</p>
           </div>
-          <ArrowRight size={18} color="#94A3B8" />
-        </button>
-        <button
-          type="button"
+          <ArrowRight size={18} className="text-ink-subtle" aria-hidden="true" />
+        </Card>
+        <Card
+          role="button"
+          tabIndex={0}
           onClick={() => push("closingHistory")}
-          className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 text-left shadow-xs"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              push("closingHistory");
+            }
+          }}
+          className="flex items-center gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50">
-            <History size={18} color="#0066FF" />
+            <History size={18} className="text-brand" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="flex-1">
             <p className="font-medium text-ink">Historial de cierres</p>
             <p className="text-ink-muted text-xs">Consultá cierres anteriores.</p>
           </div>
-          <ArrowRight size={18} color="#94A3B8" />
-        </button>
+          <ArrowRight size={18} className="text-ink-subtle" aria-hidden="true" />
+        </Card>
       </div>
 
       <CashRegisterStatusCard caja={cashShift} totalHoy={todayTotal} />

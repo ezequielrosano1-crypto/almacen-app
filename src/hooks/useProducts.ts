@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { toProductInsert, toProductUpsert } from "../data/mappers";
 import {
   deleteProduct as defaultDeleteProduct,
@@ -51,9 +52,7 @@ export async function updateStockInRepository(
     return true;
   } catch (error) {
     console.error("Error actualizando stock en Supabase:", error);
-    if (typeof alert !== "undefined") {
-      alert("No se pudo actualizar el stock.");
-    }
+    toast.error("No se pudo actualizar el stock.", { duration: Infinity });
     return false;
   }
 }
@@ -67,14 +66,13 @@ export async function deleteProductFromRepository(
     return true;
   } catch (error) {
     console.error("Error eliminando producto en Supabase:", error);
-    if (typeof alert !== "undefined") {
-      const code = (error as { code?: string } | null)?.code;
-      alert(
-        code === "23503"
-          ? "No se puede eliminar: el producto tiene ventas o movimientos registrados."
-          : "No se pudo eliminar el producto.",
-      );
-    }
+    const code = (error as { code?: string } | null)?.code;
+    toast.error(
+      code === "23503"
+        ? "No se puede eliminar: el producto tiene ventas o movimientos registrados."
+        : "No se pudo eliminar el producto.",
+      { duration: Infinity },
+    );
     return false;
   }
 }
@@ -101,9 +99,7 @@ export async function saveProductToRepository(
     return { ...(producto as ProductItem), id: producto.id };
   } catch (error) {
     console.error("Error guardando producto en Supabase:", error);
-    if (typeof alert !== "undefined") {
-      alert("No se pudo guardar el producto.");
-    }
+    toast.error("No se pudo guardar el producto.", { duration: Infinity });
     return null;
   }
 }

@@ -1,4 +1,5 @@
 import { ChevronRight, PackageX } from "lucide-react";
+import { Card } from "../components/common/Card";
 import { EmptyState } from "../components/common/EmptyState";
 import { PageHeader } from "../components/common/PageHeader";
 import { StatusBadge } from "../components/common/StatusBadge";
@@ -52,11 +53,18 @@ export function LowStockView(props: LowStockViewProps) {
           const nombre = p.nombre ?? p.name ?? "";
 
           return (
-            <button
-              type="button"
+            <Card
               key={p.id}
+              role="button"
+              tabIndex={0}
               onClick={() => onOpenDetalle(p.id)}
-              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-xs text-left"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpenDetalle(p.id);
+                }
+              }}
+              className="w-full flex items-center justify-between px-4 py-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <div>
                 <p className="text-ink font-medium text-sm">{nombre}</p>
@@ -65,8 +73,8 @@ export function LowStockView(props: LowStockViewProps) {
                   <StatusBadge tone={getStatusTone(estado)}>{STATUS_LABEL[estado]}</StatusBadge>
                 </div>
               </div>
-              <ChevronRight size={18} color="#94A3B8" />
-            </button>
+              <ChevronRight size={18} className="text-ink-subtle" aria-hidden="true" />
+            </Card>
           );
         })
       )}

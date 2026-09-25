@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import type { ChangeEvent, ReactElement } from "react";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
 export interface SearchBarProps {
   value: string;
@@ -9,15 +10,22 @@ export interface SearchBarProps {
 
 // Barra de búsqueda con icono y campo de texto estilizado.
 export function SearchBar({ value, onChange, placeholder }: SearchBarProps): ReactElement {
+  const label = placeholder || "Buscar...";
+
   return (
-    <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 shadow-xs">
-      <Search size={18} color="#94A3B8" />
-      <input
+    <InputGroup className="h-10 pointer-coarse:h-11 rounded-2xl bg-white shadow-border border-transparent px-1 has-[[data-slot=input-group-control]:focus-visible]:ring-2 has-[[data-slot=input-group-control]:focus-visible]:ring-ring has-[[data-slot=input-group-control]:focus-visible]:ring-offset-2 has-[[data-slot=input-group-control]:focus-visible]:ring-offset-background">
+      <InputGroupAddon>
+        <Search size={18} className="text-ink-subtle" strokeWidth={1.5} />
+      </InputGroupAddon>
+      <InputGroupInput
         value={value}
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        placeholder={placeholder || "Buscar..."}
-        className="flex-1 bg-transparent outline-hidden text-ink-soft text-sm"
+        placeholder={label}
+        aria-label={label}
+        type="search"
+        inputMode="search"
+        className="text-ink-soft text-sm"
       />
-    </div>
+    </InputGroup>
   );
 }

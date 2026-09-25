@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
+import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
 import { syncCashShift } from "../data/cashShiftSync";
 import { isScenarioPassing } from "../lib/cashShiftScenarios";
@@ -128,7 +129,7 @@ export function CashRegisterSandboxView() {
   };
 
   const intentarVentaConCajaCerrada = () => {
-    const bloqueada = !testCaja || testCaja.estado !== "ABIERTA";
+    const bloqueada = testCaja?.estado !== "ABIERTA";
     agregarLog(
       bloqueada
         ? "Intento de venta con caja cerrada → bloqueada correctamente (OK)"
@@ -163,44 +164,44 @@ export function CashRegisterSandboxView() {
       <Card className="space-y-2">
         <p className="text-xs font-semibold text-ink-muted px-1">Escenarios de horario</p>
         {TEST_SCENARIOS.map((e) => (
-          <button
+          <Button
             key={e.id}
-            type="button"
+            variant="secondary"
             disabled={corriendo}
             onClick={() => correr(e)}
-            className="w-full text-left text-sm rounded-xl px-3 py-2.5 border border-line text-ink bg-white disabled:opacity-60"
+            className="w-full justify-start text-left font-normal"
           >
             {e.label}
-          </button>
+          </Button>
         ))}
       </Card>
 
       <Card className="space-y-2">
         <p className="text-xs font-semibold text-ink-muted px-1">Otras verificaciones</p>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           disabled={corriendo}
           onClick={correrIdempotencia}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border border-line text-ink bg-white disabled:opacity-60"
+          className="w-full justify-start text-left font-normal"
         >
           Ejecutar 3 veces seguidas a las 12:00 (idempotencia)
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           disabled={corriendo}
           onClick={intentarVentaConCajaCerrada}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border border-line text-ink bg-white disabled:opacity-60"
+          className="w-full justify-start text-left font-normal"
         >
           Simular intento de venta con la caja del sandbox cerrada
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           disabled={corriendo}
           onClick={reiniciarSandbox}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border border-line text-danger bg-canvas disabled:opacity-60"
+          className="w-full justify-start text-left font-normal text-danger border-danger-50 bg-canvas hover:bg-danger-50"
         >
           Reiniciar sandbox de pruebas
-        </button>
+        </Button>
       </Card>
 
       {log.length > 0 && (

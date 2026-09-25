@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { reopenShift } from "../data/cashShiftRepository";
 import { nowInUruguay } from "../lib/dates";
 import type { CashShiftReopenUpdate, CashShiftRow } from "../types/db";
@@ -74,9 +75,7 @@ export function useCashRegister(deps: OpenCashShiftDeps = defaultOpenCashShiftDe
       return abierta;
     } catch (e) {
       console.error("Error abriendo jornada:", e);
-      if (typeof alert !== "undefined") {
-        alert("No se pudo abrir la caja.");
-      }
+      toast.error("No se pudo abrir la caja.", { duration: Infinity });
       return null;
     }
   }, [deps]);

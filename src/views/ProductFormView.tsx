@@ -1,10 +1,24 @@
-import { Camera, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Camera, Loader2, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { BarcodeScanner } from "../components/BarcodeScanner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
 import { PageHeader } from "../components/common/PageHeader";
+import { Field, FieldDescription, FieldError, FieldLabel } from "../components/ui/field";
+import { Input } from "../components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 import type { ProductDraft } from "../hooks/useProducts";
+import { type FieldErrors, validateProductForm } from "../lib/validation/forms";
 import type { ProductId } from "../types/domain";
 
 export interface ProductFormData {
@@ -29,9 +43,6 @@ export interface ProductFormViewProps {
   deleteProduct?: (id: ProductId) => unknown;
   pop: () => void;
 }
-
-const INPUT_CLASS =
-  "w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand";
 
 export function ProductFormView(props: ProductFormViewProps) {
   const { pop } = props;
@@ -63,161 +74,208 @@ export function ProductFormView(props: ProductFormViewProps) {
   const [stockMinimo, setStockMinimo] = useState(initialStockMinimo);
   const [codigoBarras, setCodigoBarras] = useState(initialCodigoBarras);
   const [escaneandoCodigo, setEscaneandoCodigo] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
 
-  const puedeGuardar = nombre && precio && stock !== "" && stockMinimo !== "";
+  const nombreRef = useRef<HTMLInputElement>(null);
+  const precioRef = useRef<HTMLInputElement>(null);
+  const stockRef = useRef<HTMLInputElement>(null);
+  const stockMinimoRef = useRef<HTMLInputElement>(null);
+  const fieldRefs: Record<string, React.RefObject<HTMLInputElement | null>> = {
+    nombre: nombreRef,
+    precio: precioRef,
+    stock: stockRef,
+    stockMinimo: stockMinimoRef,
+  };
 
-  const guardar = () => {
-    if (!puedeGuardar) return;
+  const guardar = async () => {
+    if (guardando) return;
+    const fieldErrors = validateProductForm({ nombre, precio, stock, stockMinimo });
+    setErrors(fieldErrors);
+    const firstInvalid = Object.keys(fieldErrors)[0];
+    if (firstInvalid) {
+      fieldRefs[firstInvalid]?.current?.focus();
+      return;
+    }
+
     const finalBarcode = codigoBarras.trim() ? codigoBarras.trim() : null;
     const nuevoProducto = {
       id: existente?.id,
       nombre,
-      precio: parseFloat(precio),
+      precio: Number.parseFloat(precio),
       unidad,
-      stock: parseFloat(stock),
-      stockMinimo: parseFloat(stockMinimo),
+      stock: Number.parseFloat(stock),
+      stockMinimo: Number.parseFloat(stockMinimo),
       codigoBarras: finalBarcode,
     };
-    saveProduct(nuevoProducto);
-    pop();
+
+    setGuardando(true);
+    try {
+      await saveProduct(nuevoProducto);
+      pop();
+    } finally {
+      setGuardando(false);
+    }
   };
 
-  const eliminar = () => {
-    if (!existente) return;
-    const confirmado =
-      typeof confirm === "undefined" ||
-      confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`);
-    if (!confirmado) return;
-    deleteProduct(existente.id);
-    pop();
+  const eliminar = async () => {
+    if (!existente || eliminando) return;
+    setEliminando(true);
+    try {
+      await deleteProduct(existente.id);
+      pop();
+    } finally {
+      setEliminando(false);
+      setConfirmandoEliminar(false);
+    }
   };
 
   return (
     <div className="pb-6 lg:max-w-2xl">
       <PageHeader title={esNuevo ? "Nuevo producto" : "Editar producto"} onBack={pop} />
       <Card className="space-y-4">
-        <div>
-          <label className="text-ink-soft text-sm font-medium block" htmlFor="product-name">
-            Nombre
-          </label>
-          <input
+        <Field data-invalid={Boolean(errors.nombre)}>
+          <FieldLabel htmlFor="product-name">Nombre</FieldLabel>
+          <Input
             id="product-name"
+            ref={nombreRef}
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            className={INPUT_CLASS}
+            autoComplete="off"
+            aria-invalid={Boolean(errors.nombre)}
+            aria-describedby={errors.nombre ? "product-name-error" : undefined}
+            className="h-10 pointer-coarse:h-11 rounded-xl border-line px-4 text-base focus-visible:ring-2 focus-visible:ring-ring"
           />
-        </div>
+          <FieldError id="product-name-error">{errors.nombre}</FieldError>
+        </Field>
 
-        <div>
-          <label className="text-ink-soft text-sm font-medium block" htmlFor="product-barcode">
-            Código de barras (opcional)
-          </label>
-          <div className="flex gap-2 mt-1.5">
-            <input
+        <Field>
+          <FieldLabel htmlFor="product-barcode">Código de barras (opcional)</FieldLabel>
+          <div className="flex gap-2">
+            <Input
               id="product-barcode"
               type="text"
+              inputMode="text"
+              autoComplete="off"
               value={codigoBarras}
               onChange={(e) => setCodigoBarras(e.target.value)}
               placeholder="7791234567890"
-              className="flex-1 rounded-xl border border-line px-4 py-3 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+              className="h-10 pointer-coarse:h-11 flex-1 rounded-xl border-line px-4 text-base focus-visible:ring-2 focus-visible:ring-ring"
             />
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="md"
+              static
               onClick={() => setEscaneandoCodigo(true)}
-              className="shrink-0 rounded-xl border border-line bg-white w-12 flex items-center justify-center"
+              aria-label="Escanear código de barras"
+              className="shrink-0 w-12 px-0"
             >
-              <Camera size={20} color="#0066FF" />
-            </button>
+              <Camera size={20} strokeWidth={2} aria-hidden="true" />
+            </Button>
           </div>
-          <p className="text-ink-subtle text-xs mt-1.5">
+          <FieldDescription>
             Mejor escanealo con la cámara que tipearlo: así queda idéntico al código que la caja va
             a leer después, sin errores de tipeo.
-          </p>
-        </div>
+          </FieldDescription>
+        </Field>
 
-        <div>
-          <label className="text-ink-soft text-sm font-medium block" htmlFor="product-price">
-            Precio de venta
-          </label>
-          <input
+        <Field data-invalid={Boolean(errors.precio)}>
+          <FieldLabel htmlFor="product-price">Precio de venta</FieldLabel>
+          <Input
             id="product-price"
             type="number"
+            inputMode="decimal"
+            ref={precioRef}
             value={precio}
             onChange={(e) => setPrecio(e.target.value)}
-            className={INPUT_CLASS}
+            aria-invalid={Boolean(errors.precio)}
+            aria-describedby={errors.precio ? "product-price-error" : undefined}
+            className="h-10 pointer-coarse:h-11 rounded-xl border-line px-4 text-base focus-visible:ring-2 focus-visible:ring-ring"
           />
-        </div>
+          <FieldError id="product-price-error">{errors.precio}</FieldError>
+        </Field>
 
-        <div>
-          <p className="text-ink-soft text-sm font-medium mb-2">Unidad de medida</p>
-          <div className="flex gap-2">
-            {["unidad", "kg"].map((u) => (
-              <button
-                type="button"
+        <Field>
+          <FieldLabel id="product-unit-label">Unidad de medida</FieldLabel>
+          <ToggleGroup
+            type="single"
+            spacing={2}
+            value={unidad}
+            onValueChange={(next) => {
+              if (next && esNuevo) setUnidad(next);
+            }}
+            aria-labelledby="product-unit-label"
+            className="flex w-full gap-2"
+          >
+            {(["unidad", "kg"] as const).map((u) => (
+              <ToggleGroupItem
                 key={u}
+                value={u}
                 disabled={!esNuevo}
-                onClick={() => setUnidad(u)}
-                className={[
-                  "flex-1 rounded-xl py-2.5 text-sm font-medium border transition-colors",
-                  !esNuevo ? "opacity-50" : "",
-                  unidad === u
-                    ? "bg-brand text-white border-brand"
-                    : "bg-white text-ink-soft border-line",
-                ].join(" ")}
+                aria-label={u === "unidad" ? "Por unidad" : "Por peso (kg)"}
+                className="flex-1 h-10 pointer-coarse:h-11 rounded-xl text-sm font-medium border border-line data-[state=on]:bg-brand data-[state=on]:text-white data-[state=on]:border-brand data-[state=off]:bg-white data-[state=off]:text-ink-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 {u === "unidad" ? "Por unidad" : "Por peso (kg)"}
-              </button>
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
           {!esNuevo && (
-            <p className="text-ink-subtle text-xs mt-1.5">
-              La unidad de medida no se puede cambiar luego de creado.
-            </p>
+            <FieldDescription>La unidad de medida no se puede cambiar luego de creado.</FieldDescription>
           )}
-        </div>
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-ink-soft text-sm font-medium block" htmlFor="product-stock">
-              Stock {esNuevo ? "inicial" : "actual"}
-            </label>
-            <input
+          <Field data-invalid={Boolean(errors.stock)}>
+            <FieldLabel htmlFor="product-stock">Stock {esNuevo ? "inicial" : "actual"}</FieldLabel>
+            <Input
               id="product-stock"
               type="number"
+              inputMode="numeric"
               step={unidad === "kg" ? "0.001" : "1"}
+              ref={stockRef}
               value={stock}
               onChange={(e) => setStock(e.target.value)}
-              className={INPUT_CLASS}
+              aria-invalid={Boolean(errors.stock)}
+              aria-describedby={errors.stock ? "product-stock-error" : undefined}
+              className="h-10 pointer-coarse:h-11 rounded-xl border-line px-4 text-base focus-visible:ring-2 focus-visible:ring-ring"
             />
-          </div>
-          <div>
-            <label className="text-ink-soft text-sm font-medium block" htmlFor="product-min-stock">
-              Stock mínimo
-            </label>
-            <input
+            <FieldError id="product-stock-error">{errors.stock}</FieldError>
+          </Field>
+          <Field data-invalid={Boolean(errors.stockMinimo)}>
+            <FieldLabel htmlFor="product-min-stock">Stock mínimo</FieldLabel>
+            <Input
               id="product-min-stock"
               type="number"
+              inputMode="numeric"
               step={unidad === "kg" ? "0.001" : "1"}
+              ref={stockMinimoRef}
               value={stockMinimo}
               onChange={(e) => setStockMinimo(e.target.value)}
-              className={INPUT_CLASS}
+              aria-invalid={Boolean(errors.stockMinimo)}
+              aria-describedby={errors.stockMinimo ? "product-min-stock-error" : undefined}
+              className="h-10 pointer-coarse:h-11 rounded-xl border-line px-4 text-base focus-visible:ring-2 focus-visible:ring-ring"
             />
-          </div>
+            <FieldError id="product-min-stock-error">{errors.stockMinimo}</FieldError>
+          </Field>
         </div>
 
-        <Button fullWidth onClick={guardar} disabled={!puedeGuardar}>
+        <Button fullWidth onClick={guardar} disabled={guardando}>
+          {guardando && <Loader2 size={18} className="motion-safe:animate-spin" aria-hidden="true" />}
           Guardar producto
         </Button>
 
         {!esNuevo && (
-          <button
-            type="button"
-            onClick={eliminar}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium text-danger"
+          <Button
+            variant="ghost"
+            fullWidth
+            onClick={() => setConfirmandoEliminar(true)}
+            className="text-danger hover:text-danger hover:bg-danger-50"
           >
-            <Trash2 size={16} />
+            <Trash2 size={16} strokeWidth={2} aria-hidden="true" />
             Eliminar producto
-          </button>
+          </Button>
         )}
       </Card>
 
@@ -231,6 +289,29 @@ export function ProductFormView(props: ProductFormViewProps) {
           mensaje="Código capturado, revisalo abajo y guardá el producto"
         />
       )}
+
+      <AlertDialog open={confirmandoEliminar} onOpenChange={setConfirmandoEliminar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar "{nombre}"?</AlertDialogTitle>
+            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={eliminando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={eliminando}
+              onClick={(e) => {
+                e.preventDefault();
+                eliminar();
+              }}
+            >
+              {eliminando && <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -2,8 +2,11 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   ChevronRight,
+  Eye,
+  MoreHorizontal,
   Package,
   PackageX,
+  Pencil,
   Plus,
   SlidersHorizontal,
 } from "lucide-react";
@@ -16,6 +19,13 @@ import { FilterChips } from "../components/common/FilterChips";
 import { KpiCard } from "../components/common/KpiCard";
 import { PageHeader } from "../components/common/PageHeader";
 import { StatusBadge } from "../components/common/StatusBadge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 import { formatMoney } from "../lib/format";
 import { type InventoryFilter, filterProducts } from "../lib/productFilters";
 import { formatStock, getProductStatus, getStatusTone } from "../lib/stock";
@@ -83,7 +93,7 @@ export function StockView({ products, push, goTabScreen }: StockViewProps) {
         title="Inventario"
         subtitle="Controlá tu stock, organizá tus productos y nunca te quedes sin lo que más vendés."
         action={
-          <Button icon={Plus} onClick={() => goTabScreen("more", "productForm")}>
+          <Button icon={Plus} onClick={() => push("productForm")}>
             Agregar producto
           </Button>
         }
@@ -99,14 +109,33 @@ export function StockView({ products, push, goTabScreen }: StockViewProps) {
         <SearchBar value={query} onChange={setQuery} placeholder="Buscar producto..." />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <FilterChips options={FILTER_OPTIONS} value={filter} onChange={(v) => setFilter(v as InventoryFilter)} />
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" icon={SlidersHorizontal} onClick={() => push("adjustStock")}>
+          {/* Mobile: 2-column grid so the actions never overflow; desktop: inline row. */}
+          <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:w-auto">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={SlidersHorizontal}
+              className="w-full lg:w-auto"
+              onClick={() => push("adjustStock")}
+            >
               Ajustar stock
             </Button>
-            <Button variant="secondary" size="sm" icon={Plus} onClick={() => push("addStockEntry")}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={Plus}
+              className="w-full lg:w-auto"
+              onClick={() => push("addStockEntry")}
+            >
               Ingresar stock
             </Button>
-            <Button variant="ghost" size="sm" icon={ArrowRightLeft} onClick={() => push("movements")}>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={ArrowRightLeft}
+              className="col-span-2 w-full lg:col-auto lg:w-auto"
+              onClick={() => push("movements")}
+            >
               Movimientos
             </Button>
           </div>
@@ -127,18 +156,18 @@ export function StockView({ products, push, goTabScreen }: StockViewProps) {
         <>
           {/* Desktop table */}
           <Card padded={false} className="hidden lg:block overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-ink-muted border-b border-line">
-                  <th className="px-4 py-3 font-medium">Producto</th>
-                  <th className="px-4 py-3 font-medium">Código de barras</th>
-                  <th className="px-4 py-3 font-medium">Precio</th>
-                  <th className="px-4 py-3 font-medium">Stock</th>
-                  <th className="px-4 py-3 font-medium">Estado</th>
-                  <th className="px-4 py-3 font-medium">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-line hover:bg-transparent">
+                  <TableHead className="px-4 py-3 text-ink-muted">Producto</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted">Código de barras</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted text-right">Precio</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted text-right">Stock</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted">Estado</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {visible.map((p) => {
                   const nombre = p.nombre ?? p.name ?? "";
                   const precio = p.precio ?? p.price ?? 0;
@@ -147,36 +176,63 @@ export function StockView({ products, push, goTabScreen }: StockViewProps) {
                   const status = getProductStatus({ stock: p.stock, minimumStock: stockMinimo });
                   const barcode = p.barcode ?? p.codigoBarras ?? "—";
                   return (
-                    <tr key={p.id} className="border-b border-line-soft last:border-0 hover:bg-line-soft/50">
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => push("productDetail", { productId: p.id })}
-                          className="font-medium text-ink text-left"
-                        >
-                          {nombre}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-ink-muted">{barcode}</td>
-                      <td className="px-4 py-3 text-ink">{formatMoney(precio)}</td>
-                      <td className="px-4 py-3 text-ink">{formatStock({ stock: p.stock, unit: unidad })}</td>
-                      <td className="px-4 py-3">
+                    <TableRow
+                      key={p.id}
+                      className="border-line-soft cursor-pointer"
+                      onClick={() => push("productDetail", { productId: p.id })}
+                    >
+                      <TableCell className="px-4 py-3 font-medium text-ink">{nombre}</TableCell>
+                      <TableCell className="px-4 py-3 text-ink-muted">{barcode}</TableCell>
+                      <TableCell className="px-4 py-3 text-ink text-right tabular-nums">
+                        {formatMoney(precio)}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-ink text-right tabular-nums">
+                        {formatStock({ stock: p.stock, unit: unidad })}
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
                         <StatusBadge tone={getStatusTone(status)}>{STATUS_LABEL[status]}</StatusBadge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => goTabScreen("more", "productForm", { productId: p.id })}
-                          className="text-brand font-medium"
-                        >
-                          Editar
-                        </button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              static
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label={`Acciones de ${nombre}`}
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreHorizontal size={16} strokeWidth={2} aria-hidden="true" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem onSelect={() => push("productDetail", { productId: p.id })}>
+                              <Eye size={14} strokeWidth={1.5} aria-hidden="true" />
+                              Ver detalle
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => push("productForm", { productId: p.id })}
+                            >
+                              <Pencil size={14} strokeWidth={1.5} aria-hidden="true" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => push("addStockEntry", { productId: p.id })}>
+                              <Plus size={14} strokeWidth={1.5} aria-hidden="true" />
+                              Ingresar stock
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => push("adjustStock", { productId: p.id })}>
+                              <SlidersHorizontal size={14} strokeWidth={1.5} aria-hidden="true" />
+                              Ajustar stock
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </Card>
 
           {/* Mobile cards */}
@@ -189,11 +245,19 @@ export function StockView({ products, push, goTabScreen }: StockViewProps) {
               const status = getProductStatus({ stock: p.stock, minimumStock: stockMinimo });
               const barcode = p.barcode ?? p.codigoBarras;
               return (
-                <button
-                  type="button"
+                <Card
                   key={p.id}
+                  padded
+                  role="button"
+                  tabIndex={0}
                   onClick={() => push("productDetail", { productId: p.id })}
-                  className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3.5 shadow-xs text-left"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      push("productDetail", { productId: p.id });
+                    }
+                  }}
+                  className="w-full flex items-center justify-between text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <div className="min-w-0">
                     <p className="text-ink font-medium text-sm truncate">{nombre}</p>
@@ -204,12 +268,12 @@ export function StockView({ products, push, goTabScreen }: StockViewProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-ink-soft text-sm font-medium">
+                    <span className="text-ink-soft text-sm font-medium tabular-nums">
                       {formatStock({ stock: p.stock, unit: unidad })}
                     </span>
-                    <ChevronRight size={18} color="#94A3B8" />
+                    <ChevronRight size={18} className="text-ink-subtle" aria-hidden="true" />
                   </div>
-                </button>
+                </Card>
               );
             })}
           </div>

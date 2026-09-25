@@ -37,6 +37,12 @@
   --font-display: "Montserrat Variable", Montserrat, system-ui, sans-serif;
 
   --background-image-brand-gradient: linear-gradient(135deg, #0066ff, #4da3ff);
+
+  /* Layered shadow-as-border tokens (better-ui/surfaces.md), light values. */
+  --shadow-border: 0px 0px 0px 1px oklch(0 0 0 / 0.06), 0px 1px 2px -1px oklch(0 0 0 / 0.06),
+    0px 2px 4px 0px oklch(0 0 0 / 0.04);
+  --shadow-border-hover: 0px 0px 0px 1px oklch(0 0 0 / 0.08), 0px 1px 2px -1px oklch(0 0 0 / 0.08),
+    0px 2px 4px 0px oklch(0 0 0 / 0.06);
 }
 
 /* shadcn/ui (Mira) semantic tokens, bound to the STOCKIA palette. */
@@ -149,5 +155,16 @@
   h2,
   h3 {
     font-family: var(--font-heading);
+  }
+
+  /* Remove the double-tap-to-zoom delay on interactive elements (better-accessibility/hit-areas.md). */
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  label {
+    touch-action: manipulation;
   }
 }

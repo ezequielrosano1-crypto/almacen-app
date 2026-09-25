@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { toMovementRecord } from "../data/mappers";
 import { registerStockMovement as defaultRegisterStockMovement } from "../data/stockMovementsRepository";
 import { initialStockMovements } from "../lib/initialData";
@@ -57,9 +58,7 @@ export async function recordStockMovementToRepository(
     });
   } catch (error) {
     console.error("Error guardando movimiento de stock:", error);
-    if (typeof alert !== "undefined") {
-      alert("No se pudo guardar el movimiento de stock.");
-    }
+    toast.error("No se pudo guardar el movimiento de stock.", { duration: Infinity });
     return null;
   }
 }

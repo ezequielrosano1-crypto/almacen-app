@@ -4,6 +4,8 @@ import { Card } from "../components/common/Card";
 import { EmptyState } from "../components/common/EmptyState";
 import { PageHeader } from "../components/common/PageHeader";
 import { StatusBadge } from "../components/common/StatusBadge";
+import { Skeleton } from "../components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { listClosings } from "../data/closingsRepository";
 import { formatMoney } from "../lib/format";
 import type { ClosingSummary } from "../types/domain";
@@ -39,7 +41,11 @@ export function ClosingHistoryView({ pop }: ClosingHistoryViewProps) {
     <div className="pb-6 space-y-3">
       <PageHeader title="Historial de cierres" onBack={pop} />
       {cargando ? (
-        <p className="text-ink-subtle text-sm text-center py-6">Cargando historial...</p>
+        <div className="space-y-2" role="status" aria-label="Cargando historial">
+          <Skeleton className="h-16 rounded-2xl" />
+          <Skeleton className="h-16 rounded-2xl" />
+          <Skeleton className="h-16 rounded-2xl" />
+        </div>
       ) : error ? (
         <p className="text-ink-subtle text-sm text-center py-6">No se pudo cargar el historial.</p>
       ) : cierres.length === 0 ? (
@@ -52,32 +58,36 @@ export function ClosingHistoryView({ pop }: ClosingHistoryViewProps) {
         <>
           {/* Desktop table */}
           <Card padded={false} className="hidden lg:block overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-ink-muted border-b border-line">
-                  <th className="px-4 py-3 font-medium">Fecha</th>
-                  <th className="px-4 py-3 font-medium">Hora de cierre</th>
-                  <th className="px-4 py-3 font-medium">Total</th>
-                  <th className="px-4 py-3 font-medium">Ventas</th>
-                  <th className="px-4 py-3 font-medium">Tipo</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-line hover:bg-transparent">
+                  <TableHead className="px-4 py-3 text-ink-muted">Fecha</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted">Hora de cierre</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted text-right">Total</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted text-right">Ventas</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted">Tipo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {cierres.map((c) => (
-                  <tr key={`${c.date}-${c.time}`} className="border-b border-line-soft last:border-0">
-                    <td className="px-4 py-3 font-medium text-ink">{c.date}</td>
-                    <td className="px-4 py-3 text-ink-soft">{c.time}</td>
-                    <td className="px-4 py-3 text-ink">{formatMoney(c.total)}</td>
-                    <td className="px-4 py-3 text-ink">{c.salesCount}</td>
-                    <td className="px-4 py-3">
+                  <TableRow key={`${c.date}-${c.time}`} className="border-line-soft">
+                    <TableCell className="px-4 py-3 font-medium text-ink">{c.date}</TableCell>
+                    <TableCell className="px-4 py-3 text-ink-soft">{c.time}</TableCell>
+                    <TableCell className="px-4 py-3 text-ink text-right tabular-nums">
+                      {formatMoney(c.total)}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-ink text-right tabular-nums">
+                      {c.salesCount}
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <StatusBadge tone={c.isAutoClosed ? "warning" : "info"}>
                         {c.isAutoClosed ? "Automático" : "Manual"}
                       </StatusBadge>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </Card>
 
           {/* Mobile cards */}

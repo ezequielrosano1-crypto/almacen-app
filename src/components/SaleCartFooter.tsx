@@ -1,7 +1,9 @@
 import { Minus, Plus, X } from "lucide-react";
 import { formatMoney } from "../lib/format";
 import type { PaymentMethod } from "../types/domain";
+import { Button } from "./common/Button";
 import { PrimaryButton } from "./PrimaryButton";
+import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
 
 export interface SaleCartFooterItem<P = unknown> {
   id: number | string;
@@ -91,31 +93,40 @@ export function SaleCartFooter({
                 <p className="text-ink-subtle text-xs">{formatMoney(it.subtotal)}</p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  static
                   onClick={() => handleChangeQty?.(it.id, -1)}
-                  className="p-1 bg-line-soft rounded-full"
+                  aria-label={`Restar unidad de ${name}`}
+                  className="h-8 w-8 p-0 rounded-full bg-line-soft"
                 >
-                  <Minus size={14} />
-                </button>
-                <span className="w-10 text-center text-ink-soft">
+                  <Minus size={14} strokeWidth={2} aria-hidden="true" />
+                </Button>
+                <span className="w-10 text-center text-ink-soft tabular-nums">
                   {qty}
                   {unit === "kg" ? "kg" : ""}
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  static
                   onClick={() => handleChangeQty?.(it.id, 1)}
-                  className="p-1 bg-line-soft rounded-full"
+                  aria-label={`Sumar unidad de ${name}`}
+                  className="h-8 w-8 p-0 rounded-full bg-line-soft"
                 >
-                  <Plus size={14} />
-                </button>
-                <button
-                  type="button"
+                  <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  static
                   onClick={() => handleRemove?.(it.id)}
-                  className="p-1 text-ink-subtle"
+                  aria-label={`Quitar ${name} de la venta`}
+                  className="h-8 w-8 p-0 text-ink-subtle"
                 >
-                  <X size={16} />
-                </button>
+                  <X size={16} strokeWidth={2} aria-hidden="true" />
+                </Button>
               </div>
             </div>
           );
@@ -131,23 +142,26 @@ export function SaleCartFooter({
           </span>
         </div>
 
-        <div className="flex gap-2">
+        <ToggleGroup
+          type="single"
+          spacing={2}
+          value={selectedPayment ?? ""}
+          onValueChange={(next) => {
+            if (next) handleSelectPayment(next as PaymentMethod);
+          }}
+          aria-label="Método de pago"
+          className="flex w-full gap-2"
+        >
           {(["Efectivo", "Débito"] as const).map((m) => (
-            <button
-              type="button"
+            <ToggleGroupItem
               key={m}
-              onClick={() => handleSelectPayment(m)}
-              className="flex-1 rounded-xl py-2.5 text-sm font-semibold border"
-              style={
-                selectedPayment === m
-                  ? { backgroundColor: "#0066FF", color: "#FFFFFF", borderColor: "#0066FF" }
-                  : { backgroundColor: "#FFFFFF", color: "#374151", borderColor: "#E2E8F0" }
-              }
+              value={m}
+              className="flex-1 h-10 pointer-coarse:h-11 rounded-xl text-sm font-semibold border border-line data-[state=on]:bg-brand data-[state=on]:text-white data-[state=on]:border-brand data-[state=off]:bg-white data-[state=off]:text-ink-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {m}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
 
         <div className="pt-1">
           <PrimaryButton onClick={handleConfirm} disabled={!selectedPayment || isSubmitting}>

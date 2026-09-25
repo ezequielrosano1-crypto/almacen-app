@@ -88,7 +88,7 @@ export function HomeView(props: HomeViewProps): ReactElement {
         subtitle="Acá tenés un resumen de cómo va tu negocio hoy."
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
           icon={Wallet}
           label="Ventas hoy"
@@ -160,13 +160,15 @@ export function HomeView(props: HomeViewProps): ReactElement {
           <div className="flex items-center justify-between">
             <p className="font-display font-semibold text-ink">Alertas</p>
             {alertsCount > 0 && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
+                iconRight={ArrowRight}
                 onClick={() => goTabScreen("stock", "lowStock")}
-                className="text-xs font-semibold text-brand inline-flex items-center gap-1"
+                className="text-brand h-auto px-2 py-1 text-xs"
               >
-                Ver todas <ArrowRight size={14} />
-              </button>
+                Ver todas
+              </Button>
             )}
           </div>
           {alerts.length > 0 ? (
@@ -200,7 +202,7 @@ export function HomeView(props: HomeViewProps): ReactElement {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-4 gap-3">
         <Button
           variant="primary"
           icon={Plus}
@@ -213,7 +215,7 @@ export function HomeView(props: HomeViewProps): ReactElement {
           variant="secondary"
           icon={PackagePlus}
           fullWidth
-          onClick={() => goTabScreen("more", "productForm")}
+          onClick={() => goTabScreen("stock", "productForm")}
         >
           Agregar producto
         </Button>
@@ -238,7 +240,7 @@ export function HomeView(props: HomeViewProps): ReactElement {
       {alertsCount > 0 && (
         <Card className="flex items-center gap-3 bg-brand-50 border-brand-100">
           <div className="flex items-center justify-center h-10 w-10 rounded-full bg-white shrink-0">
-            <Bell size={18} color="#0066FF" />
+            <Bell size={18} className="text-brand" strokeWidth={2} aria-hidden="true" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-ink">Stockia te avisa</p>
@@ -247,14 +249,16 @@ export function HomeView(props: HomeViewProps): ReactElement {
               sin stock. Revisalos ahora.
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
+            static
             onClick={() => goTabScreen("stock", "lowStock")}
-            className="text-brand shrink-0"
             aria-label="Ver productos con stock bajo"
+            className="text-brand shrink-0 h-9 w-9 p-0"
           >
-            <Package size={18} />
-          </button>
+            <Package size={18} strokeWidth={2} aria-hidden="true" />
+          </Button>
         </Card>
       )}
     </div>

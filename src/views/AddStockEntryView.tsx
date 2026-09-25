@@ -1,14 +1,17 @@
-import { CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { ConfirmationScreen } from "../components/ConfirmationScreen";
 import { ProductRow } from "../components/ProductRow";
 import { SearchBar } from "../components/SearchBar";
 import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
 import { PageHeader } from "../components/common/PageHeader";
+import { Field, FieldError, FieldLabel } from "../components/ui/field";
+import { Input } from "../components/ui/input";
 import type { StockMovementInput } from "../hooks/useStockMovements";
 import { COLORS } from "../lib/constants";
 import { formatStock } from "../lib/stock";
+import { validateStockEntry } from "../lib/validation/forms";
 import type { ProductId } from "../types/domain";
 
 export interface StockEntryProductItem {
@@ -49,6 +52,8 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
   const [cantidad, setCantidad] = useState("");
   const [confirmada, setConfirmada] = useState<ConfirmedStockEntry | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [cantidadError, setCantidadError] = useState<string | undefined>();
+  const cantidadRef = useRef<HTMLInputElement>(null);
 
   const producto = products.find((p) => p.id === productoId);
   const disponibles = products.filter((p) => {
@@ -57,13 +62,20 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
   });
 
   const confirmar = async () => {
-    const cant = parseFloat(cantidad);
-    if (!producto || !cant || cant <= 0 || guardando) return;
+    if (!producto || guardando) return;
+    const errors = validateStockEntry({ cantidad });
+    setCantidadError(errors.cantidad);
+    if (errors.cantidad) {
+      cantidadRef.current?.focus();
+      return;
+    }
+
+    const cant = Number.parseFloat(cantidad);
     const nombre = producto.nombre ?? producto.name ?? "";
     const unidad = producto.unidad ?? producto.unit ?? "unidad";
 
     // One server call updates the stock and records the movement together; the
-    // confirmation only shows once it succeeded (the hook alerts on failure).
+    // confirmation only shows once it succeeded (the hook toasts on failure).
     setGuardando(true);
     const saved = await recordMovement({
       tipo: "entrada",
@@ -110,34 +122,32 @@ export function AddStockEntryView(props: AddStockEntryViewProps) {
               <p className="text-ink font-medium text-sm">{productoNombre}</p>
               <p className="text-ink-subtle text-xs">Stock actual: {formatStock(producto)}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setProductoId(null)}
-              className="text-sm font-medium text-brand"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setProductoId(null)} className="text-brand">
               Cambiar
-            </button>
+            </Button>
           </div>
-          <div>
-            <label className="text-ink-soft text-sm font-medium block" htmlFor="entry-qty">
+          <Field data-invalid={Boolean(cantidadError)}>
+            <FieldLabel htmlFor="entry-qty">
               Cantidad a ingresar {productoUnidad === "kg" ? "(kg)" : "(unidades)"}
-            </label>
-            <input
+            </FieldLabel>
+            <Input
               id="entry-qty"
               type="number"
+              inputMode={productoUnidad === "kg" ? "decimal" : "numeric"}
               step={productoUnidad === "kg" ? "0.001" : "1"}
               min="0"
+              ref={cantidadRef}
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
               placeholder={productoUnidad === "kg" ? "0,500" : "0"}
-              className="w-full rounded-xl border border-line px-4 py-3 mt-1.5 outline-hidden text-ink focus:ring-2 focus:ring-brand focus:border-brand"
+              aria-invalid={Boolean(cantidadError)}
+              aria-describedby={cantidadError ? "entry-qty-error" : undefined}
+              className="h-10 pointer-coarse:h-11 rounded-xl border-line px-4 text-base focus-visible:ring-2 focus-visible:ring-ring"
             />
-          </div>
-          <Button
-            fullWidth
-            onClick={confirmar}
-            disabled={guardando || !cantidad || parseFloat(cantidad) <= 0}
-          >
+            <FieldError id="entry-qty-error">{cantidadError}</FieldError>
+          </Field>
+          <Button fullWidth onClick={confirmar} disabled={guardando}>
+            {guardando && <Loader2 size={18} className="motion-safe:animate-spin" aria-hidden="true" />}
             Registrar entrada
           </Button>
         </Card>
