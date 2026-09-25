@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { PrimaryButton } from "./PrimaryButton";
+import { Button } from "./common/Button";
 
 export interface ConfirmationScreenProps {
   icon: ReactNode;
@@ -18,12 +18,14 @@ export function ConfirmationScreen({
   onDone,
 }: ConfirmationScreenProps): ReactElement {
   return (
-    <div className="px-5 pt-16 pb-4 flex flex-col items-center text-center">
+    <div className="pt-16 pb-4 flex flex-col items-center text-center lg:max-w-sm lg:mx-auto">
       {icon}
-      <h2 className="text-xl font-bold text-stone-800 mt-4">{title}</h2>
-      <p className="text-stone-500 text-sm mt-2">{message}</p>
+      <h2 className="font-display text-xl font-bold text-ink mt-4">{title}</h2>
+      <p className="text-ink-muted text-sm mt-2">{message}</p>
       <div className="w-full mt-8">
-        <PrimaryButton onClick={onDone}>{buttonLabel}</PrimaryButton>
+        <Button fullWidth onClick={onDone}>
+          {buttonLabel}
+        </Button>
       </div>
     </div>
   );

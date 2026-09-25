@@ -1,19 +1,25 @@
 import type { MovementId, ProductId } from "./domain";
 
-export type TabId = "home" | "sales" | "stock" | "movements" | "more";
+export type TabId =
+  | "home"
+  | "sales"
+  | "stock"
+  | "purchases"
+  | "suppliers"
+  | "reports"
+  | "more";
 
 export type ScreenId =
   | "main"
   | "newSale"
   | "dayClosing"
   | "closingHistory"
-  | "productCatalog"
   | "productDetail"
   | "lowStock"
   | "addStockEntry"
   | "adjustStock"
+  | "movements"
   | "stockMovementDetail"
-  | "products"
   | "productForm"
   | "businessInfo"
   | "settings";

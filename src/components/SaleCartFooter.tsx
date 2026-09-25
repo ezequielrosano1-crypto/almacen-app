@@ -1,7 +1,9 @@
 import { Minus, Plus, X } from "lucide-react";
 import { formatMoney } from "../lib/format";
 import type { PaymentMethod } from "../types/domain";
+import { Button } from "./common/Button";
 import { PrimaryButton } from "./PrimaryButton";
+import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
 
 export interface SaleCartFooterItem<P = unknown> {
   id: number | string;
@@ -73,7 +75,7 @@ export function SaleCartFooter({
   };
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-stone-200 max-w-sm mx-auto flex flex-col">
+    <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-line max-w-sm mx-auto flex flex-col">
       {/* Zona con scroll propio: SOLO la lista de productos del carrito */}
       <div className="px-5 pt-3 space-y-2 max-h-40 overflow-y-auto">
         {items.map((it) => {
@@ -87,35 +89,44 @@ export function SaleCartFooter({
           return (
             <div key={it.id} className="flex items-center justify-between text-sm">
               <div className="flex-1">
-                <p className="text-stone-800 font-medium">{name}</p>
-                <p className="text-stone-400 text-xs">{formatMoney(it.subtotal)}</p>
+                <p className="text-ink font-medium">{name}</p>
+                <p className="text-ink-subtle text-xs">{formatMoney(it.subtotal)}</p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  static
                   onClick={() => handleChangeQty?.(it.id, -1)}
-                  className="p-1 bg-stone-100 rounded-full"
+                  aria-label={`Restar unidad de ${name}`}
+                  className="h-8 w-8 p-0 rounded-full bg-line-soft"
                 >
-                  <Minus size={14} />
-                </button>
-                <span className="w-10 text-center text-stone-700">
+                  <Minus size={14} strokeWidth={2} aria-hidden="true" />
+                </Button>
+                <span className="w-10 text-center text-ink-soft tabular-nums">
                   {qty}
                   {unit === "kg" ? "kg" : ""}
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  static
                   onClick={() => handleChangeQty?.(it.id, 1)}
-                  className="p-1 bg-stone-100 rounded-full"
+                  aria-label={`Sumar unidad de ${name}`}
+                  className="h-8 w-8 p-0 rounded-full bg-line-soft"
                 >
-                  <Plus size={14} />
-                </button>
-                <button
-                  type="button"
+                  <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  static
                   onClick={() => handleRemove?.(it.id)}
-                  className="p-1 text-stone-400"
+                  aria-label={`Quitar ${name} de la venta`}
+                  className="h-8 w-8 p-0 text-ink-subtle"
                 >
-                  <X size={16} />
-                </button>
+                  <X size={16} strokeWidth={2} aria-hidden="true" />
+                </Button>
               </div>
             </div>
           );
@@ -123,31 +134,34 @@ export function SaleCartFooter({
       </div>
 
       {/* Zona fija: Total, medio de pago y Confirmar venta — nunca dentro del scroll */}
-      <div className="px-5 pt-2 pb-4 space-y-2 border-t border-stone-100 bg-white">
+      <div className="px-5 pt-2 pb-4 space-y-2 border-t border-line-soft bg-white">
         <div className="flex justify-between items-center">
-          <span className="text-stone-500 text-sm">Total</span>
-          <span className="text-xl font-bold" style={{ color: "#2E6B4F" }}>
+          <span className="text-ink-muted text-sm">Total</span>
+          <span className="text-xl font-display font-bold" style={{ color: "#0066FF" }}>
             {formatMoney(total)}
           </span>
         </div>
 
-        <div className="flex gap-2">
+        <ToggleGroup
+          type="single"
+          spacing={2}
+          value={selectedPayment ?? ""}
+          onValueChange={(next) => {
+            if (next) handleSelectPayment(next as PaymentMethod);
+          }}
+          aria-label="Método de pago"
+          className="flex w-full gap-2"
+        >
           {(["Efectivo", "Débito"] as const).map((m) => (
-            <button
-              type="button"
+            <ToggleGroupItem
               key={m}
-              onClick={() => handleSelectPayment(m)}
-              className="flex-1 rounded-xl py-2.5 text-sm font-semibold border"
-              style={
-                selectedPayment === m
-                  ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
-                  : { backgroundColor: "#FFFFFF", color: "#57534E", borderColor: "#E7E5E4" }
-              }
+              value={m}
+              className="flex-1 h-10 pointer-coarse:h-11 rounded-xl text-sm font-semibold border border-line data-[state=on]:bg-brand data-[state=on]:text-white data-[state=on]:border-brand data-[state=off]:bg-white data-[state=off]:text-ink-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {m}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
 
         <div className="pt-1">
           <PrimaryButton onClick={handleConfirm} disabled={!selectedPayment || isSubmitting}>

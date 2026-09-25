@@ -1,4 +1,5 @@
 import type { MouseEvent, ReactElement, ReactNode } from "react";
+import { Button } from "./common/Button";
 
 export interface PrimaryButtonProps {
   children: ReactNode;
@@ -6,21 +7,19 @@ export interface PrimaryButtonProps {
   disabled?: boolean;
 }
 
-// Botón primario de acción completa en color verde de la aplicación.
+// Full-width primary action button in the STOCKIA brand blue.
+// Kept as a thin wrapper over the shared Button primitive for existing callers.
 export function PrimaryButton({ children, onClick, disabled }: PrimaryButtonProps): ReactElement {
   return (
-    <button
-      type="button"
+    <Button
+      variant="primary"
+      size="lg"
+      fullWidth
       onClick={onClick}
       disabled={disabled}
-      className="w-full appearance-none font-semibold rounded-2xl py-4 text-lg shadow-sm flex items-center justify-center gap-2"
-      style={
-        disabled
-          ? { backgroundColor: "#E7E5E4", color: "#78716C", cursor: "not-allowed" }
-          : { backgroundColor: "#2E6B4F", color: "#FFFFFF" }
-      }
+      className="rounded-2xl shadow-xs"
     >
       {children}
-    </button>
+    </Button>
   );
 }

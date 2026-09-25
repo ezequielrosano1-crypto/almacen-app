@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { CashRegisterStatusCard } from "../components/CashRegisterStatusCard";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
 import { syncCashShift } from "../data/cashShiftSync";
 import { isScenarioPassing } from "../lib/cashShiftScenarios";
 import { TEST_CASH_SHIFT_STORAGE_KEY } from "../lib/constants";
@@ -127,7 +129,7 @@ export function CashRegisterSandboxView() {
   };
 
   const intentarVentaConCajaCerrada = () => {
-    const bloqueada = !testCaja || testCaja.estado !== "ABIERTA";
+    const bloqueada = testCaja?.estado !== "ABIERTA";
     agregarLog(
       bloqueada
         ? "Intento de venta con caja cerrada → bloqueada correctamente (OK)"
@@ -150,72 +152,68 @@ export function CashRegisterSandboxView() {
 
   return (
     <div className="space-y-3">
-      <div className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-1">
-        <p className="text-sm font-semibold text-stone-800">Estado sandbox actual</p>
+      <Card className="space-y-1">
+        <p className="text-sm font-semibold text-ink">Estado sandbox actual</p>
         {testCaja ? (
           <CashRegisterStatusCard caja={testCaja} totalHoy={0} />
         ) : (
-          <p className="text-xs text-stone-400">Todavía no corriste ningún escenario.</p>
+          <p className="text-xs text-ink-subtle">Todavía no corriste ningún escenario.</p>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-        <p className="text-xs font-semibold text-stone-500 px-1">Escenarios de horario</p>
+      <Card className="space-y-2">
+        <p className="text-xs font-semibold text-ink-muted px-1">Escenarios de horario</p>
         {TEST_SCENARIOS.map((e) => (
-          <button
+          <Button
             key={e.id}
-            type="button"
+            variant="secondary"
             disabled={corriendo}
             onClick={() => correr(e)}
-            className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-            style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
+            className="w-full justify-start text-left font-normal"
           >
             {e.label}
-          </button>
+          </Button>
         ))}
-      </div>
+      </Card>
 
-      <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-        <p className="text-xs font-semibold text-stone-500 px-1">Otras verificaciones</p>
-        <button
-          type="button"
+      <Card className="space-y-2">
+        <p className="text-xs font-semibold text-ink-muted px-1">Otras verificaciones</p>
+        <Button
+          variant="secondary"
           disabled={corriendo}
           onClick={correrIdempotencia}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
+          className="w-full justify-start text-left font-normal"
         >
           Ejecutar 3 veces seguidas a las 12:00 (idempotencia)
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           disabled={corriendo}
           onClick={intentarVentaConCajaCerrada}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FFFFFF", color: "#44403C", borderColor: "#E7E5E4" }}
+          className="w-full justify-start text-left font-normal"
         >
           Simular intento de venta con la caja del sandbox cerrada
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           disabled={corriendo}
           onClick={reiniciarSandbox}
-          className="w-full text-left text-sm rounded-xl px-3 py-2.5 border"
-          style={{ backgroundColor: "#FAF8F5", color: "#C0392B", borderColor: "#E7E5E4" }}
+          className="w-full justify-start text-left font-normal text-danger border-danger-50 bg-canvas hover:bg-danger-50"
         >
           Reiniciar sandbox de pruebas
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       {log.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm px-4 py-3 space-y-2">
-          <p className="text-xs font-semibold text-stone-500 px-1">Resultados</p>
+        <Card className="space-y-2">
+          <p className="text-xs font-semibold text-ink-muted px-1">Resultados</p>
           {log.map((l) => (
             <div key={l.id} className="flex items-start gap-2 text-xs px-1">
               <span>{l.ok ? "✅" : "⚠️"}</span>
-              <span className="text-stone-600 flex-1">{l.texto}</span>
+              <span className="text-ink-soft flex-1">{l.texto}</span>
             </div>
           ))}
-        </div>
+        </Card>
       )}
     </div>
   );

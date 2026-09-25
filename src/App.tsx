@@ -1,4 +1,5 @@
-import { BottomNav } from "./components/BottomNav";
+import { Toaster } from "./components/ui/sonner";
+import { AppShell } from "./components/layout/AppShell";
 import { useBusinessInfo } from "./hooks/useBusinessInfo";
 import { useCashRegister } from "./hooks/useCashRegister";
 import { useCashShiftAutoSync } from "./hooks/useCashShiftAutoSync";
@@ -14,25 +15,27 @@ import { useStorageSync } from "./hooks/useStorageSync";
 import {
   getLowStockProducts,
   getOutOfStockProducts,
+  getSalesDelta,
   getTodayCashTotal,
   getTodayDebitTotal,
   getTodayProductsSold,
   getTodaySales,
   getTodayTotal,
+  getTopProducts,
+  getWeekSales,
 } from "./lib/metrics";
 import { AddStockEntryView } from "./views/AddStockEntryView";
 import { AdjustStockView } from "./views/AdjustStockView";
 import { BusinessInfoView } from "./views/BusinessInfoView";
+import { ComingSoonView } from "./views/ComingSoonView";
 import { ClosingHistoryView } from "./views/ClosingHistoryView";
 import { DayClosingView } from "./views/DayClosingView";
 import { HomeView } from "./views/HomeView";
 import { LowStockView } from "./views/LowStockView";
 import { MoreView } from "./views/MoreView";
 import { NewSaleView } from "./views/NewSaleView";
-import { ProductCatalogView } from "./views/ProductCatalogView";
 import { ProductDetailView } from "./views/ProductDetailView";
 import { ProductFormView } from "./views/ProductFormView";
-import { ProductsView } from "./views/ProductsView";
 import { SalesView } from "./views/SalesView";
 import { SettingsView } from "./views/SettingsView";
 import { StockMovementDetailView } from "./views/StockMovementDetailView";
@@ -84,6 +87,9 @@ export default function App() {
   const todayCashTotal = getTodayCashTotal(todaySales);
   const todayDebitTotal = getTodayDebitTotal(todaySales);
   const todayProductsSold = getTodayProductsSold(todaySales);
+  const weekSales = getWeekSales(movements);
+  const salesDelta = getSalesDelta(movements);
+  const topProducts = getTopProducts(movements, 5);
 
   const lowStockProducts = getLowStockProducts(products);
   const outOfStockProducts = getOutOfStockProducts(products);
@@ -92,12 +98,15 @@ export default function App() {
     if (tab === "home") {
       return (
         <HomeView
+          businessName={businessInfo.nombre}
           todayTotal={todayTotal}
-          todayCashTotal={todayCashTotal}
-          todayDebitTotal={todayDebitTotal}
+          todaySalesCount={todaySales.length}
           todayProductsSold={todayProductsSold}
+          weekSales={weekSales}
+          salesDelta={salesDelta}
           lowStockProducts={lowStockProducts}
           outOfStockProducts={outOfStockProducts}
+          topProducts={topProducts}
           goTabScreen={goTabScreen}
           cashShift={cashShift}
         />
@@ -135,18 +144,21 @@ export default function App() {
           push={push}
           cashShift={cashShift}
           todayTotal={todayTotal}
+          todaySales={todaySales}
           openCashShiftManually={openCashShiftManually}
         />
       );
     }
 
     if (tab === "stock") {
-      if (current.screen === "productCatalog")
+      if (current.screen === "productForm")
         return (
-          <ProductCatalogView
+          <ProductFormView
             products={products}
+            productId={current.params.productId}
+            saveProduct={saveProduct}
+            deleteProduct={deleteProduct}
             pop={pop}
-            onOpenDetail={(id) => push("productDetail", { productId: id })}
           />
         );
       if (current.screen === "productDetail")
@@ -187,10 +199,13 @@ export default function App() {
             resetStack={resetStack}
           />
         );
-      return <StockView push={push} />;
-    }
-
-    if (tab === "movements") {
+      if (current.screen === "movements")
+        return (
+          <StockMovementsView
+            movements={movements}
+            onOpenDetail={(id) => push("stockMovementDetail", { movementId: id })}
+          />
+        );
       if (current.screen === "stockMovementDetail")
         return (
           <StockMovementDetailView
@@ -199,34 +214,14 @@ export default function App() {
             pop={pop}
           />
         );
-      return (
-        <StockMovementsView
-          movements={movements}
-          onOpenDetail={(id) => push("stockMovementDetail", { movementId: id })}
-        />
-      );
+      return <StockView products={products} push={push} goTabScreen={goTabScreen} />;
+    }
+
+    if (tab === "purchases" || tab === "suppliers" || tab === "reports") {
+      return <ComingSoonView section={tab} />;
     }
 
     if (tab === "more") {
-      if (current.screen === "products")
-        return (
-          <ProductsView
-            products={products}
-            pop={pop}
-            onOpenDetail={(id) => push("productForm", { productId: id })}
-            onNew={() => push("productForm", { productId: null })}
-          />
-        );
-      if (current.screen === "productForm")
-        return (
-          <ProductFormView
-            products={products}
-            productId={current.params.productId}
-            saveProduct={saveProduct}
-            deleteProduct={deleteProduct}
-            pop={pop}
-          />
-        );
       if (current.screen === "businessInfo")
         return (
           <BusinessInfoView
@@ -236,26 +231,19 @@ export default function App() {
           />
         );
       if (current.screen === "settings") return <SettingsView pop={pop} />;
-      return <MoreView push={push} />;
+      return <MoreView push={push} goTab={goTab} />;
     }
 
     return null;
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center" style={{ backgroundColor: "#FAF8F5" }}>
-      <style>{`
-        button { -webkit-tap-highlight-color: transparent; }
-        button:focus { outline: none; }
-        button:focus-visible { outline: 2px solid #2E6B4F; outline-offset: 2px; }
-      `}</style>
-      <div
-        className="w-full max-w-sm min-h-screen relative pb-24"
-        style={{ backgroundColor: "#FAF8F5" }}
-      >
+    <>
+      <AppShell tab={tab} onTabChange={goTab} businessName={businessInfo.nombre}>
         {renderTab()}
-        <BottomNav active={tab} onChange={goTab} />
-      </div>
-    </div>
+      </AppShell>
+      {/* Toasts replace window alerts; offset clears the fixed mobile bottom nav. */}
+      <Toaster theme="light" mobileOffset={{ bottom: "88px" }} />
+    </>
   );
 }

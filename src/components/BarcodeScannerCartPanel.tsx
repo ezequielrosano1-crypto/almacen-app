@@ -61,9 +61,9 @@ export function BarcodeScannerCartPanel({
   return (
     <div
       className="px-5 pt-2 pb-4 space-y-2"
-      style={{ backgroundColor: "#111111", maxHeight: "45vh", overflowY: "auto" }}
+      style={{ backgroundColor: "#0F172A", maxHeight: "45vh", overflowY: "auto" }}
     >
-      <p className="text-[10px] uppercase tracking-wide text-stone-400 pb-0.5">
+      <p className="text-[10px] uppercase tracking-wide text-ink-subtle pb-0.5">
         Agregado en esta venta
       </p>
       <div className="space-y-1">
@@ -104,7 +104,7 @@ export function BarcodeScannerCartPanel({
             className="flex-1 rounded-xl py-2 text-sm font-semibold border"
             style={
               selectedPayment === m
-                ? { backgroundColor: "#2E6B4F", color: "#FFFFFF", borderColor: "#2E6B4F" }
+                ? { backgroundColor: "#0066FF", color: "#FFFFFF", borderColor: "#0066FF" }
                 : { backgroundColor: "transparent", color: "#FFFFFF", borderColor: "#FFFFFF55" }
             }
           >
@@ -120,8 +120,8 @@ export function BarcodeScannerCartPanel({
         className="w-full appearance-none font-semibold rounded-xl py-3 text-sm flex items-center justify-center gap-2"
         style={
           !selectedPayment || isSubmitting
-            ? { backgroundColor: "#3A3A3A", color: "#8A8A8A" }
-            : { backgroundColor: "#2E6B4F", color: "#FFFFFF" }
+            ? { backgroundColor: "#374151", color: "#94A3B8" }
+            : { backgroundColor: "#0066FF", color: "#FFFFFF" }
         }
       >
         Confirmar venta

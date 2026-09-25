@@ -1,48 +1,37 @@
-import { Home, ListOrdered, type LucideIcon, Menu, Package, ShoppingCart } from "lucide-react";
 import type { ReactElement } from "react";
+import { MOBILE_NAV_ITEMS } from "../lib/navigation";
 import type { TabId } from "../types/navigation";
-
-export interface NavItem {
-  key: TabId;
-  label: string;
-  icon: LucideIcon;
-}
-
-export const NAV_ITEMS: NavItem[] = [
-  { key: "home", label: "Inicio", icon: Home },
-  { key: "sales", label: "Ventas", icon: ShoppingCart },
-  { key: "stock", label: "Stock", icon: Package },
-  { key: "movements", label: "Movimientos", icon: ListOrdered },
-  { key: "more", label: "Más", icon: Menu },
-];
 
 export interface BottomNavProps {
   active: TabId | string;
   onChange: (tab: TabId) => void;
 }
 
-// Barra de navegación inferior fija para cambiar entre las 5 pestañas principales.
+// Barra de navegación inferior fija para cambiar entre las 5 pestañas móviles.
 export function BottomNav({ active, onChange }: BottomNavProps): ReactElement {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 flex justify-around items-center py-2 px-1 max-w-sm mx-auto">
-      {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-line flex justify-around items-center px-1 pt-2"
+      style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+    >
+      {MOBILE_NAV_ITEMS.map(({ key, label, icon: Icon }) => {
         const isActive = active === key;
         return (
           <button
             type="button"
             key={key}
             onClick={() => onChange(key)}
-            className="flex flex-col items-center justify-center flex-1 py-1"
+            className="flex flex-col items-center justify-center flex-1 py-1 pointer-coarse:min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
           >
             <div
               className="flex items-center justify-center rounded-full px-3 py-1 transition-colors"
-              style={{ backgroundColor: isActive ? "#2E6B4F" : "transparent" }}
+              style={{ backgroundColor: isActive ? "#0066FF" : "transparent" }}
             >
-              <Icon size={22} strokeWidth={2} color={isActive ? "#FFFFFF" : "#8A8478"} />
+              <Icon size={22} strokeWidth={2} color={isActive ? "#FFFFFF" : "#64748B"} />
             </div>
             <span
               className={`text-xs mt-1 ${isActive ? "font-semibold" : ""}`}
-              style={{ color: isActive ? "#2E6B4F" : "#A8A29E" }}
+              style={{ color: isActive ? "#0066FF" : "#94A3B8" }}
             >
               {label}
             </span>

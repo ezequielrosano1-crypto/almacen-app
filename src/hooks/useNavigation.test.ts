@@ -26,14 +26,14 @@ describe("useNavigation / pure navigation state", () => {
   });
 
   it("push appends and pop restores the previous screen with its params", () => {
-    let stack = pushNavEntry([], "productCatalog");
+    let stack = pushNavEntry([], "movements");
     stack = pushNavEntry(stack, "productDetail", { productId: 5 });
     expect(getCurrentNavEntry(stack)).toEqual({
       screen: "productDetail",
       params: { productId: 5 },
     });
     stack = popNavEntry(stack);
-    expect(getCurrentNavEntry(stack)).toEqual({ screen: "productCatalog", params: {} });
+    expect(getCurrentNavEntry(stack)).toEqual({ screen: "movements", params: {} });
     expect(popNavEntry(popNavEntry(stack))).toEqual([]);
   });
 

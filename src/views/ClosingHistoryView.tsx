@@ -1,7 +1,12 @@
+import { History } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Header } from "../components/Header";
+import { Card } from "../components/common/Card";
+import { EmptyState } from "../components/common/EmptyState";
+import { PageHeader } from "../components/common/PageHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
+import { Skeleton } from "../components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { listClosings } from "../data/closingsRepository";
-import { COLORS } from "../lib/constants";
 import { formatMoney } from "../lib/format";
 import type { ClosingSummary } from "../types/domain";
 
@@ -33,47 +38,84 @@ export function ClosingHistoryView({ pop }: ClosingHistoryViewProps) {
   }, []);
 
   return (
-    <div className="px-5 space-y-3 pb-6">
-      <Header title="Historial de cierres" onBack={pop} />
+    <div className="pb-6 space-y-3">
+      <PageHeader title="Historial de cierres" onBack={pop} />
       {cargando ? (
-        <p className="text-stone-400 text-sm text-center py-6">Cargando historial...</p>
-      ) : error ? (
-        <p className="text-stone-400 text-sm text-center py-6">No se pudo cargar el historial.</p>
-      ) : cierres.length === 0 ? (
-        <p className="text-stone-400 text-sm text-center py-6">
-          Todavía no hay ningún día cerrado.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {cierres.map((c) => (
-            <div
-              key={`${c.date}-${c.time}`}
-              className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-stone-800">{c.date}</p>
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: c.isAutoClosed ? COLORS.bajo : COLORS.principal }}
-                >
-                  {c.isAutoClosed ? "Cierre automático" : "Cierre manual"}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Hora de cierre</span>
-                <span className="text-stone-800 font-medium">{c.time}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Total</span>
-                <span className="text-stone-800 font-medium">{formatMoney(c.total)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Cantidad de ventas</span>
-                <span className="text-stone-800 font-medium">{c.salesCount}</span>
-              </div>
-            </div>
-          ))}
+        <div className="space-y-2" role="status" aria-label="Cargando historial">
+          <Skeleton className="h-16 rounded-2xl" />
+          <Skeleton className="h-16 rounded-2xl" />
+          <Skeleton className="h-16 rounded-2xl" />
         </div>
+      ) : error ? (
+        <p className="text-ink-subtle text-sm text-center py-6">No se pudo cargar el historial.</p>
+      ) : cierres.length === 0 ? (
+        <EmptyState
+          icon={History}
+          title="Todavía no hay ningún día cerrado"
+          description="Cuando cierres una jornada, va a aparecer acá."
+        />
+      ) : (
+        <>
+          {/* Desktop table */}
+          <Card padded={false} className="hidden lg:block overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-line hover:bg-transparent">
+                  <TableHead className="px-4 py-3 text-ink-muted">Fecha</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted">Hora de cierre</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted text-right">Total</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted text-right">Ventas</TableHead>
+                  <TableHead className="px-4 py-3 text-ink-muted">Tipo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cierres.map((c) => (
+                  <TableRow key={`${c.date}-${c.time}`} className="border-line-soft">
+                    <TableCell className="px-4 py-3 font-medium text-ink">{c.date}</TableCell>
+                    <TableCell className="px-4 py-3 text-ink-soft">{c.time}</TableCell>
+                    <TableCell className="px-4 py-3 text-ink text-right tabular-nums">
+                      {formatMoney(c.total)}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-ink text-right tabular-nums">
+                      {c.salesCount}
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <StatusBadge tone={c.isAutoClosed ? "warning" : "info"}>
+                        {c.isAutoClosed ? "Automático" : "Manual"}
+                      </StatusBadge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+
+          {/* Mobile cards */}
+          <div className="lg:hidden space-y-2">
+            {cierres.map((c) => (
+              <Card key={`${c.date}-${c.time}`} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-ink">{c.date}</p>
+                  <StatusBadge tone={c.isAutoClosed ? "warning" : "info"}>
+                    {c.isAutoClosed ? "Cierre automático" : "Cierre manual"}
+                  </StatusBadge>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-ink-muted">Hora de cierre</span>
+                  <span className="text-ink font-medium">{c.time}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-ink-muted">Total</span>
+                  <span className="text-ink font-medium">{formatMoney(c.total)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-ink-muted">Cantidad de ventas</span>
+                  <span className="text-ink font-medium">{c.salesCount}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

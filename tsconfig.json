@@ -9,7 +9,10 @@
     "skipLibCheck": true,
     "strict": true,
     "allowJs": false,
-    "noUnusedLocals": false
+    "noUnusedLocals": false,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }
